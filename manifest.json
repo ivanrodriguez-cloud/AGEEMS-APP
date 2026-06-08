@@ -1,13 +1,13 @@
 {
   "name": "SEMS Área de Gestión Estratégica",
   "short_name": "SEMS Gestión",
-  "start_url": "./index.html",
+  "start_url": "https://ivanrodriguez-cloud.github.io/AGEEMS-APP/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#E5004E",
   "icons": [
     {
-      "src": "icono.png",
+      "src": "https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png",
       "sizes": "512x512",
       "type": "image/png"
     }
