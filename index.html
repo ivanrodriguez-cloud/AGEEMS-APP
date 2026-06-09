@@ -102,11 +102,11 @@
       document.getElementById('tablero').style.display = 'none';
       document.getElementById('formulario').style.display = 'block';
       
-      // Llamadas directas y limpias a la base de datos de Google Sheets sin pasar por sus pantallas
-      fetch(`${URL_SCRIPT}?pestana=Material+publicitario`)
+      // El truco del "Date.now()" obliga al celular a saltarse la memoria caché defectuosa
+      fetch(`${URL_SCRIPT}?pestana=Material+publicitario&v=${Date.now()}`)
         .then(res => res.json()).then(data => construirTabla(data, 'tablaMateriales', 'mat-item'));
       
-      fetch(`${URL_SCRIPT}?pestana=Consumibles`)
+      fetch(`${URL_SCRIPT}?pestana=Consumibles&v=${Date.now()}`)
         .then(res => res.json()).then(data => construirTabla(data, 'tablaConsumibles', 'cons-item'));
     }
 
