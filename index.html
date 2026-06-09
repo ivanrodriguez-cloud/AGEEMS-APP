@@ -53,6 +53,7 @@
     <div id="formulario" class="formulario-seccion">
       <h1>Solicitud de Coffee Break</h1>
       <form id="coffeeForm" onsubmit="enviarFormulario(event)">
+        <div class="form-group"><label>Nombre del evento *</label><input type="text" id="nombreEvento" required></div>
         <div class="form-group"><label>Nombre de quien solicita el servicio *</label><input type="text" id="nombre" required></div>
         <div class="form-group"><label>Correo de quien solicita el servicio *</label><input type="email" id="correo" required></div>
         <div class="form-group"><label>Fecha y Hora de Inicio del Evento *</label><input type="datetime-local" id="fechaInicio" required onchange="validarFechas()"></div>
@@ -72,6 +73,8 @@
           <label>Consumibles disponibles</label>
           <table id="tablaConsumibles"><thead><tr><th>Consumible</th><th>Disponibles</th><th>Cantidad Requerida</th></tr></thead><tbody></tbody></table>
         </div>
+        
+        <div class="form-group"><label>Observaciones</label><input type="text" id="observaciones" placeholder="Detalles adicionales, restricciones, etc."></div>
 
         <button type="submit" class="btn" id="btnEnviar">Enviar Solicitud</button>
       </form>
@@ -134,13 +137,15 @@
       document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var datos = {
+        nombreEvento: document.getElementById('nombreEvento').value,
         nombre: document.getElementById('nombre').value,
         correo: document.getElementById('correo').value,
         fechaInicio: document.getElementById('fechaInicio').value,
         fechaFin: document.getElementById('fechaFin').value,
         lugar: document.getElementById('lugar').value,
         materiales: materiales,
-        consumibles: consumibles
+        consumibles: consumibles,
+        observaciones: document.getElementById('observaciones').value
       };
 
       fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(datos) })
