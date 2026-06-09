@@ -179,7 +179,7 @@
       document.querySelectorAll('.mat-item').forEach(input => { if(parseInt(input.value) > 0) materiales.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var consumibles = [];
-      document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, quantity: input.value }); });
+      document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var datos = {
         nombreEvento: document.getElementById('nombreEvento').value,
