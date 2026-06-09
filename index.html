@@ -5,14 +5,157 @@
   <title>SEMS - Gestión Estratégica</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="manifest.json">
-  <script>
-    // Redirección inmediata y limpia para saltar el bloqueo de Google iframe
-    window.location.href = "https://script.google.com/macros/s/AKfycbyNI_kFk7ysB-qpcdF2j0UeFTMYJFH0-SzpZek4YGALAAwnzbyB6Bd4vjJVzLd4rUzGjA/exec";
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-orange: #FF8300;
+      --primary-pink: #E5004E;
+      --neutral-gray: #5B6670;
+      --light-bg: #f8f9fa;
+    }
+    body { font-family: 'Poppins', sans-serif; background-color: var(--light-bg); color: var(--neutral-gray); margin: 0; padding: 20px; display: flex; justify-content: center; }
+    .container { background: #ffffff; width: 100%; max-width: 700px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header img { max-width: 150px; height: auto; }
+    h1 { color: var(--primary-pink); font-size: 24px; font-weight: 600; text-align: center; margin-top: 10px; }
+    .tablero-blanco { display: block; text-align: center; }
+    .formulario-seccion { display: none; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+    input[type="text"], input[type="email"], input[type="datetime-local"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; }
+    .btn-orange { background-color: var(--primary-orange); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: var(--light-bg); }
+    .cant-input { width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+    .map-helper { font-size: 11px; color: #888; margin-top: 4px; }
+    
+    /* Alerta Estilizada */
+    .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-contenido { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 80%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+  </style>
 </head>
 <body>
-  <p style="font-family: 'Poppins', sans-serif; text-align: center; margin-top: 50px; color: #5B6670;">
-    Cargando Aplicación de Gestión Estratégica...
-  </p>
+
+  <div class="container">
+    <div class="header">
+      <img src="icono.png" alt="Logo SEMS">
+    </div>
+
+    <!-- TABLERO PRINCIPAL EN BLANCO -->
+    <div id="tablero" class="tablero-blanco">
+      <div style="height: 100px;"></div>
+      <button class="btn btn-orange" onclick="mostrarFormulario()">Solicitud de Coffee Break</button>
+    </div>
+
+    <!-- FORMULARIO DE SOLICITUD -->
+    <div id="formulario" class="formulario-seccion">
+      <h1>Solicitud de Coffee Break</h1>
+      <form id="coffeeForm" onsubmit="enviarFormulario(event)">
+        <div class="form-group"><label>Nombre de quien solicita el servicio *</label><input type="text" id="nombre" required></div>
+        <div class="form-group"><label>Correo de quien solicita el servicio *</label><input type="email" id="correo" required></div>
+        <div class="form-group"><label>Fecha y Hora de Inicio del Evento *</label><input type="datetime-local" id="fechaInicio" required onchange="validarFechas()"></div>
+        <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
+        <div class="form-group">
+          <label>Lugar del evento (Enlace de Google Maps) *</label>
+          <input type="text" id="lugar" placeholder="Pegue el enlace de compartir de Google Maps" required>
+          <div class="map-helper">Busca el lugar en Google Maps, haz clic en "Compartir" y pega el enlace aquí.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Material publicitario disponible</label>
+          <table id="tablaMateriales"><thead><tr><th>Material</th><th>Disponibles</th><th>Cantidad Requerida</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <div class="form-group">
+          <label>Consumibles disponibles</label>
+          <table id="tablaConsumibles"><thead><tr><th>Consumible</th><th>Disponibles</th><th>Cantidad Requerida</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <button type="submit" class="btn" id="btnEnviar">Enviar Solicitud</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="miAlerta" class="modal-alerta"><div class="modal-contenido"><p id="mensajeAlerta">¡Solicitud registrada con éxito!</p><button class="btn" style="width: auto; padding: 8px 30px;" onclick="cerrarAlerta()">Aceptar</button></div></div>
+
+  <script>
+    // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT QUE COPIASTE EN EL PASO 1
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyNI_kFk7ysB-qpcdF2j0UeFTMYJFH0-SzpZek4YGALAAwnzbyB6Bd4vjJVzLd4rUzGjA/exec";
+
+    window.onload = function() {
+      var inicioInput = document.getElementById('fechaInicio');
+      var finInput = document.getElementById('fechaFin');
+      var ahora = new Date();
+      ahora.setHours(ahora.getHours() + 48);
+      var fechaMinimaStr = ahora.toISOString().slice(0, 16);
+      inicioInput.min = fechaMinimaStr;
+      finInput.min = fechaMinimaStr;
+    };
+
+    function validarFechas() {
+      document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
+    }
+
+    function mostrarFormulario() {
+      document.getElementById('tablero').style.display = 'none';
+      document.getElementById('formulario').style.display = 'block';
+      
+      // Llamadas directas y limpias a la base de datos de Google Sheets sin pasar por sus pantallas
+      fetch(`${URL_SCRIPT}?pestana=Material+publicitario`)
+        .then(res => res.json()).then(data => construirTabla(data, 'tablaMateriales', 'mat-item'));
+      
+      fetch(`${URL_SCRIPT}?pestana=Consumibles`)
+        .then(res => res.json()).then(data => construirTabla(data, 'tablaConsumibles', 'cons-item'));
+    }
+
+    function construirTabla(data, idTabla, clase) {
+      var tbody = document.querySelector(`#${idTabla} tbody`);
+      tbody.innerHTML = '';
+      data.forEach(item => {
+        tbody.innerHTML += `<tr>
+          <td>${item.nombre}</td>
+          <td>${item.disponible}</td>
+          <td><input type="number" class="cant-input ${clase}" data-nombre="${item.nombre}" min="0" max="${item.disponible}" value="0"></td>
+        </tr>`;
+      });
+    }
+
+    function enviarFormulario(e) {
+      e.preventDefault();
+      document.getElementById('btnEnviar').disabled = true;
+      document.getElementById('btnEnviar').innerText = "Enviando...";
+
+      var materiales = [];
+      document.querySelectorAll('.mat-item').forEach(input => { if(parseInt(input.value) > 0) materiales.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
+
+      var consumibles = [];
+      document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
+
+      var datos = {
+        nombre: document.getElementById('nombre').value,
+        correo: document.getElementById('correo').value,
+        fechaInicio: document.getElementById('fechaInicio').value,
+        fechaFin: document.getElementById('fechaFin').value,
+        lugar: document.getElementById('lugar').value,
+        materiales: materiales,
+        consumibles: consumibles
+      };
+
+      fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(datos) })
+        .then(res => res.text()).then(res => {
+          document.getElementById('mensajeAlerta').innerText = res;
+          document.getElementById('miAlerta').style.display = 'flex';
+          document.getElementById('coffeeForm').reset();
+          document.getElementById('formulario').style.display = 'none';
+          document.getElementById('tablero').style.display = 'block';
+          document.getElementById('btnEnviar').disabled = false;
+          document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
+        });
+    }
+
+    function cerrarAlerta() { document.getElementById('miAlerta').style.display = 'none'; }
+  </script>
 </body>
 </html>
