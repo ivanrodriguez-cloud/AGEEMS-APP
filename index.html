@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- Icono de la pestaña (Favicon) -->
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
   
@@ -24,16 +23,17 @@
     h1 { color: var(--primary-pink); font-size: 24px; font-weight: 600; text-align: center; margin-top: 10px; }
     .tablero-blanco { display: block; text-align: center; }
     .formulario-seccion { display: none; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+    .form-group { margin-bottom: 25px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
     input[type="text"], input[type="email"], input[type="datetime-local"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; }
     .btn-orange { background-color: var(--primary-orange); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    
+    /* Estilos de Tablas de Inventario */
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    th { background-color: var(--light-bg); }
-    .cant-input { width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
-    .map-helper { font-size: 11px; color: #888; margin-top: 4px; }
+    th { background-color: #f1f3f4; font-weight: 600; }
+    .cant-input { width: 65px; padding: 6px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; }
     
     /* Alerta Estilizada */
     .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
@@ -47,13 +47,11 @@
       <img src="icono.png" alt="Logo SEMS">
     </div>
 
-    <!-- TABLERO PRINCIPAL EN BLANCO -->
     <div id="tablero" class="tablero-blanco">
       <div style="height: 100px;"></div>
       <button class="btn btn-orange" onclick="mostrarFormulario()">Solicitud de Coffee Break</button>
     </div>
 
-    <!-- FORMULARIO DE SOLICITUD -->
     <div id="formulario" class="formulario-seccion">
       <h1>Solicitud de Coffee Break</h1>
       <form id="coffeeForm" onsubmit="enviarFormulario(event)">
@@ -70,8 +68,36 @@
               <span>Mueve el mapa o usa tu ubicación actual</span>
               <button type="button" style="background: #FF8300; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 11px;" onclick="obtenerUbicacionGPS()">Mi Ubicación Actual 📍</button>
             </div>
-            <iframe id="iframeMaps" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Guadalajara,Jalisco&t=&z=14&ie=UTF8&iwloc=&output=embed"></iframe>
+            <iframe id="iframeMaps" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Guadalajara,Jalisco&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
           </div>
+        </div>
+
+        <div class="form-group">
+          <label>Selecciona el Material Publicitario requerido:</label>
+          <table id="tablaMateriales">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Disponibles</th>
+                <th>Cantidad Requerida</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="form-group">
+          <label>Selecciona los Consumibles requeridos:</label>
+          <table id="tablaConsumibles">
+            <thead>
+              <tr>
+                <th>Consumible</th>
+                <th>Disponibles</th>
+                <th>Cantidad Requerida</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
 
         <div class="form-group">
@@ -90,7 +116,7 @@
     // URL DE TU GOOGLE APPS SCRIPT
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyNI_kFk7ysB-qpcdF2j0UeFTMYJFH0-SzpZek4YGALAAwnzbyB6Bd4vjJVzLd4rUzGjA/exec";
 
-    let coordenadasActuales = "Ubicación por defecto (Guadalajara)";
+    let coordenadasActuales = "Ubicación por defecto (Guadalajara, Jalisco)";
 
     window.onload = function() {
       var inicioInput = document.getElementById('fechaInicio');
@@ -101,7 +127,6 @@
       inicioInput.min = fechaMinimaStr;
       finInput.min = fechaMinimaStr;
       
-      // Intentar obtener la ubicación del usuario apenas abra la app
       obtenerUbicacionGPS();
     };
 
@@ -114,12 +139,10 @@
         navigator.geolocation.getCurrentPosition(function(position) {
           var lat = position.coords.latitude;
           var lon = position.coords.longitude;
-          // Actualizar mapa visualmente con la posición del usuario
           document.getElementById('iframeMaps').src = `https://maps.google.com/maps?q=${lat},${lon}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
-          // Guardar el enlace real listo para Google Sheets
           coordenadasActuales = `https://www.google.com/maps?q=${lat},${lon}`;
         }, function(error) {
-          console.log("El usuario denegó el GPS o hubo un error.");
+          console.log("Acceso a GPS denegado por el usuario.");
         });
       }
     }
@@ -141,7 +164,7 @@
       data.forEach(item => {
         tbody.innerHTML += `<tr>
           <td>${item.nombre}</td>
-          <td>${item.disponible}</td>
+          <td><strong>${item.disponible}</strong></td>
           <td><input type="number" class="cant-input ${clase}" data-nombre="${item.nombre}" min="0" max="${item.disponible}" value="0"></td>
         </tr>`;
       });
@@ -156,7 +179,7 @@
       document.querySelectorAll('.mat-item').forEach(input => { if(parseInt(input.value) > 0) materiales.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var consumibles = [];
-      document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
+      document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, quantity: input.value }); });
 
       var datos = {
         nombreEvento: document.getElementById('nombreEvento').value,
@@ -164,15 +187,15 @@
         correo: document.getElementById('correo').value,
         fechaInicio: document.getElementById('fechaInicio').value,
         fechaFin: document.getElementById('fechaFin').value,
-        lugar: coordenadasActuales, // Envia el link directo sin fallas
+        lugar: coordenadasActuales,
         materiales: materiales,
         consumibles: consumibles,
         observaciones: document.getElementById('observaciones').value
       };
 
-      fetch(URL_SCRIPT, { method: 'POST', body: JSON.stringify(datos) })
-        .then(res => res.text()).then(res => {
-          document.getElementById('mensajeAlerta').innerText = res;
+      fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) })
+        .then(() => {
+          document.getElementById('mensajeAlerta').innerText = "¡Solicitud registrada con éxito!";
           document.getElementById('miAlerta').style.display = 'flex';
           document.getElementById('coffeeForm').reset();
           document.getElementById('formulario').style.display = 'none';
@@ -180,7 +203,7 @@
           document.getElementById('btnEnviar').disabled = false;
           document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
         }).catch(err => {
-          alert("Hubo un error al enviar: " + err);
+          alert("Error en el envío: " + err);
           document.getElementById('btnEnviar').disabled = false;
           document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
         });
