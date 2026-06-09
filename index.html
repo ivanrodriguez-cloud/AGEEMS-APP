@@ -9,10 +9,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
     :root {
       --primary-orange: #FF8300;
@@ -39,9 +35,6 @@
     th { background-color: #f1f3f4; font-weight: 600; }
     .cant-input { width: 65px; padding: 6px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; }
     
-    /* Contenedor del Mapa Físico */
-    #mapaId { width: 100%; height: 300px; border-radius: 0 0 8px 8px; border-top: none; }
-
     /* Alerta Estilizada */
     .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
     .modal-contenido { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 80%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
@@ -69,13 +62,14 @@
         <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
         
         <div class="form-group">
-          <label>Lugar del evento (Arrastra el marcador naranja al sitio exacto) *</label>
-          <div style="margin-top: 10px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-            <div style="background: #f1f3f4; padding: 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
-              <span id="txtCoordenadas" style="font-weight: 600; color: #E5004E;">Ubicación: Guadalajara, Jal.</span>
-              <button type="button" style="background: #FF8300; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 11px;" onclick="centrarEnGPS()">Usar mi GPS 📍</button>
-            </div>
-            <div id="mapaId"></div>
+          <label>Lugar del evento *</label>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="inputLugar" placeholder="Escribe la dirección o nombre del lugar" required onchange="actualizarMapaPorTexto()">
+            <button type="button" class="btn btn-orange" style="width: auto; padding: 0 15px; font-size: 14px; white-space: nowrap;" onclick="obtenerUbicacionGPS()">Mi Ubicación 📍</button>
+          </div>
+          
+          <div id="contenedorMapa" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+            <iframe id="iframeMaps" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Guadalajara,Jalisco&t=&z=15&ie=UTF8&iwloc=&output=embed"></iframe>
           </div>
         </div>
 
@@ -83,7 +77,11 @@
           <label>Selecciona el Material Publicitario requerido:</label>
           <table id="tablaMateriales">
             <thead>
-              <tr><th>Material</th><th>Disponibles</th><th>Cantidad Requerida</th></tr>
+              <tr>
+                <th>Material</th>
+                <th>Disponibles</th>
+                <th>Cantidad Requerida</th>
+              </tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -93,7 +91,11 @@
           <label>Selecciona los Consumibles requeridos:</label>
           <table id="tablaConsumibles">
             <thead>
-              <tr><th>Consumible</th><th>Disponibles</th><th>Cantidad Requerida</th></tr>
+              <tr>
+                <th>Consumible</th>
+                <th>Disponibles</th>
+                <th>Cantidad Requerida</th>
+              </tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -113,61 +115,51 @@
 
   <script>
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyNI_kFk7ysB-qpcdF2j0UeFTMYJFH0-SzpZek4YGALAAwnzbyB6Bd4vjJVzLd4rUzGjA/exec";
-
-    let mapa, marcador;
-    // Coordenadas iniciales por defecto (Guadalajara Centro)
-    let latActual = 20.6767;
-    let lonActual = -103.3475;
-    let coordenadasActuales = "https://www.google.com/maps?q=20.6767,-103.3475";
+    
+    // Variable global que enviará la dirección final a Google Sheets
+    let direccionFinal = "Guadalajara, Jalisco";
 
     window.onload = function() {
       var inicioInput = document.getElementById('fechaInicio');
       var finInput = document.getElementById('fechaFin');
       var ahora = new Date();
       ahora.setHours(ahora.getHours() + 48);
-      inicioInput.min = ahora.toISOString().slice(0, 16);
-      finInput.min = ahora.toISOString().slice(0, 16);
+      var fechaMinimaStr = ahora.toISOString().slice(0, 16);
+      inicioInput.min = fechaMinimaStr;
+      finInput.min = fechaMinimaStr;
       
-      // Inicializar el mapa interactivo
-      mapa = L.map('mapaId').setView([latActual, lonActual], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(mapa);
-
-      // Crear marcador arrastrable
-      marcador = L.marker([latActual, lonActual], { draggable: true }).addTo(mapa);
-      
-      // Escuchar cuando el usuario termine de arrastrar el marcador
-      marcador.on('dragend', function(event) {
-        var posicion = marcador.getLatLng();
-        actualizarCoordenadasRegistradas(posicion.lat, posicion.lng);
-      });
-
-      // Intentar obtener GPS inicial para centrarlo automáticamente
-      centrarEnGPS();
+      obtenerUbicacionGPS();
     };
 
     function validarFechas() {
       document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
     }
 
-    function actualizarCoordenadasRegistradas(lat, lng) {
-      latActual = lat;
-      lonActual = lng;
-      // Genera el enlace final exacto de Google Maps para tu Sheets
-      coordenadasActuales = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
-      document.getElementById('txtCoordenadas').innerText = `Ubicación marcada correctamente`;
-    }
-
-    function centrarEnGPS() {
+    // Caso A: El usuario usa su GPS actual
+    function obtenerUbicacionGPS() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
           var lat = position.coords.latitude;
           var lon = position.coords.longitude;
-          mapa.setView([lat, lon], 16);
-          marcador.setLatLng([lat, lon]);
-          actualizarCoordenadasRegistradas(lat, lon);
+          document.getElementById('iframeMaps').src = `https://maps.google.com/maps?q=${lat},${lon}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+          
+          direccionFinal = `https://www.google.com/maps?q=${lat},${lon}`;
+          document.getElementById('inputLugar').value = "Ubicación actual obtenida por GPS";
+        }, function(error) {
+          console.log("Acceso a GPS denegado.");
         });
+      }
+    }
+
+    // Caso B: El usuario escribe una dirección o plantel diferente
+    function actualizarMapaPorTexto() {
+      var textoDireccion = document.getElementById('inputLugar').value;
+      if (textoDireccion.trim() !== "") {
+        // Actualiza el mapa visual con el texto ingresado
+        document.getElementById('iframeMaps').src = `https://maps.google.com/maps?q=${encodeURIComponent(textoDireccion)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        
+        // Guarda el texto o genera un enlace de búsqueda para Sheets
+        direccionFinal = textoDireccion;
       }
     }
 
@@ -175,9 +167,6 @@
       document.getElementById('tablero').style.display = 'none';
       document.getElementById('formulario').style.display = 'block';
       
-      // Forzar al mapa a renderizarse correctamente al hacerse visible el contenedor
-      setTimeout(() => { mapa.invalidateSize(); }, 200);
-
       fetch(`${URL_SCRIPT}?pestana=Material+publicitario&v=${Date.now()}`)
         .then(res => res.json()).then(data => construirTabla(data, 'tablaMateriales', 'mat-item'));
       
@@ -211,10 +200,10 @@
       var datos = {
         nombreEvento: document.getElementById('nombreEvento').value,
         nombre: document.getElementById('nombre').value,
-        correo: document.getElementById('correoern') || document.getElementById('correo').value,
+        correo: document.getElementById('correo').value,
         fechaInicio: document.getElementById('fechaInicio').value,
         fechaFin: document.getElementById('fechaFin').value,
-        lugar: coordenadasActuales, // Enlace dinámico final donde soltaste el pin
+        lugar: direccionFinal, // Envía el GPS o la dirección escrita que se muestra en el mapa
         materiales: materiales,
         consumibles: consumibles,
         observaciones: document.getElementById('observaciones').value
