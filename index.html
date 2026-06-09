@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- Icono de la pestaña (Favicon) -->
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
   
@@ -11,7 +10,6 @@
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   
-  <!-- Librería del mapa interactivo integrado en la App (Leaflet) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -70,7 +68,6 @@
         <div class="form-group"><label>Fecha y Hora de Inicio del Evento *</label><input type="datetime-local" id="fechaInicio" required onchange="validarFechas()"></div>
         <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
         
-        <!-- SECCIÓN DEL MAPA INTERNO CON PIN ARRASTRABLE -->
         <div class="form-group">
           <label>Lugar del evento (Arrastra el marcador azul al sitio exacto) *</label>
           <div style="margin-top: 10px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
@@ -121,7 +118,7 @@
     // Ubicación de inicio por defecto (Guadalajara Centro)
     let latActual = 20.6767;
     let lonActual = -103.3475;
-    let coordenadasActuales = "https://www.google.com/maps?q=20.6767,-103.3475";
+    let coordenadasActuales = "https://maps.google.com/?q=20.6767,-103.3475";
 
     window.onload = function() {
       var inicioInput = document.getElementById('fechaInicio');
@@ -156,8 +153,8 @@
     function guardarNuevaUbicacion(lat, lng) {
       latActual = lat;
       lonActual = lng;
-      // Transforma el punto arrastrado en una liga limpia de Google Maps para tu Sheets
-      coordenadasActuales = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+      // Genera una URL de Google Maps estándar e impecable para tu Sheets
+      coordenadasActuales = `https://maps.google.com/?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
       document.getElementById('txtCoordenadas').innerText = `Ubicación marcada: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     }
 
@@ -177,7 +174,7 @@
       document.getElementById('tablero').style.display = 'none';
       document.getElementById('formulario').style.display = 'block';
       
-      // Corrige el tamaño del mapa al abrir la pestaña
+      // Corrige el tamaño del mapa al abrir la pestaña para evitar que salga cortado
       setTimeout(() => { mapa.invalidateSize(); }, 250);
 
       fetch(`${URL_SCRIPT}?pestana=Material+publicitario&v=${Date.now()}`)
@@ -208,7 +205,6 @@
       document.querySelectorAll('.mat-item').forEach(input => { if(parseInt(input.value) > 0) materiales.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var consumibles = [];
-      // CORRECCIÓN CLAVE: Aquí se usa "cantidad" de manera idéntica a los materiales para evitar el #NUM!
       document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var datos = {
@@ -217,7 +213,7 @@
         correo: document.getElementById('correo').value,
         fechaInicio: document.getElementById('fechaInicio').value,
         fechaFin: document.getElementById('fechaFin').value,
-        lugar: coordenadasActuales, // Enlace exacto de la ubicación seleccionada con el pin
+        lugar: coordenadasActuales, // Envía de forma limpia el enlace de Google Maps generado
         materiales: materiales,
         consumibles: consumibles,
         observaciones: document.getElementById('observaciones').value
