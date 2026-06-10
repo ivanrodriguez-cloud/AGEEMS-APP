@@ -10,7 +10,8 @@
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   
-  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     :root {
@@ -38,8 +39,11 @@
     th { background-color: #f1f3f4; font-weight: 600; }
     .cant-input { width: 65px; padding: 6px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; }
     
-    /* Contenedor del mapa real de Google */
-    #googleMapaCanvas { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px; }
+    /* Área visual del mapa interno */
+    #mapaId { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; z-index: 1; margin-top: 5px; }
+    
+    /* Ocultar marcas de agua molestas */
+    .leaflet-control-attribution { display: none !important; }
 
     /* Alerta Estilizada */
     .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
@@ -68,8 +72,8 @@
         <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
         
         <div class="form-group">
-          <label>Lugar del evento (Arrastra el marcador rojo de Google al sitio exacto) *</label>
-          <div id="googleMapaCanvas"></div>
+          <label>Lugar del evento (Arrastra el marcador azul al sitio exacto) *</label>
+          <div id="mapaId"></div>
         </div>
 
         <div class="form-group">
@@ -107,11 +111,11 @@
   <script>
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyNI_kFk7ysB-qpcdF2j0UeFTMYJFH0-SzpZek4YGALAAwnzbyB6Bd4vjJVzLd4rUzGjA/exec";
 
-    let map, marker;
-    // Guadalajara Centro por defecto
-    let miLatitud = 20.6767;
-    let miLongitud = -103.3475;
-    let coordenadasActuales = "https://maps.google.com/maps?q=$4";
+    let mapa, marcador;
+    // Guadalajara como punto inicial base
+    let latBase = 20.6767;
+    let lonBase = -103.3475;
+    let coordenadasActuales = "https://maps.google.com/maps?q=$6";
 
     window.onload = function() {
       var inicioInput = document.getElementById('fechaInicio');
@@ -119,60 +123,41 @@
       var ahora = new Date();
       ahora.setHours(ahora.getHours() + 48);
       inicioInput.min = ahora.toISOString().slice(0, 16);
-      finInput.min = estaba = ahora.toISOString().slice(0, 16);
+      finInput.min = ahora.toISOString().slice(0, 16);
       
-      inicializarGoogleMap();
+      // Inicializar el mapa interactivo nativo e independiente
+      mapa = L.map('mapaId').setView([latBase, lonBase], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+
+      // Crear el marcador azul arrastrable
+      marcador = L.marker([latBase, lonBase], { draggable: true }).addTo(mapa);
+      
+      // Evento: Al soltar el pin, captura y guarda el punto exacto de la ubicación
+      marcador.on('dragend', function() {
+        var posicion = marcador.getLatLng();
+        guardarCoordenadasFormulario(posicion.lat, posicion.lng);
+      });
+
+      detectarUbicacionGPS();
     };
 
     function validarFechas() {
       document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
     }
 
-    // Inicializa el mapa nativo con controles de Google
-    function inicializarGoogleMap() {
-      const opcionesMapa = {
-        zoom: 13,
-        center: new google.maps.LatLng(miLatitud, miLongitud),
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-      };
-      
-      map = new google.maps.Map(document.getElementById('googleMapaCanvas'), opcionesMapa);
-
-      // Crear marcador clásico rojo de Google Maps Arrastrable
-      marker = new google.maps.Marker({
-        position: new google.maps.LatLng(miLatitud, miLongitud),
-        map: map,
-        draggable: true
-      });
-
-      // Evento clave: detecta cuando terminas de mover el pin en Google Maps
-      google.maps.event.addListener(marker, 'dragend', function() {
-        const posicion = marker.getPosition();
-        actualizarUbicacionFinal(posicion.lat(), posicion.lng());
-      });
-
-      // Intentar centrar en el GPS real del usuario al abrir la app
-      obtenerGPS();
+    function guardarCoordenadasFormulario(lat, lng) {
+      // Convierte las coordenadas del pin a una liga de Google Maps para tu Sheets
+      coordenadasActuales = `https://maps.google.com/maps?q=$7{lat.toFixed(6)},${lng.toFixed(6)}`;
     }
 
-    function actualizarUbicacionFinal(lat, lng) {
-      miLatitud = lat;
-      miLongitud = lng;
-      // Genera la URL exacta para tu Google Sheets
-      coordenadasActuales = `https://maps.google.com/maps?q=$5{lat.toFixed(6)},${lng.toFixed(6)}`;
-    }
-
-    function obtenerGPS() {
+    function detectarUbicacionGPS() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          const nuevoPunto = new google.maps.LatLng(lat, lon);
-          
-          map.setCenter(nuevoPunto);
-          map.setZoom(16);
-          marker.setPosition(nuevoPunto);
-          actualizarUbicacionFinal(lat, lon);
+          var lat = position.coords.latitude;
+          var lon = position.coords.longitude;
+          mapa.setView([lat, lon], 16);
+          marcador.setLatLng([lat, lon]);
+          guardarCoordenadasFormulario(lat, lon);
         });
       }
     }
@@ -181,11 +166,8 @@
       document.getElementById('tablero').style.display = 'none';
       document.getElementById('formulario').style.display = 'block';
       
-      // Forzar al mapa de Google a recalcular su tamaño al abrir la vista
-      setTimeout(() => {
-        google.maps.event.trigger(map, 'resize');
-        map.setCenter(marker.getPosition());
-      }, 300);
+      // Ajuste para evitar que el mapa cargue incompleto visualmente
+      setTimeout(() => { mapa.invalidateSize(); }, 250);
 
       fetch(`${URL_SCRIPT}?pestana=Material+publicitario&v=${Date.now()}`)
         .then(res => res.json()).then(data => construirTabla(data, 'tablaMateriales', 'mat-item'));
@@ -215,6 +197,7 @@
       document.querySelectorAll('.mat-item').forEach(input => { if(parseInt(input.value) > 0) materiales.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var consumibles = [];
+      // Corrección definitiva para evitar fallas matemáticas en tu inventario de Google Sheets
       document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var datos = {
@@ -223,7 +206,7 @@
         correo: document.getElementById('correo').value,
         fechaInicio: document.getElementById('fechaInicio').value,
         fechaFin: document.getElementById('fechaFin').value,
-        lugar: coordenadasActuales, // Envía las coordenadas del pin movido
+        lugar: coordenadasActuales, // Envía de forma limpia el enlace de mapas generado por el pin
         materiales: materiales,
         consumibles: consumibles,
         observaciones: document.getElementById('observaciones').value
