@@ -42,7 +42,7 @@
     /* Área visual del mapa interno */
     #mapaId { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; z-index: 1; margin-top: 5px; }
     
-    /* Ocultar marcas de agua molestas */
+    /* Ocultar marcas de agua del mapa */
     .leaflet-control-attribution { display: none !important; }
 
     /* Alerta Estilizada */
@@ -112,10 +112,10 @@
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyNI_kFk7ysB-qpcdF2j0UeFTMYJFH0-SzpZek4YGALAAwnzbyB6Bd4vjJVzLd4rUzGjA/exec";
 
     let mapa, marcador;
-    // Guadalajara como punto inicial base
+    // Ubicación inicial por defecto (Guadalajara Centro)
     let latBase = 20.6767;
     let lonBase = -103.3475;
-    let coordenadasActuales = "https://maps.google.com/maps?q=$6";
+    let coordenadasActuales = "https://www.google.com/maps?q=20.6767,-103.3475";
 
     window.onload = function() {
       var inicioInput = document.getElementById('fechaInicio');
@@ -125,14 +125,14 @@
       inicioInput.min = ahora.toISOString().slice(0, 16);
       finInput.min = ahora.toISOString().slice(0, 16);
       
-      // Inicializar el mapa interactivo nativo e independiente
+      // Inicializar mapa interactivo
       mapa = L.map('mapaId').setView([latBase, lonBase], 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
 
-      // Crear el marcador azul arrastrable
+      // Crear pin azul arrastrable
       marcador = L.marker([latBase, lonBase], { draggable: true }).addTo(mapa);
       
-      // Evento: Al soltar el pin, captura y guarda el punto exacto de la ubicación
+      // Escuchar cuando el usuario termina de arrastrar el marcador
       marcador.on('dragend', function() {
         var posicion = marcador.getLatLng();
         guardarCoordenadasFormulario(posicion.lat, posicion.lng);
@@ -145,9 +145,9 @@
       document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
     }
 
+    // CORRECCIÓN CLAVE: Genera un enlace estándar de Google Maps totalmente limpio
     function guardarCoordenadasFormulario(lat, lng) {
-      // Convierte las coordenadas del pin a una liga de Google Maps para tu Sheets
-      coordenadasActuales = `https://maps.google.com/maps?q=$7{lat.toFixed(6)},${lng.toFixed(6)}`;
+      coordenadasActuales = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
     }
 
     function detectarUbicacionGPS() {
@@ -158,6 +158,9 @@
           mapa.setView([lat, lon], 16);
           marcador.setLatLng([lat, lon]);
           guardarCoordenadasFormulario(lat, lon);
+        }, function(error) {
+          console.log("Acceso a GPS denegado, se queda en la ubicación base.");
+          guardarCoordenadasFormulario(latBase, lonBase);
         });
       }
     }
@@ -166,7 +169,7 @@
       document.getElementById('tablero').style.display = 'none';
       document.getElementById('formulario').style.display = 'block';
       
-      // Ajuste para evitar que el mapa cargue incompleto visualmente
+      // Forzar al mapa a renderizar sus dimensiones reales al cambiar de vista
       setTimeout(() => { mapa.invalidateSize(); }, 250);
 
       fetch(`${URL_SCRIPT}?pestana=Material+publicitario&v=${Date.now()}`)
@@ -197,7 +200,6 @@
       document.querySelectorAll('.mat-item').forEach(input => { if(parseInt(input.value) > 0) materiales.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var consumibles = [];
-      // Corrección definitiva para evitar fallas matemáticas en tu inventario de Google Sheets
       document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
       var datos = {
@@ -206,7 +208,7 @@
         correo: document.getElementById('correo').value,
         fechaInicio: document.getElementById('fechaInicio').value,
         fechaFin: document.getElementById('fechaFin').value,
-        lugar: coordenadasActuales, // Envía de forma limpia el enlace de mapas generado por el pin
+        lugar: coordenadasActuales, // Enlace de Google Maps perfectamente formateado
         materiales: materiales,
         consumibles: consumibles,
         observaciones: document.getElementById('observaciones').value
