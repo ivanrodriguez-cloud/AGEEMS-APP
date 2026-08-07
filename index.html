@@ -47,7 +47,7 @@
     th { background-color: #f1f3f4; font-weight: 600; }
     .cant-input { width: 65px; padding: 6px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; }
     
-    /* Imagen congruente para las tablas de inventario */
+    /* Formato de imagen en tabla */
     .img-tabla { width: 55px; height: 55px; object-fit: contain; border-radius: 6px; display: block; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; padding: 2px; }
 
     #mapaId { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; z-index: 1; margin-top: 5px; }
@@ -229,16 +229,15 @@
       document.getElementById('paginasInteres').style.display = 'block';
     }
 
-   // Convertidor optimizado para imágenes públicas de Google Drive
-function obtenerUrlDirecta(url) {
-  if (!url) return "";
-  let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    // Usa el servidor CDN directo de Google (lh3) para evitar bloqueos
-    return `https://lh3.googleusercontent.com/d/${match[1]}`;
-  }
-  return url;
-  }
+    // Convertidor para enlaces de Google Drive a formato de imagen incrustable
+    function obtenerUrlDirecta(url) {
+      if (!url) return "";
+      let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w500`;
+      }
+      return url;
+    }
 
     function construirTablaMateriales(data) {
       var tbody = document.querySelector("#tablaMateriales tbody");
@@ -252,7 +251,7 @@ function obtenerUrlDirecta(url) {
       data.forEach(item => {
         let urlDirecta = obtenerUrlDirecta(item.imagen);
         let imgHtml = urlDirecta 
-          ? `<img src="${urlDirecta}" class="img-tabla" alt="${item.nombre}" onerror="this.onerror=null; this.src='https://via.placeholder.com/50?text=Sin+Imagen';">`
+          ? `<img src="${urlDirecta}" class="img-tabla" alt="${item.nombre}">`
           : `<span style="font-size: 11px; color: #999;">Sin foto</span>`;
 
         tbody.innerHTML += `<tr>
