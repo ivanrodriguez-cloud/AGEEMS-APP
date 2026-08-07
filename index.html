@@ -229,12 +229,12 @@
       document.getElementById('paginasInteres').style.display = 'block';
     }
 
-    // Convertidor para enlaces de Google Drive a formato de imagen incrustable
+    // Convertidor para enlaces de Google Drive a exportación directa
     function obtenerUrlDirecta(url) {
       if (!url) return "";
       let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
       if (match && match[1]) {
-        return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w500`;
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
       }
       return url;
     }
@@ -250,8 +250,12 @@
 
       data.forEach(item => {
         let urlDirecta = obtenerUrlDirecta(item.imagen);
+        let idDrive = item.imagen ? (item.imagen.match(/\/d\/([a-zA-Z0-9_-]+)/) || item.imagen.match(/id=([a-zA-Z0-9_-]+)/)) : null;
+        let idClean = idDrive ? idDrive[1] : '';
+
+        // Atributos antireferer para evitar bloqueos CORS en navegadores
         let imgHtml = urlDirecta 
-          ? `<img src="${urlDirecta}" class="img-tabla" alt="${item.nombre}">`
+          ? `<img src="${urlDirecta}" class="img-tabla" alt="${item.nombre}" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="if(this.src!='https://drive.google.com/thumbnail?id=${idClean}&sz=w500'){this.src='https://drive.google.com/thumbnail?id=${idClean}&sz=w500';}else{this.onerror=null; this.src='https://via.placeholder.com/50?text=Sin+Foto';}">`
           : `<span style="font-size: 11px; color: #999;">Sin foto</span>`;
 
         tbody.innerHTML += `<tr>
