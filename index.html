@@ -229,15 +229,16 @@
       document.getElementById('paginasInteres').style.display = 'block';
     }
 
-    // Convierte links de Google Drive a URLs directas cargables
-    function obtenerUrlDirecta(url) {
-      if (!url) return "";
-      let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) {
-        return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w500`;
-      }
-      return url;
-    }
+   // Convertidor optimizado para imágenes públicas de Google Drive
+function obtenerUrlDirecta(url) {
+  if (!url) return "";
+  let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    // Usa el servidor CDN directo de Google (lh3) para evitar bloqueos
+    return `https://lh3.googleusercontent.com/d/${match[1]}`;
+  }
+  return url;
+  }
 
     function construirTablaMateriales(data) {
       var tbody = document.querySelector("#tablaMateriales tbody");
