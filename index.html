@@ -248,7 +248,18 @@
         return;
       }
 
-      data.forEach(item => {
+      // FILTRADO: Solo pasa si estatus es igual a "ACTIVO"
+      var materialesActivos = data.filter(item => {
+        var estatusTexto = item.estatus ? item.estatus.toString().trim().toUpperCase() : '';
+        return estatusTexto === 'ACTIVO';
+      });
+
+      if (materialesActivos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">No hay materiales activos disponibles.</td></tr>';
+        return;
+      }
+
+      materialesActivos.forEach(item => {
         let imgHtml = item.imagen 
           ? `<img src="${item.imagen}" class="img-tabla" alt="${item.nombre}">`
           : `<span style="font-size: 11px; color: #999;">Sin foto</span>`;
