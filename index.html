@@ -45,7 +45,7 @@
     /* ESTILOS DE TABLAS Y OPTIMIZACIÓN DE ESPACIO */
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; table-layout: fixed; }
     th, td { border: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: middle; word-wrap: break-word; }
-    th { background-color: #f1f3f4; font-weight: 600; }
+    th { background-color: #f1f3f4; font-weight: 600; white-space: nowrap; }
     .cant-input { width: 48px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
     
     /* IMAGEN SIN MARCO NI BORDE */
@@ -122,7 +122,7 @@
           <table id="tablaMateriales">
             <thead>
               <tr>
-                <th style="width: 50px; text-align: center;">Imagen</th>
+                <th style="width: 65px; text-align: center; white-space: nowrap;">Imagen</th>
                 <th>Material</th>
                 <th style="width: 70px; text-align: center;">Disp.</th>
                 <th style="width: 55px; text-align: center;">Cant.</th>
@@ -248,10 +248,13 @@
         return;
       }
 
-      // FILTRADO: Solo pasa si estatus es igual a "ACTIVO"
       var materialesActivos = data.filter(item => {
-        var estatusTexto = item.estatus ? item.estatus.toString().trim().toUpperCase() : '';
-        return estatusTexto === 'ACTIVO';
+        var esActivo = true;
+        if (item.estatus !== undefined && item.estatus !== null && item.estatus !== "") {
+          esActivo = item.estatus.toString().trim().toUpperCase() === 'ACTIVO';
+        }
+        var tieneStock = (parseInt(item.disponible) || 0) > 0;
+        return esActivo && tieneStock;
       });
 
       if (materialesActivos.length === 0) {
