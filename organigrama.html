@@ -35,7 +35,7 @@
 
     header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
 
     h1 {
@@ -100,62 +100,64 @@
       border-color: var(--primary-orange);
     }
 
-    /* Estructura del Organigrama */
-    .level-group {
-      margin-bottom: 35px;
+    /* Árbol Jerárquico */
+    .tree-node {
+      margin-bottom: 15px;
+      position: relative;
     }
 
-    .level-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--primary-orange);
-      border-bottom: 2px solid var(--primary-orange);
-      padding-bottom: 6px;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .children-container {
+      margin-left: 25px;
+      padding-left: 15px;
+      border-left: 3px dashed #cbd5e0;
+      margin-top: 15px;
+      display: none; /* Oculto por defecto */
     }
 
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+    .children-container.open {
+      display: block;
     }
 
+    /* Estilo de Tarjetas */
     .card {
       background: var(--card-bg);
       border-radius: 12px;
-      padding: 20px;
+      padding: 18px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-top: 4px solid var(--primary-pink);
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+      max-width: 600px;
     }
 
     .card-header {
-      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
     }
 
     .user-name {
       font-size: 16px;
       font-weight: 600;
       color: var(--text-dark);
-      margin: 0 0 4px 0;
+      margin: 0 0 2px 0;
     }
 
     .user-job {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 600;
       color: var(--primary-orange);
       margin: 0;
+    }
+
+    .level-badge {
+      background-color: #edf2f7;
+      color: #4a5568;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      white-space: nowrap;
     }
 
     .area-badge {
@@ -178,9 +180,26 @@
       margin-top: 10px;
     }
 
-    .card-details div {
-      margin-bottom: 4px;
-      word-break: break-word;
+    .toggle-btn {
+      margin-top: 12px;
+      background-color: #fff;
+      color: var(--primary-pink);
+      border: 1.5px solid var(--primary-pink);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-btn:hover {
+      background-color: var(--primary-pink);
+      color: #ffffff;
     }
 
     .loading-spinner {
@@ -212,7 +231,6 @@
   </div>
 
   <script>
-    // URL Web App oficial configurada
     const URL_SCRIPT_DIRECTORIO = "https://script.google.com/macros/s/AKfycbyJ0GqKtNg8fiaVnBErRyHVbiNL2-pbtVVvuoHqp1i209jU5E24_KgH3FD9lWz4y-jh4Q/exec";
 
     let datosGlobales = [];
@@ -224,38 +242,136 @@
     function obtenerDatosDirectorio() {
       fetch(`${URL_SCRIPT_DIRECTORIO}?v=${Date.now()}`, { method: 'GET', redirect: 'follow' })
         .then(response => {
-          if (!response.ok) throw new Error("Respuesta de red no OK");
+          if (!response.ok) throw new Error("Error en respuesta del servidor");
           return response.json();
         })
         .then(data => {
           if (Array.isArray(data)) {
             datosGlobales = data;
-            renderizarOrganigrama(datosGlobales);
-          } else if (data.error) {
-            document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">${data.error}</p>`;
+            renderizarOrganigramaJerarquico(datosGlobales);
           } else {
-            document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Formato de datos no válido.</p>`;
+            document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">No se pudieron cargar los datos.</p>`;
           }
         })
         .catch(err => {
           console.error("Error al obtener datos:", err);
-          document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Ocurrió un error al conectar con el servidor. Verifica los permisos de Apps Script.</p>`;
+          document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Ocurrió un error al conectar con el servidor.</p>`;
         });
     }
 
-    function obtenerValorColumna(item, listaPosiblesNombres) {
+    function obtenerValor(item, listaNombres) {
       if (!item) return "";
       const keys = Object.keys(item);
-      for (let nombre of listaPosiblesNombres) {
+      for (let nombre of listaNombres) {
         const keyMatch = keys.find(k => k.trim().toLowerCase() === nombre.toLowerCase());
         if (keyMatch && item[keyMatch] !== undefined && item[keyMatch] !== null && item[keyMatch] !== "") {
-          return item[keyMatch];
+          return item[keyMatch].toString().trim();
         }
       }
       return "";
     }
 
-    function renderizarOrganigrama(lista) {
+    // Identifica dependientes jerárquicos por Área y Nivel
+    function obtenerSubordinadosDirectos(padre, todos) {
+      const nivelPadre = parseInt(obtenerValor(padre, ["NIVEL ORGANIGRAMA", "NIVEL"])) || 99;
+      const subPadre = obtenerValor(padre, ["SUBSECRETARIA"]);
+      const dgPadre = obtenerValor(padre, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]);
+      const daPadre = obtenerValor(padre, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]);
+
+      return todos.filter(hijo => {
+        if (hijo === padre) return false;
+
+        const nivelHijo = parseInt(obtenerValor(hijo, ["NIVEL ORGANIGRAMA", "NIVEL"])) || 99;
+        const subHijo = obtenerValor(hijo, ["SUBSECRETARIA"]);
+        const dgHijo = obtenerValor(hijo, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]);
+        const daHijo = obtenerValor(hijo, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]);
+
+        if (nivelHijo <= nivelPadre) return false;
+
+        // Regla Nivel 1 (Subsecretario)
+        if (nivelPadre === 1) {
+          return nivelHijo === 5 || nivelHijo === 2;
+        }
+
+        // Regla Nivel 2 (Directores Generales)
+        if (nivelPadre === 2) {
+          if (dgHijo !== dgPadre) return false;
+          return nivelHijo === 6 || nivelHijo === 3 || nivelHijo === 4;
+        }
+
+        // Regla Nivel 3 y 4 (Titulares de Área)
+        if (nivelPadre === 3 || nivelPadre === 4) {
+          if (dgHijo !== dgPadre) return false;
+          if (daHijo !== daPadre) return false;
+          return nivelHijo === 7;
+        }
+
+        return false;
+      });
+    }
+
+    function crearNodoHTML(persona, todos, nivelAbierto = false) {
+      const nombre = obtenerValor(persona, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]);
+      const puesto = obtenerValor(persona, ["FUNCIONES", "PUESTO"]);
+      const nivel = obtenerValor(persona, ["NIVEL ORGANIGRAMA", "NIVEL"]);
+      const dirArea = obtenerValor(persona, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]);
+      const dirGeneral = obtenerValor(persona, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]);
+      const subsecretaria = obtenerValor(persona, ["SUBSECRETARIA"]);
+      const correo = obtenerValor(persona, ["CORREO"]);
+      const ext = obtenerValor(persona, ["EXTENSIÓN", "EXTENSION"]);
+
+      const areaTexto = dirArea || dirGeneral || subsecretaria || "SEMS";
+      const subordinados = obtenerSubordinadosDirectos(persona, todos);
+
+      const nodeDiv = document.createElement('div');
+      nodeDiv.className = 'tree-node';
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      
+      let htmlCard = `
+        <div class="card-header">
+          <div>
+            <h3 class="user-name">${nombre || 'Sin Nombre'}</h3>
+            <p class="user-job">${puesto || 'Personal'}</p>
+          </div>
+          <span class="level-badge">Nivel ${nivel}</span>
+        </div>
+        <span class="area-badge">${areaTexto}</span>
+        <div class="card-details">
+          ${correo ? `<div>✉️ ${correo}</div>` : ''}
+          ${ext ? `<div>📞 Ext. ${ext}</div>` : ''}
+        </div>
+      `;
+
+      if (subordinados.length > 0) {
+        htmlCard += `
+          <button class="toggle-btn" onclick="toggleHijos(this)">
+            <span class="btn-icon">${nivelAbierto ? '−' : '+'}</span>
+            <span class="btn-text">${nivelAbierto ? 'Ocultar equipo' : 'Ver equipo'} (${subordinados.length})</span>
+          </button>
+        `;
+      }
+
+      card.innerHTML = htmlCard;
+      nodeDiv.appendChild(card);
+
+      if (subordinados.length > 0) {
+        const containerHijos = document.createElement('div');
+        containerHijos.className = `children-container ${nivelAbierto ? 'open' : ''}`;
+        
+        // Renderizar subordinados recursivamente
+        subordinados.forEach(hijo => {
+          containerHijos.appendChild(crearNodoHTML(hijo, todos, false));
+        });
+
+        nodeDiv.appendChild(containerHijos);
+      }
+
+      return nodeDiv;
+    }
+
+    function renderizarOrganigramaJerarquico(lista) {
       const contenedor = document.getElementById('organigramaContainer');
       contenedor.innerHTML = '';
 
@@ -264,70 +380,65 @@
         return;
       }
 
-      // Agrupar dinámicamente por la columna "NIVEL ORGANIGRAMA"
-      const nivelesMap = {};
-      lista.forEach(item => {
-        let nivel = obtenerValorColumna(item, ["NIVEL ORGANIGRAMA", "Nivel", "NIVEL"]) || "Sin Nivel";
-        if (!nivelesMap[nivel]) nivelesMap[nivel] = [];
-        nivelesMap[nivel].push(item);
-      });
+      // El nodo raíz es el Nivel 1
+      const raiz = lista.find(item => obtenerValor(item, ["NIVEL ORGANIGRAMA", "NIVEL"]) === "1");
 
-      // Ordenar niveles (1, 2, 3...)
-      const nivelesOrdenados = Object.keys(nivelesMap).sort((a, b) => (parseInt(a) || 99) - (parseInt(b) || 99));
-
-      nivelesOrdenados.forEach(nivel => {
-        const grupoDiv = document.createElement('div');
-        grupoDiv.className = 'level-group';
-
-        const tituloNivel = document.createElement('div');
-        tituloNivel.className = 'level-title';
-        tituloNivel.innerHTML = `<span>Nivel ${nivel}</span>`;
-        grupoDiv.appendChild(tituloNivel);
-
-        const grid = document.createElement('div');
-        grid.className = 'cards-grid';
-
-        nivelesMap[nivel].forEach(persona => {
-          const nombre = obtenerValorColumna(persona, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]);
-          const puesto = obtenerValorColumna(persona, ["FUNCIONES", "PUESTO"]);
-          const subsecretaria = obtenerValorColumna(persona, ["SUBSECRETARIA"]);
-          const dirGeneral = obtenerValorColumna(persona, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]);
-          const dirArea = obtenerValorColumna(persona, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]);
-          const correo = obtenerValorColumna(persona, ["CORREO"]);
-          const ext = obtenerValorColumna(persona, ["EXTENSIÓN", "EXTENSION"]);
-
-          const areaTexto = dirArea || dirGeneral || subsecretaria || "SEMS";
-
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div class="card-header">
-              <h3 class="user-name">${nombre || 'Sin Nombre'}</h3>
-              <p class="user-job">${puesto || 'Personal'}</p>
-              <span class="area-badge">${areaTexto}</span>
-            </div>
-            <div class="card-details">
-              ${correo ? `<div>✉️ ${correo}</div>` : ''}
-              ${ext ? `<div>📞 Ext. ${ext}</div>` : ''}
-            </div>
-          `;
-          grid.appendChild(card);
+      if (raiz) {
+        // Nivel 1 se muestra expandido por defecto
+        contenedor.appendChild(crearNodoHTML(raiz, lista, true));
+      } else {
+        // Si no hay Nivel 1, listar elementos superiores
+        lista.forEach(item => {
+          contenedor.appendChild(crearNodoHTML(item, lista, false));
         });
+      }
+    }
 
-        grupoDiv.appendChild(grid);
-        contenedor.appendChild(grupoDiv);
-      });
+    function toggleHijos(btn) {
+      const node = btn.closest('.tree-node');
+      const container = node.querySelector('.children-container');
+      const icon = btn.querySelector('.btn-icon');
+      const text = btn.querySelector('.btn-text');
+      const count = text.textContent.match(/\(\d+\)/)[0];
+
+      if (container.classList.contains('open')) {
+        container.classList.remove('open');
+        icon.textContent = '+';
+        text.textContent = `Ver equipo ${count}`;
+      } else {
+        container.classList.add('open');
+        icon.textContent = '−';
+        text.textContent = `Ocultar equipo ${count}`;
+      }
     }
 
     function filtrarOrganigrama() {
-      const texto = document.getElementById('searchInput').value.toLowerCase();
+      const texto = document.getElementById('searchInput').value.toLowerCase().trim();
+      
+      if (!texto) {
+        renderizarOrganigramaJerarquico(datosGlobales);
+        return;
+      }
+
+      const contenedor = document.getElementById('organigramaContainer');
+      contenedor.innerHTML = '';
+
       const filtrados = datosGlobales.filter(item => {
-        const nombre = obtenerValorColumna(item, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]).toString().toLowerCase();
-        const puesto = obtenerValorColumna(item, ["FUNCIONES", "PUESTO"]).toString().toLowerCase();
-        const area = (obtenerValorColumna(item, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]) || obtenerValorColumna(item, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"])).toString().toLowerCase();
+        const nombre = obtenerValor(item, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]).toLowerCase();
+        const puesto = obtenerValor(item, ["FUNCIONES", "PUESTO"]).toLowerCase();
+        const area = (obtenerValor(item, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]) || obtenerValor(item, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"])).toLowerCase();
         return nombre.includes(texto) || puesto.includes(texto) || area.includes(texto);
       });
-      renderizarOrganigrama(filtrados);
+
+      if (filtrados.length === 0) {
+        contenedor.innerHTML = '<p style="text-align:center; color:#718096;">No se encontraron resultados para la búsqueda.</p>';
+        return;
+      }
+
+      // Mostrar resultados planos al buscar
+      filtrados.forEach(item => {
+        contenedor.appendChild(crearNodoHTML(item, datosGlobales, false));
+      });
     }
   </script>
 </body>
