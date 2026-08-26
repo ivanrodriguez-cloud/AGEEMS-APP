@@ -83,7 +83,6 @@
     .search-box {
       flex: 1;
       max-width: 400px;
-      position: relative;
     }
 
     .search-box input {
@@ -213,7 +212,7 @@
   </div>
 
   <script>
-    // Reemplaza con la URL desplegada de tu Google Apps Script de "Directorio"
+    // URL Web App oficial configurada
     const URL_SCRIPT_DIRECTORIO = "https://script.google.com/macros/s/AKfycbyJ0GqKtNg8fiaVnBErRyHVbiNL2-pbtVVvuoHqp1i209jU5E24_KgH3FD9lWz4y-jh4Q/exec";
 
     let datosGlobales = [];
@@ -223,27 +222,33 @@
     };
 
     function obtenerDatosDirectorio() {
-      fetch(`${URL_SCRIPT_DIRECTORIO}?v=${Date.now()}`)
-        .then(response => response.json())
+      fetch(`${URL_SCRIPT_DIRECTORIO}?v=${Date.now()}`, { method: 'GET', redirect: 'follow' })
+        .then(response => {
+          if (!response.ok) throw new Error("Respuesta de red no OK");
+          return response.json();
+        })
         .then(data => {
           if (Array.isArray(data)) {
             datosGlobales = data;
             renderizarOrganigrama(datosGlobales);
+          } else if (data.error) {
+            document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">${data.error}</p>`;
           } else {
-            document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Error al cargar la información.</p>`;
+            document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Formato de datos no válido.</p>`;
           }
         })
         .catch(err => {
           console.error("Error al obtener datos:", err);
-          document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Ocurrió un error al conectar con el servidor.</p>`;
+          document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Ocurrió un error al conectar con el servidor. Verifica los permisos de Apps Script.</p>`;
         });
     }
 
     function obtenerValorColumna(item, listaPosiblesNombres) {
+      if (!item) return "";
       const keys = Object.keys(item);
       for (let nombre of listaPosiblesNombres) {
         const keyMatch = keys.find(k => k.trim().toLowerCase() === nombre.toLowerCase());
-        if (keyMatch && item[keyMatch] !== undefined && item[keyMatch] !== "") {
+        if (keyMatch && item[keyMatch] !== undefined && item[keyMatch] !== null && item[keyMatch] !== "") {
           return item[keyMatch];
         }
       }
@@ -259,7 +264,7 @@
         return;
       }
 
-      // Agrupar por NIVEL ORGANIGRAMA
+      // Agrupar dinámicamente por la columna "NIVEL ORGANIGRAMA"
       const nivelesMap = {};
       lista.forEach(item => {
         let nivel = obtenerValorColumna(item, ["NIVEL ORGANIGRAMA", "Nivel", "NIVEL"]) || "Sin Nivel";
@@ -267,10 +272,8 @@
         nivelesMap[nivel].push(item);
       });
 
-      // Ordenar niveles numéricamente
-      const nivelesOrdenados = Object.keys(nivelesMap).sort((a, b) => {
-        return (parseInt(a) || 99) - (parseInt(b) || 99);
-      });
+      // Ordenar niveles (1, 2, 3...)
+      const nivelesOrdenados = Object.keys(nivelesMap).sort((a, b) => (parseInt(a) || 99) - (parseInt(b) || 99));
 
       nivelesOrdenados.forEach(nivel => {
         const grupoDiv = document.createElement('div');
@@ -288,8 +291,8 @@
           const nombre = obtenerValorColumna(persona, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]);
           const puesto = obtenerValorColumna(persona, ["FUNCIONES", "PUESTO"]);
           const subsecretaria = obtenerValorColumna(persona, ["SUBSECRETARIA"]);
-          const dirGeneral = obtenerValorColumna(persona, ["DIRECCIÓN GENERAL"]);
-          const dirArea = obtenerValorColumna(persona, ["DIRECCIÓN DE ÁREA"]);
+          const dirGeneral = obtenerValorColumna(persona, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]);
+          const dirArea = obtenerValorColumna(persona, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]);
           const correo = obtenerValorColumna(persona, ["CORREO"]);
           const ext = obtenerValorColumna(persona, ["EXTENSIÓN", "EXTENSION"]);
 
@@ -319,9 +322,9 @@
     function filtrarOrganigrama() {
       const texto = document.getElementById('searchInput').value.toLowerCase();
       const filtrados = datosGlobales.filter(item => {
-        const nombre = obtenerValorColumna(item, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO"]).toString().toLowerCase();
-        const puesto = obtenerValorColumna(item, ["FUNCIONES"]).toString().toLowerCase();
-        const area = obtenerValorColumna(item, ["DIRECCIÓN DE ÁREA", "DIRECCIÓN GENERAL"]).toString().toLowerCase();
+        const nombre = obtenerValorColumna(item, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]).toString().toLowerCase();
+        const puesto = obtenerValorColumna(item, ["FUNCIONES", "PUESTO"]).toString().toLowerCase();
+        const area = (obtenerValorColumna(item, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]) || obtenerValorColumna(item, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"])).toString().toLowerCase();
         return nombre.includes(texto) || puesto.includes(texto) || area.includes(texto);
       });
       renderizarOrganigrama(filtrados);
