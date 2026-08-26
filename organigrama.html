@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Organigrama SEMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Fuente Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-orange: #ff8300;
+      --primary-pink: #c6004c;
+      --bg-light: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-dark: #2d3748;
+      --text-muted: #718096;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: var(--primary-pink);
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .btn-back {
+      background-color: transparent;
+      color: var(--primary-pink);
+      border: 2px solid var(--primary-pink);
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-back:hover {
+      background-color: var(--primary-pink);
+      color: #ffffff;
+    }
+
+    .search-box {
+      flex: 1;
+      max-width: 400px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 16px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary-orange);
+    }
+
+    /* Estructura del Organigrama */
+    .level-group {
+      margin-bottom: 35px;
+    }
+
+    .level-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary-orange);
+      border-bottom: 2px solid var(--primary-orange);
+      padding-bottom: 6px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-top: 4px solid var(--primary-pink);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+      margin-bottom: 12px;
+    }
+
+    .user-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin: 0 0 4px 0;
+    }
+
+    .user-job {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-orange);
+      margin: 0;
+    }
+
+    .area-badge {
+      display: inline-block;
+      background-color: #fffaf0;
+      color: #c05621;
+      border: 1px solid #fbd38d;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    .card-details {
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid #edf2f7;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    .card-details div {
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 50px;
+      font-weight: 600;
+      color: var(--primary-pink);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Subsecretaría de Educación Media Superior</h1>
+      <p class="subtitle">Organigrama Institucional Interactivo</p>
+    </header>
+
+    <div class="toolbar">
+      <a href="index.html" class="btn-back">← Volver al Menú</a>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre, puesto o área..." onkeyup="filtrarOrganigrama()">
+      </div>
+    </div>
+
+    <div id="organigramaContainer">
+      <div class="loading-spinner">Cargando organigrama...</div>
+    </div>
+  </div>
+
+  <script>
+    // Reemplaza con la URL desplegada de tu Google Apps Script de "Directorio"
+    const URL_SCRIPT_DIRECTORIO = "https://script.google.com/macros/s/AKfycbyJ0GqKtNg8fiaVnBErRyHVbiNL2-pbtVVvuoHqp1i209jU5E24_KgH3FD9lWz4y-jh4Q/exec";
+
+    let datosGlobales = [];
+
+    window.onload = function() {
+      obtenerDatosDirectorio();
+    };
+
+    function obtenerDatosDirectorio() {
+      fetch(`${URL_SCRIPT_DIRECTORIO}?v=${Date.now()}`)
+        .then(response => response.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            datosGlobales = data;
+            renderizarOrganigrama(datosGlobales);
+          } else {
+            document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Error al cargar la información.</p>`;
+          }
+        })
+        .catch(err => {
+          console.error("Error al obtener datos:", err);
+          document.getElementById('organigramaContainer').innerHTML = `<p style="text-align:center; color:red;">Ocurrió un error al conectar con el servidor.</p>`;
+        });
+    }
+
+    function obtenerValorColumna(item, listaPosiblesNombres) {
+      const keys = Object.keys(item);
+      for (let nombre of listaPosiblesNombres) {
+        const keyMatch = keys.find(k => k.trim().toLowerCase() === nombre.toLowerCase());
+        if (keyMatch && item[keyMatch] !== undefined && item[keyMatch] !== "") {
+          return item[keyMatch];
+        }
+      }
+      return "";
+    }
+
+    function renderizarOrganigrama(lista) {
+      const contenedor = document.getElementById('organigramaContainer');
+      contenedor.innerHTML = '';
+
+      if (lista.length === 0) {
+        contenedor.innerHTML = '<p style="text-align:center; color:#718096;">No se encontraron registros.</p>';
+        return;
+      }
+
+      // Agrupar por NIVEL ORGANIGRAMA
+      const nivelesMap = {};
+      lista.forEach(item => {
+        let nivel = obtenerValorColumna(item, ["NIVEL ORGANIGRAMA", "Nivel", "NIVEL"]) || "Sin Nivel";
+        if (!nivelesMap[nivel]) nivelesMap[nivel] = [];
+        nivelesMap[nivel].push(item);
+      });
+
+      // Ordenar niveles numéricamente
+      const nivelesOrdenados = Object.keys(nivelesMap).sort((a, b) => {
+        return (parseInt(a) || 99) - (parseInt(b) || 99);
+      });
+
+      nivelesOrdenados.forEach(nivel => {
+        const grupoDiv = document.createElement('div');
+        grupoDiv.className = 'level-group';
+
+        const tituloNivel = document.createElement('div');
+        tituloNivel.className = 'level-title';
+        tituloNivel.innerHTML = `<span>Nivel ${nivel}</span>`;
+        grupoDiv.appendChild(tituloNivel);
+
+        const grid = document.createElement('div');
+        grid.className = 'cards-grid';
+
+        nivelesMap[nivel].forEach(persona => {
+          const nombre = obtenerValorColumna(persona, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]);
+          const puesto = obtenerValorColumna(persona, ["FUNCIONES", "PUESTO"]);
+          const subsecretaria = obtenerValorColumna(persona, ["SUBSECRETARIA"]);
+          const dirGeneral = obtenerValorColumna(persona, ["DIRECCIÓN GENERAL"]);
+          const dirArea = obtenerValorColumna(persona, ["DIRECCIÓN DE ÁREA"]);
+          const correo = obtenerValorColumna(persona, ["CORREO"]);
+          const ext = obtenerValorColumna(persona, ["EXTENSIÓN", "EXTENSION"]);
+
+          const areaTexto = dirArea || dirGeneral || subsecretaria || "SEMS";
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="card-header">
+              <h3 class="user-name">${nombre || 'Sin Nombre'}</h3>
+              <p class="user-job">${puesto || 'Personal'}</p>
+              <span class="area-badge">${areaTexto}</span>
+            </div>
+            <div class="card-details">
+              ${correo ? `<div>✉️ ${correo}</div>` : ''}
+              ${ext ? `<div>📞 Ext. ${ext}</div>` : ''}
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+        grupoDiv.appendChild(grid);
+        contenedor.appendChild(grupoDiv);
+      });
+    }
+
+    function filtrarOrganigrama() {
+      const texto = document.getElementById('searchInput').value.toLowerCase();
+      const filtrados = datosGlobales.filter(item => {
+        const nombre = obtenerValorColumna(item, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO"]).toString().toLowerCase();
+        const puesto = obtenerValorColumna(item, ["FUNCIONES"]).toString().toLowerCase();
+        const area = obtenerValorColumna(item, ["DIRECCIÓN DE ÁREA", "DIRECCIÓN GENERAL"]).toString().toLowerCase();
+        return nombre.includes(texto) || puesto.includes(texto) || area.includes(texto);
+      });
+      renderizarOrganigrama(filtrados);
+    }
+  </script>
+</body>
+</html>
