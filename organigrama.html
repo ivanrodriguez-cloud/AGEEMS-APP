@@ -29,7 +29,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
@@ -93,7 +93,6 @@
       font-family: 'Poppins', sans-serif;
       font-size: 14px;
       outline: none;
-      transition: border-color 0.2s;
     }
 
     .search-box input:focus {
@@ -107,10 +106,10 @@
     }
 
     .children-container {
-      margin-left: 25px;
+      margin-left: 20px;
       padding-left: 15px;
-      border-left: 3px dashed #cbd5e0;
-      margin-top: 15px;
+      border-left: 3px solid #fbd38d;
+      margin-top: 12px;
       display: none; /* Oculto por defecto */
     }
 
@@ -123,10 +122,10 @@
       background: var(--card-bg);
       border-radius: 12px;
       padding: 18px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      border-top: 4px solid var(--primary-pink);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border-left: 5px solid var(--primary-pink);
       position: relative;
-      max-width: 600px;
+      max-width: 650px;
     }
 
     .card-header {
@@ -180,26 +179,32 @@
       margin-top: 10px;
     }
 
+    /* Botón [+]/[-] */
     .toggle-btn {
       margin-top: 12px;
-      background-color: #fff;
+      background-color: #ffffff;
       color: var(--primary-pink);
-      border: 1.5px solid var(--primary-pink);
+      border: 2px solid var(--primary-pink);
       padding: 6px 14px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-family: 'Poppins', sans-serif;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       transition: all 0.2s ease;
     }
 
     .toggle-btn:hover {
       background-color: var(--primary-pink);
       color: #ffffff;
+    }
+
+    .toggle-icon {
+      font-size: 14px;
+      font-weight: bold;
     }
 
     .loading-spinner {
@@ -241,10 +246,7 @@
 
     function obtenerDatosDirectorio() {
       fetch(`${URL_SCRIPT_DIRECTORIO}?v=${Date.now()}`, { method: 'GET', redirect: 'follow' })
-        .then(response => {
-          if (!response.ok) throw new Error("Error en respuesta del servidor");
-          return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
           if (Array.isArray(data)) {
             datosGlobales = data;
@@ -271,46 +273,46 @@
       return "";
     }
 
-    // Identifica dependientes jerárquicos por Área y Nivel
+    function normalizarTexto(txt) {
+      return txt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
     function obtenerSubordinadosDirectos(padre, todos) {
       const nivelPadre = parseInt(obtenerValor(padre, ["NIVEL ORGANIGRAMA", "NIVEL"])) || 99;
-      const subPadre = obtenerValor(padre, ["SUBSECRETARIA"]);
-      const dgPadre = obtenerValor(padre, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]);
-      const daPadre = obtenerValor(padre, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]);
+      const dgPadre = normalizarTexto(obtenerValor(padre, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]));
+      const daPadre = normalizarTexto(obtenerValor(padre, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]));
+      const curpPadre = obtenerValor(padre, ["CURP"]);
 
       return todos.filter(hijo => {
-        if (hijo === padre) return false;
+        const curpHijo = obtenerValor(hijo, ["CURP"]);
+        if (curpPadre && curpHijo && curpPadre === curpHijo) return false;
 
         const nivelHijo = parseInt(obtenerValor(hijo, ["NIVEL ORGANIGRAMA", "NIVEL"])) || 99;
-        const subHijo = obtenerValor(hijo, ["SUBSECRETARIA"]);
-        const dgHijo = obtenerValor(hijo, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]);
-        const daHijo = obtenerValor(hijo, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]);
+        const dgHijo = normalizarTexto(obtenerValor(hijo, ["DIRECCIÓN GENERAL", "DIRECCION GENERAL"]));
+        const daHijo = normalizarTexto(obtenerValor(hijo, ["DIRECCIÓN DE ÁREA", "DIRECCION DE AREA"]));
 
         if (nivelHijo <= nivelPadre) return false;
 
-        // Regla Nivel 1 (Subsecretario)
+        // Regla Nivel 1 (Subsecretario): Dependen Nivel 5 y Nivel 2
         if (nivelPadre === 1) {
           return nivelHijo === 5 || nivelHijo === 2;
         }
 
-        // Regla Nivel 2 (Directores Generales)
+        // Regla Nivel 2 (Directores Generales): Dependen Nivel 6, 3 y 4 de su misma Dirección General
         if (nivelPadre === 2) {
-          if (dgHijo !== dgPadre) return false;
-          return nivelHijo === 6 || nivelHijo === 3 || nivelHijo === 4;
+          return dgHijo === dgPadre && (nivelHijo === 6 || nivelHijo === 3 || nivelHijo === 4);
         }
 
-        // Regla Nivel 3 y 4 (Titulares de Área)
+        // Regla Nivel 3 y 4 (Titulares de Área): Dependen Nivel 7 de su misma Dirección de Área y Dirección General
         if (nivelPadre === 3 || nivelPadre === 4) {
-          if (dgHijo !== dgPadre) return false;
-          if (daHijo !== daPadre) return false;
-          return nivelHijo === 7;
+          return dgHijo === dgPadre && daHijo === daPadre && nivelHijo === 7;
         }
 
         return false;
       });
     }
 
-    function crearNodoHTML(persona, todos, nivelAbierto = false) {
+    function crearNodoHTML(persona, todos, autoExpandir = false) {
       const nombre = obtenerValor(persona, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]);
       const puesto = obtenerValor(persona, ["FUNCIONES", "PUESTO"]);
       const nivel = obtenerValor(persona, ["NIVEL ORGANIGRAMA", "NIVEL"]);
@@ -347,8 +349,8 @@
       if (subordinados.length > 0) {
         htmlCard += `
           <button class="toggle-btn" onclick="toggleHijos(this)">
-            <span class="btn-icon">${nivelAbierto ? '−' : '+'}</span>
-            <span class="btn-text">${nivelAbierto ? 'Ocultar equipo' : 'Ver equipo'} (${subordinados.length})</span>
+            <span class="toggle-icon">${autoExpandir ? '[ − ]' : '[ + ]'}</span>
+            <span class="toggle-text">${autoExpandir ? 'Ocultar personal' : 'Ver personal a cargo'} (${subordinados.length})</span>
           </button>
         `;
       }
@@ -358,9 +360,8 @@
 
       if (subordinados.length > 0) {
         const containerHijos = document.createElement('div');
-        containerHijos.className = `children-container ${nivelAbierto ? 'open' : ''}`;
+        containerHijos.className = `children-container ${autoExpandir ? 'open' : ''}`;
         
-        // Renderizar subordinados recursivamente
         subordinados.forEach(hijo => {
           containerHijos.appendChild(crearNodoHTML(hijo, todos, false));
         });
@@ -380,14 +381,13 @@
         return;
       }
 
-      // El nodo raíz es el Nivel 1
-      const raiz = lista.find(item => obtenerValor(item, ["NIVEL ORGANIGRAMA", "NIVEL"]) === "1");
+      // Buscar el Nivel 1 (Subsecretario)
+      const raiz = lista.find(item => parseInt(obtenerValor(item, ["NIVEL ORGANIGRAMA", "NIVEL"])) === 1);
 
       if (raiz) {
-        // Nivel 1 se muestra expandido por defecto
+        // Nivel 1 arranca desplegado automáticamente
         contenedor.appendChild(crearNodoHTML(raiz, lista, true));
       } else {
-        // Si no hay Nivel 1, listar elementos superiores
         lista.forEach(item => {
           contenedor.appendChild(crearNodoHTML(item, lista, false));
         });
@@ -397,18 +397,19 @@
     function toggleHijos(btn) {
       const node = btn.closest('.tree-node');
       const container = node.querySelector('.children-container');
-      const icon = btn.querySelector('.btn-icon');
-      const text = btn.querySelector('.btn-text');
-      const count = text.textContent.match(/\(\d+\)/)[0];
+      const icon = btn.querySelector('.toggle-icon');
+      const text = btn.querySelector('.toggle-text');
+      const countMatch = text.textContent.match(/\(\d+\)/);
+      const count = countMatch ? countMatch[0] : '';
 
       if (container.classList.contains('open')) {
         container.classList.remove('open');
-        icon.textContent = '+';
-        text.textContent = `Ver equipo ${count}`;
+        icon.textContent = '[ + ]';
+        text.textContent = `Ver personal a cargo ${count}`;
       } else {
         container.classList.add('open');
-        icon.textContent = '−';
-        text.textContent = `Ocultar equipo ${count}`;
+        icon.textContent = '[ − ]';
+        text.textContent = `Ocultar personal ${count}`;
       }
     }
 
@@ -435,7 +436,6 @@
         return;
       }
 
-      // Mostrar resultados planos al buscar
       filtrados.forEach(item => {
         contenedor.appendChild(crearNodoHTML(item, datosGlobales, false));
       });
