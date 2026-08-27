@@ -11,9 +11,6 @@
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
     :root {
       --primary-orange: #FF8300;
@@ -27,10 +24,7 @@
     .header img { max-width: 150px; height: auto; }
     h1 { color: var(--primary-pink); font-size: 22px; font-weight: 600; text-align: center; margin-top: 10px; }
     .tablero-blanco { display: block; text-align: center; }
-    .formulario-seccion, .paginas-interes-seccion { display: none; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
-    input[type="text"], input[type="email"], input[type="datetime-local"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    .paginas-interes-seccion { display: none; }
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
     .btn-orange { background-color: var(--primary-orange); }
     .btn-orange:hover { background-color: #e07300; }
@@ -41,30 +35,6 @@
     .card-enlace:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); border-color: var(--primary-orange); }
     .card-enlace img { max-width: 120px; max-height: 80px; width: auto; height: auto; margin-bottom: 12px; object-fit: contain; }
     .card-enlace span { font-weight: 600; font-size: 16px; color: #333; }
-
-    /* ESTILOS DE TABLAS Y OPTIMIZACIÓN DE ESPACIO */
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; table-layout: fixed; }
-    th, td { border: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: middle; word-wrap: break-word; }
-    th { background-color: #f1f3f4; font-weight: 600; white-space: nowrap; }
-    .cant-input { width: 48px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
-    
-    /* IMAGEN SIN MARCO NI BORDE */
-    .img-tabla { width: 45px; height: 45px; object-fit: contain; border: none !important; padding: 0 !important; background-color: transparent !important; display: block; margin: 0 auto; }
-
-    #mapaId { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; z-index: 1; margin-top: 5px; }
-    .leaflet-control-attribution { display: none !important; }
-
-    .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-contenido { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 80%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-
-    /* REGLAS ESPECÍFICAS PARA DISPOSITIVOS MÓVILES */
-    @media (max-width: 480px) {
-      body { padding: 5px; }
-      .container { padding: 12px 8px; }
-      th, td { padding: 5px 2px; font-size: 12px; }
-      .cant-input { width: 40px; padding: 3px; }
-      .img-tabla { width: 40px; height: 40px; }
-    }
   </style>
 </head>
 <body>
@@ -75,18 +45,18 @@
     </div>
 
     <!-- TABLERO PRINCIPAL DE BOTONES -->
-<div id="tablero" class="tablero-blanco">
-  <div style="height: 40px;"></div>
-  <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="mostrarFormulario()">
-    Solicitud de Coffee Break
-  </button>
-  <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='organigrama.html'">
-    Organigrama Interactivo
-  </button>
-  <button class="btn btn-orange" onclick="mostrarPaginasInteres()">
-    Páginas de interés
-  </button>
-</div>
+    <div id="tablero" class="tablero-blanco">
+      <div style="height: 40px;"></div>
+      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='coffeeBreak.html'">
+        Solicitud de Coffee Break
+      </button>
+      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='organigrama.html'">
+        Organigrama Interactivo
+      </button>
+      <button class="btn btn-orange" onclick="mostrarPaginasInteres()">
+        Páginas de interés
+      </button>
+    </div>
 
     <!-- SECCIÓN DE PÁGINAS DE INTERÉS -->
     <div id="paginasInteres" class="paginas-interes-seccion">
@@ -106,240 +76,18 @@
         </a>
       </div>
     </div>
-
-    <!-- SECCIÓN FORMULARIO COFFEE BREAK -->
-    <div id="formulario" class="formulario-seccion">
-      <button class="btn btn-secundario" onclick="mostrarTablero()">← Volver al Menú</button>
-      <h1>Solicitud de Coffee Break</h1>
-      <form id="coffeeForm" onsubmit="enviarFormulario(event)">
-        <div class="form-group"><label>Nombre del evento *</label><input type="text" id="nombreEvento" required></div>
-        <div class="form-group"><label>Nombre de quien solicita el servicio *</label><input type="text" id="nombre" required></div>
-        <div class="form-group"><label>Correo de quien solicita el servicio *</label><input type="email" id="correo" required></div>
-        <div class="form-group"><label>Fecha y Hora de Inicio del Evento *</label><input type="datetime-local" id="fechaInicio" required onchange="validarFechas()"></div>
-        <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
-        
-        <!-- MAPA INTERACTIVO -->
-        <div class="form-group">
-          <label>Lugar del evento (Arrastra el marcador azul al sitio exacto) *</label>
-          <div id="mapaId"></div>
-        </div>
-
-        <div class="form-group">
-          <label>Selecciona el Material Publicitario requerido:</label>
-          <table id="tablaMateriales">
-            <thead>
-              <tr>
-                <th style="width: 65px; text-align: center; white-space: nowrap;">Imagen</th>
-                <th>Material</th>
-                <th style="width: 70px; text-align: center;">Disp.</th>
-                <th style="width: 55px; text-align: center;">Cant.</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="form-group">
-          <label>Selecciona los Consumibles requeridos:</label>
-          <table id="tablaConsumibles">
-            <thead>
-              <tr>
-                <th>Consumible</th>
-                <th style="width: 70px; text-align: center;">Disp.</th>
-                <th style="width: 55px; text-align: center;">Cant.</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="form-group">
-          <label>Observaciones</label>
-          <input type="text" id="observaciones" placeholder="Detalles adicionales, restricciones, etc.">
-        </div>
-
-        <button type="submit" class="btn" id="btnEnviar">Enviar Solicitud</button>
-      </form>
-    </div>
   </div>
 
-  <div id="miAlerta" class="modal-alerta"><div class="modal-contenido"><p id="mensajeAlerta">¡Solicitud registrada con éxito!</p><button class="btn" style="width: auto; padding: 8px 30px;" onclick="cerrarAlerta()">Aceptar</button></div></div>
-
   <script>
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyNI_kFk7ysB-qpcdF2j0UeFTMYJFH0-SzpZek4YGALAAwnzbyB6Bd4vjJVzLd4rUzGjA/exec";
-
-    let mapa, marcador;
-    let latBase = 20.6767;
-    let lonBase = -103.3475;
-    let coordenadasActuales = "https://www.google.com/maps?q=20.6767,-103.3475";
-
-    window.onload = function() {
-      var inicioInput = document.getElementById('fechaInicio');
-      var finInput = document.getElementById('fechaFin');
-      var ahora = new Date();
-      ahora.setHours(ahora.getHours() + 48);
-      inicioInput.min = ahora.toISOString().slice(0, 16);
-      finInput.min = ahora.toISOString().slice(0, 16);
-      
-      mapa = L.map('mapaId').setView([latBase, lonBase], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-
-      marcador = L.marker([latBase, lonBase], { draggable: true }).addTo(mapa);
-      
-      marcador.on('dragend', function() {
-        var posicion = marcador.getLatLng();
-        guardarCoordenadasFormulario(posicion.lat, posicion.lng);
-      });
-
-      detectarUbicacionGPS();
-    };
-
-    function validarFechas() {
-      document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
-    }
-
-    function guardarCoordenadasFormulario(lat, lng) {
-      coordenadasActuales = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
-    }
-
-    function detectarUbicacionGPS() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          var lat = position.coords.latitude;
-          var lon = position.coords.longitude;
-          mapa.setView([lat, lon], 16);
-          marcador.setLatLng([lat, lon]);
-          guardarCoordenadasFormulario(lat, lon);
-        }, function(error) {
-          guardarCoordenadasFormulario(latBase, lonBase);
-        });
-      }
-    }
-
     function mostrarTablero() {
       document.getElementById('tablero').style.display = 'block';
-      document.getElementById('formulario').style.display = 'none';
       document.getElementById('paginasInteres').style.display = 'none';
-    }
-
-    function mostrarFormulario() {
-      document.getElementById('tablero').style.display = 'none';
-      document.getElementById('paginasInteres').style.display = 'none';
-      document.getElementById('formulario').style.display = 'block';
-      
-      setTimeout(() => { mapa.invalidateSize(); }, 250);
-
-      fetch(`${URL_SCRIPT}?pestana=Material+publicitario&v=${Date.now()}`)
-        .then(res => res.json())
-        .then(data => construirTablaMateriales(data))
-        .catch(err => console.error("Error al cargar materiales:", err));
-      
-      fetch(`${URL_SCRIPT}?pestana=Consumibles&v=${Date.now()}`)
-        .then(res => res.json())
-        .then(data => construirTablaConsumibles(data))
-        .catch(err => console.error("Error al cargar consumibles:", err));
     }
 
     function mostrarPaginasInteres() {
       document.getElementById('tablero').style.display = 'none';
-      document.getElementById('formulario').style.display = 'none';
       document.getElementById('paginasInteres').style.display = 'block';
     }
-
-    function construirTablaMateriales(data) {
-      var tbody = document.querySelector("#tablaMateriales tbody");
-      tbody.innerHTML = '';
-      
-      if (!Array.isArray(data) || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">No hay materiales registrados.</td></tr>';
-        return;
-      }
-
-      var materialesActivos = data.filter(item => {
-        var esActivo = true;
-        if (item.estatus !== undefined && item.estatus !== null && item.estatus !== "") {
-          esActivo = item.estatus.toString().trim().toUpperCase() === 'ACTIVO';
-        }
-        var tieneStock = (parseInt(item.disponible) || 0) > 0;
-        return esActivo && tieneStock;
-      });
-
-      if (materialesActivos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">No hay materiales activos disponibles.</td></tr>';
-        return;
-      }
-
-      materialesActivos.forEach(item => {
-        let imgHtml = item.imagen 
-          ? `<img src="${item.imagen}" class="img-tabla" alt="${item.nombre}">`
-          : `<span style="font-size: 11px; color: #999;">Sin foto</span>`;
-
-        tbody.innerHTML += `<tr>
-          <td style="text-align: center;">${imgHtml}</td>
-          <td>${item.nombre}</td>
-          <td style="text-align: center;"><strong>${item.disponible}</strong></td>
-          <td style="text-align: center;"><input type="number" class="cant-input mat-item" data-nombre="${item.nombre}" min="0" max="${item.disponible}" value="0"></td>
-        </tr>`;
-      });
-    }
-
-    function construirTablaConsumibles(data) {
-      var tbody = document.querySelector("#tablaConsumibles tbody");
-      tbody.innerHTML = '';
-      
-      if (!Array.isArray(data) || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay consumibles registrados.</td></tr>';
-        return;
-      }
-
-      data.forEach(item => {
-        tbody.innerHTML += `<tr>
-          <td>${item.nombre}</td>
-          <td style="text-align: center;"><strong>${item.disponible}</strong></td>
-          <td style="text-align: center;"><input type="number" class="cant-input cons-item" data-nombre="${item.nombre}" min="0" max="${item.disponible}" value="0"></td>
-        </tr>`;
-      });
-    }
-
-    function enviarFormulario(e) {
-      e.preventDefault();
-      document.getElementById('btnEnviar').disabled = true;
-      document.getElementById('btnEnviar').innerText = "Enviando...";
-
-      var materiales = [];
-      document.querySelectorAll('.mat-item').forEach(input => { if(parseInt(input.value) > 0) materiales.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
-
-      var consumibles = [];
-      document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
-
-      var datos = {
-        nombreEvento: document.getElementById('nombreEvento').value,
-        nombre: document.getElementById('nombre').value,
-        correo: document.getElementById('correo').value,
-        fechaInicio: document.getElementById('fechaInicio').value,
-        fechaFin: document.getElementById('fechaFin').value,
-        lugar: coordenadasActuales,
-        materiales: materiales,
-        consumibles: consumibles,
-        observaciones: document.getElementById('observaciones').value
-      };
-
-      fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) })
-        .then(() => {
-          document.getElementById('mensajeAlerta').innerText = "¡Solicitud registrada con éxito!";
-          document.getElementById('miAlerta').style.display = 'flex';
-          document.getElementById('coffeeForm').reset();
-          mostrarTablero();
-          document.getElementById('btnEnviar').disabled = false;
-          document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
-        }).catch(err => {
-          alert("Error en el envío: " + err);
-          document.getElementById('btnEnviar').disabled = false;
-          document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
-        });
-    }
-
-    function cerrarAlerta() { document.getElementById('miAlerta').style.display = 'none'; }
   </script>
 </body>
 </html>
