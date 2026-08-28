@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Ingreso de Consumibles</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Librería para escanear código de barras -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --primary-orange: #FF8300;
+      --primary-pink: #E5004E;
+      --neutral-gray: #5B6670;
+      --light-bg: #f8f9fa;
+    }
+    body { font-family: 'Poppins', sans-serif; background-color: var(--light-bg); color: var(--neutral-gray); margin: 0; padding: 15px; display: flex; justify-content: center; }
+    .container { background: #ffffff; width: 100%; max-width: 700px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
+    h1 { color: var(--primary-pink); font-size: 22px; font-weight: 600; text-align: center; margin-top: 10px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
+    input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    input[readonly] { background-color: #e9ecef; cursor: not-allowed; }
+    
+    .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
+    .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; cursor: pointer; }
+    .btn-camara { background-color: var(--primary-orange); color: white; padding: 10px 18px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; margin-bottom: 10px; }
+
+    #reader-container { display: none; margin-bottom: 20px; border: 2px dashed var(--primary-orange); border-radius: 8px; padding: 10px; text-align: center; }
+    #reader { width: 100%; max-width: 400px; margin: 0 auto; }
+
+    .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-contenido { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 80%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+
+    @media (max-width: 480px) {
+      body { padding: 5px; }
+      .container { padding: 12px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <a href="index.html" class="btn btn-secundario">← Volver al Menú</a>
+    <h1>Ingreso de Consumibles</h1>
+
+    <div class="form-group">
+      <button type="button" class="btn-camara" id="btnIngresarCodigo" onclick="iniciarEscaneo('producto')">📷 Ingresar código</button>
+    </div>
+
+    <!-- Visor de cámara -->
+    <div id="reader-container">
+      <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600;" id="instruccionesCamara">Escaneando código...</p>
+      <div id="reader"></div>
+      <button type="button" class="btn-secundario" style="margin-top:10px;" onclick="detenerEscaneo()">Cancelar Escaneo</button>
+    </div>
+
+    <form id="ingresoForm" onsubmit="enviarConsumible(event)">
+      <div class="form-group">
+        <label>Código del Producto *</label>
+        <input type="text" id="codigoProducto" readonly required>
+      </div>
+
+      <div class="form-group">
+        <label>Código Paquete *</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="codigoPaquete" readonly required>
+          <button type="button" class="btn-camara" id="btnEscanearPaquete" style="display:none;" onclick="iniciarEscaneo('paquete')">📷 Escanear Paquete</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Consumible *</label>
+        <input type="text" id="consumible" readonly required>
+      </div>
+
+      <div class="form-group">
+        <label>Unidades por paquete *</label>
+        <input type="text" id="unidadesPorPaquete" readonly required oninput="validarSoloNumeros(this)" placeholder="Solo números">
+      </div>
+
+      <div class="form-group">
+        <label>Paquetes ingresados *</label>
+        <input type="text" id="paquetesIngresados" disabled required oninput="validarSoloNumeros(this); verificarFormulario();" placeholder="Solo números">
+      </div>
+
+      <button type="submit" class="btn" id="btnIngresar" disabled>Ingresar</button>
+    </form>
+  </div>
+
+  <div id="miAlerta" class="modal-alerta">
+    <div class="modal-contenido">
+      <p id="mensajeAlerta"></p>
+      <button class="btn" style="width: auto; padding: 8px 30px;" onclick="cerrarAlerta()">Aceptar</button>
+    </div>
+  </div>
+
+  <script>
+    const URL_SCRIPT = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
+    let html5QrcodeScanner = null;
+    let modoEscaneo = ''; // 'producto' o 'paquete'
+    let redireccionarAlCerrar = false;
+
+    // Bloquea espacio, texto y caracteres especiales en inputs numéricos
+    function validarSoloNumeros(input) {
+      input.value = input.value.replace(/[^0-9]/g, '');
+    }
+
+    function iniciarEscaneo(modo) {
+      modoEscaneo = modo;
+      document.getElementById('reader-container').style.display = 'block';
+      document.getElementById('instruccionesCamara').innerText = modo === 'producto' 
+        ? "Apunte la cámara al código de barras del PRODUCTO" 
+        : "Apunte la cámara al código de barras del PAQUETE";
+
+      if (!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5Qrcode("reader");
+      }
+
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        onScanSuccess,
+        onScanError
+      ).catch(err => {
+        mostrarAlerta("Error al acceder a la cámara: " + err);
+        detenerEscaneo();
+      });
+    }
+
+    function detenerEscaneo() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+          document.getElementById('reader-container').style.display = 'none';
+        }).catch(err => console.error(err));
+      } else {
+        document.getElementById('reader-container').style.display = 'none';
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      detenerEscaneo();
+      const codigoCapturado = decodedText.trim();
+
+      if (modoEscaneo === 'producto') {
+        document.getElementById('codigoProducto').value = codigoCapturado;
+        buscarCodigoEnBaseDeDatos(codigoCapturado);
+      } else if (modoEscaneo === 'paquete') {
+        document.getElementById('codigoPaquete').value = codigoCapturado;
+        verificarFormulario();
+      }
+    }
+
+    function onScanError(errorMessage) {
+      // Ignorar errores continuos de búsqueda de frame
+    }
+
+    function buscarCodigoEnBaseDeDatos(codigo) {
+      fetch(`${URL_SCRIPT}?action=buscarCodigo&codigo=${encodeURIComponent(codigo)}&v=${Date.now()}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.encontrado) {
+            if (data.tipo === 'paquete') {
+              mostrarAlerta("Es un código de paquete, se requiere el código del producto.");
+              document.getElementById('codigoProducto').value = '';
+              setTimeout(() => iniciarEscaneo('producto'), 1500);
+            } else if (data.tipo === 'producto') {
+              // Producto encontrado en Columna A
+              document.getElementById('codigoPaquete').value = data.codigoPaquete || '';
+              document.getElementById('consumible').value = data.consumible || '';
+              document.getElementById('unidadesPorPaquete').value = data.unidadesPorPaquete || '';
+              
+              // Hacerlos readonly ya que vienen registrados
+              document.getElementById('consumible').readOnly = true;
+              document.getElementById('unidadesPorPaquete').readOnly = true;
+              document.getElementById('btnEscanearPaquete').style.display = 'none';
+
+              habilitarRegistro();
+            }
+          } else {
+            // No encontrado: Carga manual y escaneo de paquete
+            mostrarAlerta("Código no registrado. Proceda a la captura manual de datos.");
+            document.getElementById('codigoPaquete').value = '';
+            document.getElementById('consumible').value = '';
+            document.getElementById('unidadesPorPaquete').value = '';
+
+            document.getElementById('btnEscanearPaquete').style.display = 'inline-block';
+            document.getElementById('consumible').readOnly = false;
+            document.getElementById('unidadesPorPaquete').readOnly = false;
+            
+            habilitarRegistro();
+          }
+        })
+        .catch(err => {
+          mostrarAlerta("Error al consultar la base de datos: " + err);
+        });
+    }
+
+    function habilitarRegistro() {
+      document.getElementById('paquetesIngresados').disabled = false;
+      verificarFormulario();
+    }
+
+    function verificarFormulario() {
+      const prod = document.getElementById('codigoProducto').value;
+      const paq = document.getElementById('codigoPaquete').value;
+      const cons = document.getElementById('consumible').value;
+      const uni = document.getElementById('unidadesPorPaquete').value;
+      const ing = document.getElementById('paquetesIngresados').value;
+
+      if (prod && paq && cons && uni && ing && parseInt(ing) > 0) {
+        document.getElementById('btnIngresar').disabled = false;
+      } else {
+        document.getElementById('btnIngresar').disabled = true;
+      }
+    }
+
+    function enviarConsumible(e) {
+      e.preventDefault();
+      document.getElementById('btnIngresar').disabled = true;
+      document.getElementById('btnIngresar').innerText = "Guardando...";
+
+      const datos = {
+        codigoProducto: document.getElementById('codigoProducto').value,
+        codigoPaquete: document.getElementById('codigoPaquete').value,
+        consumible: document.getElementById('consumible').value,
+        unidadesPorPaquete: document.getElementById('unidadesPorPaquete').value,
+        paquetesIngresados: document.getElementById('paquetesIngresados').value
+      };
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      })
+      .then(() => {
+        redireccionarAlCerrar = true;
+        mostrarAlerta("¡Consumible ingresado con éxito!");
+      })
+      .catch(err => {
+        mostrarAlerta("Error al registrar: " + err);
+        document.getElementById('btnIngresar').disabled = false;
+        document.getElementById('btnIngresar').innerText = "Ingresar";
+      });
+    }
+
+    function mostrarAlerta(msg) {
+      document.getElementById('mensajeAlerta').innerText = msg;
+      document.getElementById('miAlerta').style.display = 'flex';
+    }
+
+    function cerrarAlerta() {
+      document.getElementById('miAlerta').style.display = 'none';
+      if (redireccionarAlCerrar) {
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>
