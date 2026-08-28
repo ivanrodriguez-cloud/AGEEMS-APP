@@ -120,8 +120,8 @@
       var finInput = document.getElementById('fechaFin');
       var ahora = new Date();
       ahora.setHours(ahora.getHours() + 48);
-      inicioInput.min = ahora.toISOString().slice(0, 16);
-      finInput.min = ahora.toISOString().slice(0, 16);
+      inicioInput.min = meFormatearFechaIso(ahora);
+      finInput.min = meFormatearFechaIso(ahora);
       
       mapa = L.map('mapaId').setView([latBase, lonBase], 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
@@ -136,6 +136,10 @@
       detectarUbicacionGPS();
       cargarInsumos();
     };
+
+    function meFormatearFechaIso(d) {
+      return d.toISOString().slice(0, 16);
+    }
 
     function validarFechas() {
       document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
@@ -165,7 +169,8 @@
         .then(data => construirTablaMateriales(data))
         .catch(err => console.error("Error al cargar materiales:", err));
       
-      fetch(`${URL_SCRIPT}?pestana=Consumibles&v=${Date.now()}`)
+      // Cambio de pestaña a 'Lista de Consumibles'
+      fetch(`${URL_SCRIPT}?pestana=Lista+de+Consumibles&v=${Date.now()}`)
         .then(res => res.json())
         .then(data => construirTablaConsumibles(data))
         .catch(err => console.error("Error al cargar consumibles:", err));
@@ -225,7 +230,8 @@
 
       data.forEach(item => {
         let nombreCons = item.consumible || item.Consumible || item.nombre || item.Nombre || "Sin nombre";
-        let dispCons = item.disponibles || item.disponible || item.Disponibles || item.Disponible || 0;
+        // En "Lista de Consumibles" la columna con la existencia es "Stock"
+        let dispCons = item.stock !== undefined ? item.stock : (item.Stock !== undefined ? item.Stock : 0);
 
         tbody.innerHTML += `<tr>
           <td>${nombreCons}</td>
