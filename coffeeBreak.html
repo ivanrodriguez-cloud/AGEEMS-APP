@@ -181,11 +181,13 @@
       }
 
       var materialesActivos = data.filter(item => {
+        var estatusVal = item.estatus || item.Estatus;
         var esActivo = true;
-        if (item.estatus !== undefined && item.estatus !== null && item.estatus !== "") {
-          esActivo = item.estatus.toString().trim().toUpperCase() === 'ACTIVO';
+        if (estatusVal !== undefined && estatusVal !== null && estatusVal !== "") {
+          esActivo = estatusVal.toString().trim().toUpperCase() === 'ACTIVO';
         }
-        var tieneStock = (parseInt(item.disponible) || 0) > 0;
+        var dispVal = item.disponibles || item.disponible || item.Disponibles || item.Disponible || 0;
+        var tieneStock = (parseInt(dispVal) || 0) > 0;
         return esActivo && tieneStock;
       });
 
@@ -195,15 +197,19 @@
       }
 
       materialesActivos.forEach(item => {
-        let imgHtml = item.imagen 
-          ? `<img src="${item.imagen}" class="img-tabla" alt="${item.nombre}">`
+        let nombreMat = item.material || item.Material || item.nombre || item.Nombre || "Sin nombre";
+        let dispMat = item.disponibles || item.disponible || item.Disponibles || item.Disponible || 0;
+        let imgUrl = item.imagen || item.Imagen;
+        
+        let imgHtml = imgUrl 
+          ? `<img src="${imgUrl}" class="img-tabla" alt="${nombreMat}">`
           : `<span style="font-size: 11px; color: #999;">Sin foto</span>`;
 
         tbody.innerHTML += `<tr>
           <td style="text-align: center;">${imgHtml}</td>
-          <td>${item.nombre}</td>
-          <td style="text-align: center;"><strong>${item.disponible}</strong></td>
-          <td style="text-align: center;"><input type="number" class="cant-input mat-item" data-nombre="${item.nombre}" min="0" max="${item.disponible}" value="0"></td>
+          <td>${nombreMat}</td>
+          <td style="text-align: center;"><strong>${dispMat}</strong></td>
+          <td style="text-align: center;"><input type="number" class="cant-input mat-item" data-nombre="${nombreMat}" min="0" max="${dispMat}" value="0"></td>
         </tr>`;
       });
     }
@@ -218,10 +224,13 @@
       }
 
       data.forEach(item => {
+        let nombreCons = item.consumible || item.Consumible || item.nombre || item.Nombre || "Sin nombre";
+        let dispCons = item.disponibles || item.disponible || item.Disponibles || item.Disponible || 0;
+
         tbody.innerHTML += `<tr>
-          <td>${item.nombre}</td>
-          <td style="text-align: center;"><strong>${item.disponible}</strong></td>
-          <td style="text-align: center;"><input type="number" class="cant-input cons-item" data-nombre="${item.nombre}" min="0" max="${item.disponible}" value="0"></td>
+          <td>${nombreCons}</td>
+          <td style="text-align: center;"><strong>${dispCons}</strong></td>
+          <td style="text-align: center;"><input type="number" class="cant-input cons-item" data-nombre="${nombreCons}" min="0" max="${dispCons}" value="0"></td>
         </tr>`;
       });
     }
