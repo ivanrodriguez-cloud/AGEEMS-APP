@@ -21,12 +21,15 @@
     .form-group { margin-bottom: 20px; }
     label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
     input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
-    input[readonly] { background-color: #e9ecef; cursor: not-allowed; }
+    input[readonly] { background-color: #e9ecef; }
     
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
     .btn:disabled { background-color: #ccc; cursor: not-allowed; }
     .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; cursor: pointer; }
-    .btn-camara { background-color: var(--primary-orange); color: white; padding: 10px 18px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; margin-bottom: 10px; }
+    .btn-camara { background-color: var(--primary-orange); color: white; padding: 10px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; white-space: nowrap; font-size: 13px; }
+    .btn-aux { background-color: var(--neutral-gray); color: white; padding: 10px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; white-space: nowrap; font-size: 13px; }
+
+    .input-with-btn { display: flex; gap: 8px; align-items: center; }
 
     #reader-container { display: none; margin-bottom: 20px; border: 2px dashed var(--primary-orange); border-radius: 8px; padding: 10px; text-align: center; }
     #reader { width: 100%; max-width: 400px; margin: 0 auto; }
@@ -37,6 +40,8 @@
     @media (max-width: 480px) {
       body { padding: 5px; }
       .container { padding: 12px 8px; }
+      .input-with-btn { flex-direction: column; align-items: stretch; }
+      .btn-camara, .btn-aux { width: 100%; margin-top: 4px; }
     }
   </style>
 </head>
@@ -45,10 +50,6 @@
   <div class="container">
     <a href="index.html" class="btn btn-secundario">← Volver al Menú</a>
     <h1>Ingreso de Consumibles</h1>
-
-    <div class="form-group">
-      <button type="button" class="btn-camara" id="btnIngresarCodigo" onclick="iniciarEscaneo('producto')">📷 Ingresar código</button>
-    </div>
 
     <!-- Visor de cámara -->
     <div id="reader-container">
@@ -60,30 +61,34 @@
     <form id="ingresoForm" onsubmit="enviarConsumible(event)">
       <div class="form-group">
         <label>Código del Producto *</label>
-        <input type="text" id="codigoProducto" readonly required>
+        <div class="input-with-btn">
+          <input type="text" id="codigoProducto" required placeholder="Escribe o escanea el código" onchange="validarCodigoManual()" onkeyup="verificarFormulario()">
+          <button type="button" class="btn-camara" onclick="iniciarEscaneo('producto')">📷 Escanear</button>
+        </div>
       </div>
 
       <div class="form-group">
         <label>Código Paquete *</label>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="codigoPaquete" readonly required>
-          <button type="button" class="btn-camara" id="btnEscanearPaquete" style="display:none;" onclick="iniciarEscaneo('paquete')">📷 Escanear Paquete</button>
+        <div class="input-with-btn">
+          <input type="text" id="codigoPaquete" required placeholder="Escribe o escanea el paquete" onkeyup="verificarFormulario()">
+          <button type="button" class="btn-camara" onclick="iniciarEscaneo('paquete')">📷 Escanear</button>
+          <button type="button" class="btn-aux" onclick="usarMismoCodigoPaquete()" title="Usar el mismo código de producto">Mismo código</button>
         </div>
       </div>
 
       <div class="form-group">
         <label>Consumible *</label>
-        <input type="text" id="consumible" readonly required>
+        <input type="text" id="consumible" required placeholder="Nombre del consumible" onkeyup="verificarFormulario()">
       </div>
 
       <div class="form-group">
         <label>Unidades por paquete *</label>
-        <input type="text" id="unidadesPorPaquete" readonly required oninput="validarSoloNumeros(this)" placeholder="Solo números">
+        <input type="text" id="unidadesPorPaquete" required oninput="validarSoloNumeros(this); verificarFormulario();" placeholder="Solo números">
       </div>
 
       <div class="form-group">
         <label>Paquetes ingresados *</label>
-        <input type="text" id="paquetesIngresados" disabled required oninput="validarSoloNumeros(this); verificarFormulario();" placeholder="Solo números">
+        <input type="text" id="paquetesIngresados" required oninput="validarSoloNumeros(this); verificarFormulario();" placeholder="Solo números">
       </div>
 
       <button type="submit" class="btn" id="btnIngresar" disabled>Ingresar</button>
@@ -98,22 +103,31 @@
   </div>
 
   <script>
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbz4UBaPg2Lk3KElG2wl1QGl_MO6O3ETC1di-DU1n4ERHRftOk2DqEu8GP57L8Z1mfSdFQ/exec"; 
+    const URL_SCRIPT = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
     let html5QrcodeScanner = null;
-    let modoEscaneo = ''; // 'producto' o 'paquete'
+    let modoEscaneo = '';
     let redireccionarAlCerrar = false;
 
-    // Bloquea espacio, texto y caracteres especiales en inputs numéricos
     function validarSoloNumeros(input) {
       input.value = input.value.replace(/[^0-9]/g, '');
+    }
+
+    function usarMismoCodigoPaquete() {
+      const codProd = document.getElementById('codigoProducto').value;
+      if (codProd) {
+        document.getElementById('codigoPaquete').value = codProd;
+        verificarFormulario();
+      } else {
+        mostrarAlerta("Primero ingresa o escanea el Código del Producto.");
+      }
     }
 
     function iniciarEscaneo(modo) {
       modoEscaneo = modo;
       document.getElementById('reader-container').style.display = 'block';
       document.getElementById('instruccionesCamara').innerText = modo === 'producto' 
-        ? "Apunte la cámara al código de barras del PRODUCTO" 
-        : "Apunte la cámara al código de barras del PAQUETE";
+        ? "Apunte la cámara al código del PRODUCTO" 
+        : "Apunte la cámara al código del PAQUETE";
 
       if (!html5QrcodeScanner) {
         html5QrcodeScanner = new Html5Qrcode("reader");
@@ -123,7 +137,7 @@
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 150 } },
         onScanSuccess,
-        onScanError
+        () => {}
       ).catch(err => {
         mostrarAlerta("Error al acceder a la cámara: " + err);
         detenerEscaneo();
@@ -134,7 +148,9 @@
       if (html5QrcodeScanner) {
         html5QrcodeScanner.stop().then(() => {
           document.getElementById('reader-container').style.display = 'none';
-        }).catch(err => console.error(err));
+        }).catch(() => {
+          document.getElementById('reader-container').style.display = 'none';
+        });
       } else {
         document.getElementById('reader-container').style.display = 'none';
       }
@@ -153,8 +169,11 @@
       }
     }
 
-    function onScanError(errorMessage) {
-      // Ignorar errores continuos de búsqueda de frame
+    function validarCodigoManual() {
+      const cod = document.getElementById('codigoProducto').value.trim();
+      if (cod) {
+        buscarCodigoEnBaseDeDatos(cod);
+      }
     }
 
     function buscarCodigoEnBaseDeDatos(codigo) {
@@ -162,53 +181,28 @@
         .then(res => res.json())
         .then(data => {
           if (data.encontrado) {
-            if (data.tipo === 'paquete') {
-              mostrarAlerta("Es un código de paquete, se requiere el código del producto.");
-              document.getElementById('codigoProducto').value = '';
-              setTimeout(() => iniciarEscaneo('producto'), 1500);
-            } else if (data.tipo === 'producto') {
-              // Producto encontrado en Columna A
-              document.getElementById('codigoPaquete').value = data.codigoPaquete || '';
-              document.getElementById('consumible').value = data.consumible || '';
-              document.getElementById('unidadesPorPaquete').value = data.unidadesPorPaquete || '';
-              
-              // Hacerlos readonly ya que vienen registrados
-              document.getElementById('consumible').readOnly = true;
-              document.getElementById('unidadesPorPaquete').readOnly = true;
-              document.getElementById('btnEscanearPaquete').style.display = 'none';
-
-              habilitarRegistro();
-            }
+            document.getElementById('codigoPaquete').value = data.codigoPaquete || data.codigoProducto || codigo;
+            document.getElementById('consumible').value = data.consumible || '';
+            document.getElementById('unidadesPorPaquete').value = data.unidadesPorPaquete || '';
+            
+            document.getElementById('consumible').readOnly = true;
+            document.getElementById('unidadesPorPaquete').readOnly = true;
           } else {
-            // No encontrado: Carga manual y escaneo de paquete
-            mostrarAlerta("Código no registrado. Proceda a la captura manual de datos.");
-            document.getElementById('codigoPaquete').value = '';
-            document.getElementById('consumible').value = '';
-            document.getElementById('unidadesPorPaquete').value = '';
-
-            document.getElementById('btnEscanearPaquete').style.display = 'inline-block';
+            // Código no encontrado: Habilitar campos para ingreso manual
             document.getElementById('consumible').readOnly = false;
             document.getElementById('unidadesPorPaquete').readOnly = false;
-            
-            habilitarRegistro();
           }
+          verificarFormulario();
         })
-        .catch(err => {
-          mostrarAlerta("Error al consultar la base de datos: " + err);
-        });
-    }
-
-    function habilitarRegistro() {
-      document.getElementById('paquetesIngresados').disabled = false;
-      verificarFormulario();
+        .catch(err => console.error("Error al consultar:", err));
     }
 
     function verificarFormulario() {
-      const prod = document.getElementById('codigoProducto').value;
-      const paq = document.getElementById('codigoPaquete').value;
-      const cons = document.getElementById('consumible').value;
-      const uni = document.getElementById('unidadesPorPaquete').value;
-      const ing = document.getElementById('paquetesIngresados').value;
+      const prod = document.getElementById('codigoProducto').value.trim();
+      const paq = document.getElementById('codigoPaquete').value.trim();
+      const cons = document.getElementById('consumible').value.trim();
+      const uni = document.getElementById('unidadesPorPaquete').value.trim();
+      const ing = document.getElementById('paquetesIngresados').value.trim();
 
       if (prod && paq && cons && uni && ing && parseInt(ing) > 0) {
         document.getElementById('btnIngresar').disabled = false;
@@ -223,11 +217,11 @@
       document.getElementById('btnIngresar').innerText = "Guardando...";
 
       const datos = {
-        codigoProducto: document.getElementById('codigoProducto').value,
-        codigoPaquete: document.getElementById('codigoPaquete').value,
-        consumible: document.getElementById('consumible').value,
-        unidadesPorPaquete: document.getElementById('unidadesPorPaquete').value,
-        paquetesIngresados: document.getElementById('paquetesIngresados').value
+        codigoProducto: document.getElementById('codigoProducto').value.trim(),
+        codigoPaquete: document.getElementById('codigoPaquete').value.trim(),
+        consumible: document.getElementById('consumible').value.trim(),
+        unidadesPorPaquete: document.getElementById('unidadesPorPaquete').value.trim(),
+        paquetesIngresados: document.getElementById('paquetesIngresados').value.trim()
       };
 
       fetch(URL_SCRIPT, {
