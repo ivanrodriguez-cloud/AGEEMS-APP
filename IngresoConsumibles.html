@@ -122,7 +122,7 @@
       }
     }
 
-    function iniciarEscaneo(modo) {
+    async function iniciarEscaneo(modo) {
       modoEscaneo = modo;
       document.getElementById('reader-container').style.display = 'block';
       document.getElementById('instruccionesCamara').innerText = modo === 'producto' 
@@ -133,15 +133,48 @@
         html5QrcodeScanner = new Html5Qrcode("reader");
       }
 
-      html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        onScanSuccess,
-        () => {}
-      ).catch(err => {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        let cameraId = null;
+
+        if (devices && devices.length > 0) {
+          // Filtrar para ignorar lentes ultra gran angular o lentes auxiliares
+          const camaraPrincipal = devices.find(device => {
+            const label = device.label.toLowerCase();
+            return (label.includes('back') || label.includes('trasera') || label.includes('rear')) &&
+                   !label.includes('ultra') && !label.includes('wide') && !label.includes('0.5x');
+          });
+
+          // Seleccionar la cámara filtrada, o por defecto la primera cámara trasera si no encuentra la coincidencia
+          if (camaraPrincipal) {
+            cameraId = camaraPrincipal.id;
+          } else {
+            const camaraTrasera = devices.find(device => {
+              const label = device.label.toLowerCase();
+              return label.includes('back') || label.includes('trasera') || label.includes('rear');
+            });
+            cameraId = camaraTrasera ? camaraTrasera.id : devices[0].id;
+          }
+        }
+
+        const cameraConfig = cameraId ? { deviceId: { exact: cameraId } } : { facingMode: "environment" };
+
+        await html5QrcodeScanner.start(
+          cameraConfig,
+          { 
+            fps: 15, 
+            qrbox: { width: 260, height: 160 },
+            videoConstraints: {
+              advanced: [{ zoom: 1.0 }]
+            }
+          },
+          onScanSuccess,
+          () => {}
+        );
+      } catch (err) {
         mostrarAlerta("Error al acceder a la cámara: " + err);
         detenerEscaneo();
-      });
+      }
     }
 
     function detenerEscaneo() {
@@ -188,7 +221,6 @@
             document.getElementById('consumible').readOnly = true;
             document.getElementById('unidadesPorPaquete').readOnly = true;
           } else {
-            // Código no encontrado: Habilitar campos para ingreso manual
             document.getElementById('consumible').readOnly = false;
             document.getElementById('unidadesPorPaquete').readOnly = false;
           }
