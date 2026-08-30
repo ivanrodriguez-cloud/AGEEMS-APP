@@ -227,12 +227,33 @@
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay consumibles registrados.</td></tr>';
         return;
       }
-
-      data.forEach(item => {
+    
+      // FILTRO: Solo considerar las filas que tengan valor en la Columna A (Código)
+      var consumiblesValidos = data.filter(item => {
+        // Busca la propiedad correspondiente a la Columna A (código)
+        var codigoVal = item.codigo || item.Código || item.CODIGO || item["código"] || item["Código"] || item.A;
+        
+        // Opcional: Si el nombre de encabezado en la Col A es dinámico, 
+        // verificamos si la clave de la columna A existe y no está vacía:
+        if (!codigoVal) {
+          // Intenta obtener el valor por el nombre exacto del encabezado de la columna A
+          // Ajusta 'Código' si el encabezado en tu hoja de Google Sheets tiene otro nombre
+          codigoVal = Object.values(item)[0]; // Toma el primer valor de la fila (Columna A)
+        }
+    
+        return codigoVal !== undefined && codigoVal !== null && codigoVal.toString().trim() !== "";
+      });
+    
+      if (consumiblesValidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay consumibles activos registrados.</td></tr>';
+        return;
+      }
+    
+      consumiblesValidos.forEach(item => {
         let nombreCons = item.consumible || item.Consumible || item.nombre || item.Nombre || "Sin nombre";
         // En "Lista de Consumibles" la columna con la existencia es "Stock"
         let dispCons = item.stock !== undefined ? item.stock : (item.Stock !== undefined ? item.Stock : 0);
-
+    
         tbody.innerHTML += `<tr>
           <td>${nombreCons}</td>
           <td style="text-align: center;"><strong>${dispCons}</strong></td>
@@ -240,7 +261,7 @@
         </tr>`;
       });
     }
-
+    
     function enviarFormulario(e) {
       e.preventDefault();
       document.getElementById('btnEnviar').disabled = true;
