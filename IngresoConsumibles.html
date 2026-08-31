@@ -128,52 +128,37 @@
       document.getElementById('instruccionesCamara').innerText = modo === 'producto' 
         ? "Apunte la cámara al código del PRODUCTO" 
         : "Apunte la cámara al código del PAQUETE";
-
+    
       if (!html5QrcodeScanner) {
         html5QrcodeScanner = new Html5Qrcode("reader");
       }
-
+    
+      const configuracionEscaner = { 
+        fps: 15, 
+        qrbox: { width: 260, height: 160 } 
+      };
+    
       try {
-        const devices = await Html5Qrcode.getCameras();
-        let cameraId = null;
-
-        if (devices && devices.length > 0) {
-          // Filtrar para ignorar lentes ultra gran angular o lentes auxiliares
-          const camaraPrincipal = devices.find(device => {
-            const label = device.label.toLowerCase();
-            return (label.includes('back') || label.includes('trasera') || label.includes('rear')) &&
-                   !label.includes('ultra') && !label.includes('wide') && !label.includes('0.5x');
-          });
-
-          // Seleccionar la cámara filtrada, o por defecto la primera cámara trasera si no encuentra la coincidencia
-          if (camaraPrincipal) {
-            cameraId = camaraPrincipal.id;
-          } else {
-            const camaraTrasera = devices.find(device => {
-              const label = device.label.toLowerCase();
-              return label.includes('back') || label.includes('trasera') || label.includes('rear');
-            });
-            cameraId = camaraTrasera ? camaraTrasera.id : devices[0].id;
-          }
-        }
-
-        const cameraConfig = cameraId ? { deviceId: { exact: cameraId } } : { facingMode: "environment" };
-
+        // Intenta abrir forzosamente la cámara trasera principal
         await html5QrcodeScanner.start(
-          cameraConfig,
-          { 
-            fps: 15, 
-            qrbox: { width: 260, height: 160 },
-            videoConstraints: {
-              advanced: [{ zoom: 1.0 }]
-            }
-          },
+          { facingMode: { exact: "environment" } },
+          configuracionEscaner,
           onScanSuccess,
           () => {}
         );
       } catch (err) {
-        mostrarAlerta("Error al acceder a la cámara: " + err);
-        detenerEscaneo();
+        // Si falla (por ejemplo, en PC/laptop donde no hay cámara 'environment'), usa la cámara por defecto
+        try {
+          await html5QrcodeScanner.start(
+            { facingMode: "environment" },
+            configuracionEscaner,
+            onScanSuccess,
+            () => {}
+          );
+        } catch (err2) {
+          mostrarAlerta("Error al acceder a la cámara: " + err2);
+          detenerEscaneo();
+        }
       }
     }
 
