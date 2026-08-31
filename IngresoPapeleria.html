@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Ingreso de Papelería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Librería para escanear código de barras -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --primary-orange: #FF8300;
+      --primary-pink: #E5004E;
+      --neutral-gray: #5B6670;
+      --light-bg: #f8f9fa;
+    }
+    body { font-family: 'Poppins', sans-serif; background-color: var(--light-bg); color: var(--neutral-gray); margin: 0; padding: 15px; display: flex; justify-content: center; }
+    .container { background: #ffffff; width: 100%; max-width: 700px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
+    h1 { color: var(--primary-pink); font-size: 22px; font-weight: 600; text-align: center; margin-top: 10px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
+    input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    input[readonly] { background-color: #e9ecef; }
+    
+    .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
+    .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; cursor: pointer; }
+    .btn-camara { background-color: var(--primary-orange); color: white; padding: 10px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; white-space: nowrap; font-size: 13px; }
+    .btn-aux { background-color: var(--neutral-gray); color: white; padding: 10px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; white-space: nowrap; font-size: 13px; }
+
+    .input-with-btn { display: flex; gap: 8px; align-items: center; }
+
+    #reader-container { display: none; margin-bottom: 20px; border: 2px dashed var(--primary-orange); border-radius: 8px; padding: 10px; text-align: center; }
+    #reader { width: 100%; max-width: 400px; margin: 0 auto; }
+
+    .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-contenido { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 80%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+
+    @media (max-width: 480px) {
+      body { padding: 5px; }
+      .container { padding: 12px 8px; }
+      .input-with-btn { flex-direction: column; align-items: stretch; }
+      .btn-camara, .btn-aux { width: 100%; margin-top: 4px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <a href="index.html" class="btn btn-secundario">← Volver al Menú</a>
+    <h1>Ingreso de Papelería</h1>
+
+    <!-- Visor de cámara -->
+    <div id="reader-container">
+      <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600;" id="instruccionesCamara">Escaneando código...</p>
+      <div id="reader"></div>
+      <button type="button" class="btn-secundario" style="margin-top:10px;" onclick="detenerEscaneo()">Cancelar Escaneo</button>
+    </div>
+
+    <form id="ingresoForm" onsubmit="enviarPapeleria(event)">
+      <div class="form-group">
+        <label>Ingresar código del Producto *</label>
+        <div class="input-with-btn">
+          <input type="text" id="codigoProducto" required placeholder="Escribe o escanea el código" onchange="validarCodigoManual()" onkeyup="verificarFormulario()">
+          <button type="button" class="btn-camara" onclick="iniciarEscaneo('producto')">📷 Ingresar código</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Código Paquete *</label>
+        <div class="input-with-btn">
+          <input type="text" id="codigoPaquete" required placeholder="Escribe o escanea el paquete" onkeyup="verificarFormulario()">
+          <button type="button" class="btn-camara" onclick="iniciarEscaneo('paquete')">📷 Escanear</button>
+          <button type="button" class="btn-aux" onclick="usarMismoCodigoPaquete()" title="Usar el mismo código de producto">Mismo código</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Producto *</label>
+        <input type="text" id="producto" required placeholder="Nombre del artículo de papelería" onkeyup="verificarFormulario()">
+      </div>
+
+      <div class="form-group">
+        <label>Unidades por paquete *</label>
+        <input type="text" id="unidadesPorPaquete" required oninput="validarSoloNumeros(this); verificarFormulario();" placeholder="Solo números">
+      </div>
+
+      <div class="form-group">
+        <label>Paquetes ingresados *</label>
+        <input type="text" id="paquetesIngresados" required oninput="validarSoloNumeros(this); verificarFormulario();" placeholder="Solo números">
+      </div>
+
+      <button type="submit" class="btn" id="btnIngresar" disabled>Ingresar</button>
+    </form>
+  </div>
+
+  <div id="miAlerta" class="modal-alerta">
+    <div class="modal-contenido">
+      <p id="mensajeAlerta"></p>
+      <button class="btn" style="width: auto; padding: 8px 30px;" onclick="cerrarAlerta()">Aceptar</button>
+    </div>
+  </div>
+
+  <script>
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbz4UBaPg2Lk3KElG2wl1QGl_MO6O3ETC1di-DU1n4ERHRftOk2DqEu8GP57L8Z1mfSdFQ/exec"; 
+    let html5QrcodeScanner = null;
+    let modoEscaneo = '';
+    let redireccionarAlCerrar = false;
+
+    function validarSoloNumeros(input) {
+      input.value = input.value.replace(/[^0-9]/g, '');
+    }
+
+    function usarMismoCodigoPaquete() {
+      const codProd = document.getElementById('codigoProducto').value;
+      if (codProd) {
+        document.getElementById('codigoPaquete').value = codProd;
+        verificarFormulario();
+      } else {
+        mostrarAlerta("Primero ingresa o escanea el Código del Producto.");
+      }
+    }
+
+    async function iniciarEscaneo(modo) {
+      modoEscaneo = modo;
+      document.getElementById('reader-container').style.display = 'block';
+      document.getElementById('instruccionesCamara').innerText = modo === 'producto' 
+        ? "Apunte la cámara al código del PRODUCTO" 
+        : "Apunte la cámara al código del PAQUETE";
+
+      if (!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5Qrcode("reader");
+      }
+
+      const configuracionEscaner = { 
+        fps: 15, 
+        qrbox: { width: 260, height: 160 } 
+      };
+
+      try {
+        await html5QrcodeScanner.start(
+          { facingMode: { exact: "environment" } },
+          configuracionEscaner,
+          onScanSuccess,
+          () => {}
+        );
+      } catch (err) {
+        try {
+          await html5QrcodeScanner.start(
+            { facingMode: "environment" },
+            configuracionEscaner,
+            onScanSuccess,
+            () => {}
+          );
+        } catch (err2) {
+          mostrarAlerta("Error al acceder a la cámara: " + err2);
+          detenerEscaneo();
+        }
+      }
+    }
+
+    function detenerEscaneo() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+          document.getElementById('reader-container').style.display = 'none';
+        }).catch(() => {
+          document.getElementById('reader-container').style.display = 'none';
+        });
+      } else {
+        document.getElementById('reader-container').style.display = 'none';
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      detenerEscaneo();
+      const codigoCapturado = decodedText.trim();
+
+      if (modoEscaneo === 'producto') {
+        document.getElementById('codigoProducto').value = codigoCapturado;
+        buscarCodigoEnBaseDeDatos(codigoCapturado);
+      } else if (modoEscaneo === 'paquete') {
+        document.getElementById('codigoPaquete').value = codigoCapturado;
+        verificarFormulario();
+      }
+    }
+
+    function validarCodigoManual() {
+      const cod = document.getElementById('codigoProducto').value.trim();
+      if (cod) {
+        buscarCodigoEnBaseDeDatos(cod);
+      }
+    }
+
+    function buscarCodigoEnBaseDeDatos(codigo) {
+      fetch(`${URL_SCRIPT}?action=buscarCodigoPapeleria&codigo=${encodeURIComponent(codigo)}&v=${Date.now()}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.encontrado) {
+            if (data.tipo === 'paquete') {
+              mostrarAlerta("El código escaneado corresponde a un PAQUETE. Por favor, escanee o ingrese primero el código del PRODUCTO.");
+              document.getElementById('codigoProducto').value = '';
+              iniciarEscaneo('producto');
+              return;
+            }
+
+            document.getElementById('codigoPaquete').value = data.codigoPaquete || data.codigoProducto || codigo;
+            document.getElementById('producto').value = data.producto || '';
+            document.getElementById('unidadesPorPaquete').value = data.unidadesPorPaquete || '';
+            
+            document.getElementById('producto').readOnly = true;
+            document.getElementById('unidadesPorPaquete').readOnly = true;
+          } else {
+            document.getElementById('producto').readOnly = false;
+            document.getElementById('unidadesPorPaquete').readOnly = false;
+          }
+          verificarFormulario();
+        })
+        .catch(err => console.error("Error al consultar:", err));
+    }
+
+    function verificarFormulario() {
+      const prod = document.getElementById('codigoProducto').value.trim();
+      const paq = document.getElementById('codigoPaquete').value.trim();
+      const articulo = document.getElementById('producto').value.trim();
+      const uni = document.getElementById('unidadesPorPaquete').value.trim();
+      const ing = document.getElementById('paquetesIngresados').value.trim();
+
+      if (prod && paq && articulo && uni && ing && parseInt(ing) > 0) {
+        document.getElementById('btnIngresar').disabled = false;
+      } else {
+        document.getElementById('btnIngresar').disabled = true;
+      }
+    }
+
+    function enviarPapeleria(e) {
+      e.preventDefault();
+      document.getElementById('btnIngresar').disabled = true;
+      document.getElementById('btnIngresar').innerText = "Guardando...";
+
+      const datos = {
+        tipoAccion: "ingresoPapeleria",
+        codigoProducto: document.getElementById('codigoProducto').value.trim(),
+        codigoPaquete: document.getElementById('codigoPaquete').value.trim(),
+        producto: document.getElementById('producto').value.trim(),
+        unidadesPorPaquete: document.getElementById('unidadesPorPaquete').value.trim(),
+        paquetesIngresados: document.getElementById('paquetesIngresados').value.trim()
+      };
+
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      })
+      .then(() => {
+        redireccionarAlCerrar = true;
+        mostrarAlerta("¡Artículo de papelería ingresado con éxito!");
+      })
+      .catch(err => {
+        mostrarAlerta("Error al registrar: " + err);
+        document.getElementById('btnIngresar').disabled = false;
+        document.getElementById('btnIngresar').innerText = "Ingresar";
+      });
+    }
+
+    function mostrarAlerta(msg) {
+      document.getElementById('mensajeAlerta').innerText = msg;
+      document.getElementById('miAlerta').style.display = 'flex';
+    }
+
+    function cerrarAlerta() {
+      document.getElementById('miAlerta').style.display = 'none';
+      if (redireccionarAlCerrar) {
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>
