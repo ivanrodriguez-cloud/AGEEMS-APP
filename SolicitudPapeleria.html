@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Solicitud de Papelería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-orange: #FF8300;
+      --primary-pink: #E5004E;
+      --neutral-gray: #5B6670;
+      --light-bg: #f8f9fa;
+    }
+    body { font-family: 'Poppins', sans-serif; background-color: var(--light-bg); color: var(--neutral-gray); margin: 0; padding: 15px; display: flex; justify-content: center; }
+    .container { background: #ffffff; width: 100%; max-width: 700px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
+    h1 { color: var(--primary-pink); font-size: 22px; font-weight: 600; text-align: center; margin-top: 10px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
+    input[type="text"], input[type="email"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
+    .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; table-layout: fixed; }
+    th, td { border: 1px solid #ddd; padding: 8px 6px; text-align: left; vertical-align: middle; word-wrap: break-word; }
+    th { background-color: #f1f3f4; font-weight: 600; white-space: nowrap; }
+    .cant-input { width: 55px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+
+    .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-contenido { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 80%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+
+    @media (max-width: 480px) {
+      body { padding: 5px; }
+      .container { padding: 12px 8px; }
+      th, td { padding: 5px 2px; font-size: 12px; }
+      .cant-input { width: 45px; padding: 3px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <a href="index.html" class="btn btn-secundario">← Volver al Menú</a>
+    <h1>Solicitud de Papelería</h1>
+    <form id="papeleriaForm" onsubmit="enviarFormulario(event)">
+      <div class="form-group">
+        <label>Nombre de quien solicita el servicio *</label>
+        <input type="text" id="nombre" required placeholder="Nombre completo">
+      </div>
+      
+      <div class="form-group">
+        <label>Correo de quien solicita el servicio *</label>
+        <input type="email" id="correo" required placeholder="ejemplo@jalisco.gob.mx">
+      </div>
+
+      <div class="form-group">
+        <label>Selecciona los Productos requeridos:</label>
+        <table id="tablaProductos">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th style="width: 70px; text-align: center;">Disp.</th>
+              <th style="width: 65px; text-align: center;">Cant.</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="form-group">
+        <label>Observaciones</label>
+        <input type="text" id="observaciones" placeholder="Detalles adicionales, área solicitante, etc.">
+      </div>
+
+      <button type="submit" class="btn" id="btnEnviar">Enviar Solicitud</button>
+    </form>
+  </div>
+
+  <div id="miAlerta" class="modal-alerta">
+    <div class="modal-contenido">
+      <p id="mensajeAlerta">¡Solicitud registrada con éxito!</p>
+      <button class="btn" style="width: auto; padding: 8px 30px;" onclick="cerrarAlerta()">Aceptar</button>
+    </div>
+  </div>
+
+  <script>
+    // Coloca la URL del Apps Script desplegado como Web App
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzGz3e1GHZFvFwCbQWtCn6nB1UDanMoHq6krOTxVMX7D6MmlSUff5N7LJG1np2e9vw/exec";
+
+    window.onload = function() {
+      cargarProductos();
+    };
+
+    function cargarProductos() {
+      fetch(`${URL_SCRIPT}?pestana=Papeler%C3%ADa&v=${Date.now()}`)
+        .then(res => res.json())
+        .then(data => construirTablaProductos(data))
+        .catch(err => console.error("Error al cargar productos de papelería:", err));
+    }
+
+    function construirTablaProductos(data) {
+      var tbody = document.querySelector("#tablaProductos tbody");
+      tbody.innerHTML = '';
+      
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay productos registrados.</td></tr>';
+        return;
+      }
+
+      var productosDisponibles = data.filter(item => {
+        var desc = item["descripción del producto"] || item["Descripción del Producto"] || item.producto || item.Producto;
+        var stock = parseFloat(item["stock actual"] || item["Stock Actual"] || item.stock || item.Stock || 0);
+        return desc && desc.toString().trim() !== "" && stock > 0;
+      });
+
+      if (productosDisponibles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay productos de papelería con existencia disponible.</td></tr>';
+        return;
+      }
+
+      productosDisponibles.forEach(item => {
+        let nombreProd = item["descripción del producto"] || item["Descripción del Producto"] || item.producto || item.Producto;
+        let dispProd = item["stock actual"] || item["Stock Actual"] || item.stock || item.Stock || 0;
+        let codigoProd = item["n."] || item["N."] || item.codigo || item.Código || "";
+
+        tbody.innerHTML += `<tr>
+          <td>${nombreProd}</td>
+          <td style="text-align: center;"><strong>${dispProd}</strong></td>
+          <td style="text-align: center;">
+            <input type="number" class="cant-input prod-item" data-nombre="${nombreProd}" data-codigo="${codigoProd}" min="0" max="${dispProd}" value="0">
+          </td>
+        </tr>`;
+      });
+    }
+
+    function enviarFormulario(e) {
+      e.preventDefault();
+
+      var productos = [];
+      document.querySelectorAll('.prod-item').forEach(input => { 
+        if(parseInt(input.value) > 0) {
+          productos.push({ 
+            codigo: input.dataset.codigo,
+            nombre: input.dataset.nombre, 
+            cantidad: input.value 
+          }); 
+        }
+      });
+
+      if (productos.length === 0) {
+        alert("Por favor, selecciona al menos un producto e indica la cantidad requerida.");
+        return;
+      }
+
+      document.getElementById('btnEnviar').disabled = true;
+      document.getElementById('btnEnviar').innerText = "Enviando...";
+
+      var datos = {
+        nombre: document.getElementById('nombre').value,
+        correo: document.getElementById('correo').value,
+        productos: productos,
+        observaciones: document.getElementById('observaciones').value
+      };
+
+      fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) })
+        .then(() => {
+          document.getElementById('mensajeAlerta').innerText = "¡Solicitud registrada con éxito!";
+          document.getElementById('miAlerta').style.display = 'flex';
+          document.getElementById('papeleriaForm').reset();
+          document.getElementById('btnEnviar').disabled = false;
+          document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
+        }).catch(err => {
+          alert("Error en el envío: " + err);
+          document.getElementById('btnEnviar').disabled = false;
+          document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
+        });
+    }
+
+    function cerrarAlerta() { 
+      document.getElementById('miAlerta').style.display = 'none';
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
