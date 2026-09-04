@@ -223,8 +223,33 @@
         return;
       }
 
-      // Filtrar solo artículos con stock mayor a 0 (las filas sin código en Col A ya vienen filtradas desde el Apps Script)
-      var productosDisponibles = data.filter(item => Number(item.stock) > 0);
+      var productosDisponibles = [];
+
+      // Evaluar la disponibilidad condicional según la unidad de medida de cada artículo
+      data.forEach(item => {
+        var stock = Number(item.stock) || 0;
+        var unidadesPorPaquete = Number(item.unidadesPorPaquete) || 1;
+        var unidadMedida = item.unidadMedida ? item.unidadMedida.toString().toUpperCase() : "PIEZA";
+        var disp = 0;
+
+        // Condicional oculto: Si es PAQUETE = Stock / Unidades por paquete; si es PIEZA = Stock
+        if (unidadMedida === "PAQUETE") {
+          disp = unidadesPorPaquete > 0 ? Math.floor(stock / unidadesPorPaquete) : 0;
+        } else {
+          disp = stock;
+        }
+
+        // Mostrar solo artículos que tengan disponibilidad mayor a 0
+        if (disp > 0) {
+          productosDisponibles.push({
+            codigo: item.codigo,
+            producto: item.producto,
+            disp: disp,
+            unidadMedida: unidadMedida,
+            unidadesPorPaquete: unidadesPorPaquete
+          });
+        }
+      });
 
       if (productosDisponibles.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay productos de papelería con existencia disponible.</td></tr>';
@@ -234,9 +259,14 @@
       productosDisponibles.forEach(item => {
         tbody.innerHTML += `<tr>
           <td>${item.producto}</td>
-          <td style="text-align: center;"><strong>${item.stock}</strong></td>
+          <td style="text-align: center;"><strong>${item.disp}</strong></td>
           <td style="text-align: center;">
-            <input type="number" class="cant-input prod-item" data-nombre="${item.producto}" data-codigo="${item.codigo}" min="0" max="${item.stock}" value="0">
+            <input type="number" class="cant-input prod-item" 
+                   data-nombre="${item.producto}" 
+                   data-codigo="${item.codigo}" 
+                   data-unidad="${item.unidadMedida}" 
+                   data-unidades-paquete="${item.unidadesPorPaquete}" 
+                   min="0" max="${item.disp}" value="0">
           </td>
         </tr>`;
       });
@@ -249,10 +279,16 @@
       document.querySelectorAll('.prod-item').forEach(input => { 
         var val = parseInt(input.value);
         if(!isNaN(val) && val > 0) {
+          var unidad = input.dataset.unidad;
+          var unidadesPorPaquete = parseInt(input.dataset.unidadesPaquete) || 1;
+          
+          // Convertir a total de piezas si la unidad de medida es PAQUETE
+          var totalPiezas = (unidad === "PAQUETE") ? (val * unidadesPorPaquete) : val;
+
           productos.push({ 
             codigo: input.dataset.codigo,
             nombre: input.dataset.nombre, 
-            cantidad: val 
+            cantidad: totalPiezas // Se envía directamente la cantidad calculada en piezas
           }); 
         }
       });
