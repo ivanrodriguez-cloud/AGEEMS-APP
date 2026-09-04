@@ -20,7 +20,7 @@
     h1 { color: var(--primary-pink); font-size: 22px; font-weight: 600; text-align: center; margin-top: 10px; }
     .form-group { margin-bottom: 20px; }
     label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
-    input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    input[type="text"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; background-color: white; }
     input[readonly] { background-color: #e9ecef; }
     
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
@@ -79,6 +79,15 @@
       <div class="form-group">
         <label>Producto *</label>
         <input type="text" id="producto" required placeholder="Nombre del artículo de papelería" onkeyup="verificarFormulario()">
+      </div>
+
+      <div class="form-group">
+        <label>Unidad de medida *</label>
+        <select id="unidadMedida" required onchange="verificarFormulario()">
+          <option value="" disabled selected>Selecciona una opción</option>
+          <option value="PIEZA">PIEZA</option>
+          <option value="PAQUETE">PAQUETE</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -223,10 +232,11 @@
       const prod = document.getElementById('codigoProducto').value.trim();
       const paq = document.getElementById('codigoPaquete').value.trim();
       const articulo = document.getElementById('producto').value.trim();
+      const unidad = document.getElementById('unidadMedida').value;
       const uni = document.getElementById('unidadesPorPaquete').value.trim();
       const ing = document.getElementById('paquetesIngresados').value.trim();
 
-      if (prod && paq && articulo && uni && ing && parseInt(ing) > 0) {
+      if (prod && paq && articulo && unidad && uni && ing && parseInt(ing) > 0) {
         document.getElementById('btnIngresar').disabled = false;
       } else {
         document.getElementById('btnIngresar').disabled = true;
@@ -243,6 +253,7 @@
         codigoProducto: document.getElementById('codigoProducto').value.trim(),
         codigoPaquete: document.getElementById('codigoPaquete').value.trim(),
         producto: document.getElementById('producto').value.trim(),
+        unidadMedida: document.getElementById('unidadMedida').value,
         unidadesPorPaquete: document.getElementById('unidadesPorPaquete').value.trim(),
         paquetesIngresados: document.getElementById('paquetesIngresados').value.trim()
       };
