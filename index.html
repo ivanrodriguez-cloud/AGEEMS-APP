@@ -11,6 +11,9 @@
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   
+  <!-- SDK oficial de Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <style>
     :root {
       --primary-orange: #FF8300;
@@ -23,8 +26,16 @@
     .header { text-align: center; margin-bottom: 20px; }
     .header img { max-width: 150px; height: auto; border-radius: 15px; }
     h1 { color: var(--primary-pink); font-size: 22px; font-weight: 600; text-align: center; margin-top: 10px; }
-    .tablero-blanco { display: block; text-align: center; }
+    .tablero-blanco { display: none; text-align: center; }
     .paginas-interes-seccion { display: none; }
+    
+    /* Sección Login */
+    .login-container { text-align: center; padding: 20px 0; }
+    .user-info { display: flex; justify-content: space-between; align-items: center; background: #fff3e6; border: 1px solid var(--primary-orange); padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+    .user-info span { font-weight: 600; color: #333; }
+    .btn-logout { background: transparent; color: var(--primary-pink); border: 1px solid var(--primary-pink); border-radius: 5px; padding: 4px 10px; cursor: pointer; font-size: 12px; font-family: 'Poppins', sans-serif; }
+    .btn-logout:hover { background: var(--primary-pink); color: #fff; }
+
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
     .btn-orange { background-color: var(--primary-orange); }
     .btn-orange:hover { background-color: #e07300; }
@@ -42,19 +53,42 @@
   <div class="container">
     <div class="header">
       <img src="icono.png" alt="Logo SEMS">
+      <h1>SEMS - Gestión Estratégica</h1>
+    </div>
+
+    <!-- SECCIÓN DE LOGIN CON GOOGLE -->
+    <div id="seccionLogin" class="login-container">
+      <p style="margin-bottom: 20px; font-weight: 400;">Inicia sesión con tu cuenta de Google para continuar</p>
+      
+      <div id="g_id_onload"
+           data-client_id="287359960751-l4p24dep46nrtc41if0n8naabn1vi1lu.apps.googleusercontent.com"
+           data-callback="handleCredentialResponse"
+           data-auto_select="false">
+      </div>
+
+      <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
+      
+      <p id="mensajeLogin" style="color: red; margin-top: 15px; font-size: 14px;"></p>
+    </div>
+
+    <!-- BARRA DE INFORMACIÓN DE USUARIO LOGUEADO -->
+    <div id="userInfoBar" class="user-info" style="display: none;">
+      <div>
+        <span id="userName">Cargando...</span> (<span id="userRole">ROL</span>)
+      </div>
+      <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
 
     <!-- TABLERO PRINCIPAL DE BOTONES -->
     <div id="tablero" class="tablero-blanco">
-      <div style="height: 40px;"></div>
       
       <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='IngresoPapeleria.html'">
         Ingreso de Papelería
       </button> 
       <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='SolicitudPapeleria.html'">
         Solicitud de Papelería
-      </button>       
-       <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='IngresoConsumibles.html'">
+      </button>        
+      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='IngresoConsumibles.html'">
         Ingreso de Consumible
       </button> 
       <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='coffeeBreak.html'">
@@ -71,7 +105,7 @@
     <!-- SECCIÓN DE PÁGINAS DE INTERÉS -->
     <div id="paginasInteres" class="paginas-interes-seccion">
       <button class="btn btn-secundario" onclick="mostrarTablero()">← Volver al Menú</button>
-      <h1>Páginas de interés</h1>
+      <h1 style="text-align: left; margin-bottom: 20px;">Páginas de interés</h1>
       <div class="grid-paginas">
         <!-- BOTÓN SIGE - INFEJAL -->
         <a href="https://sinfejal.jalisco.gob.mx/sige" target="_blank" class="card-enlace">
@@ -89,6 +123,56 @@
   </div>
 
   <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby67S5Ong7-MnmBHpwWw_z5IWG-jMsm0GNsbre85vjiU4PFIXBYcVWVbwi2UZ7IgDy9xg/exec";
+
+    function handleCredentialResponse(response) {
+      document.getElementById('mensajeLogin').innerText = "Verificando permisos...";
+      const payload = parseJwt(response.credential);
+      const userEmail = payload.email;
+
+      fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "cors",
+        body: JSON.stringify({ email: userEmail })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          sessionStorage.setItem("userSession", JSON.stringify(data.user));
+          inicializarVistaSesion(data.user);
+        } else {
+          document.getElementById('mensajeLogin').innerText = data.message;
+        }
+      })
+      .catch(err => {
+        console.error("Error al validar con Apps Script:", err);
+        document.getElementById('mensajeLogin').innerText = "Error de conexión con el servidor.";
+      });
+    }
+
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => 
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    function inicializarVistaSesion(user) {
+      document.getElementById('seccionLogin').style.display = 'none';
+      document.getElementById('userInfoBar').style.display = 'flex';
+      document.getElementById('userName').innerText = user.nombre;
+      document.getElementById('userRole').innerText = user.rol;
+      
+      mostrarTablero();
+    }
+
+    function cerrarSesion() {
+      sessionStorage.removeItem("userSession");
+      location.reload();
+    }
+
     function mostrarTablero() {
       document.getElementById('tablero').style.display = 'block';
       document.getElementById('paginasInteres').style.display = 'none';
@@ -98,6 +182,14 @@
       document.getElementById('tablero').style.display = 'none';
       document.getElementById('paginasInteres').style.display = 'block';
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedSession = sessionStorage.getItem("userSession");
+      if (savedSession) {
+        const user = JSON.parse(savedSession);
+        inicializarVistaSesion(user);
+      }
+    });
   </script>
 </body>
 </html>
