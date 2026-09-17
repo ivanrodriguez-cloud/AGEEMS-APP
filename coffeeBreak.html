@@ -1,6 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA -->
+  <script>
+    (function() {
+      const userSession = sessionStorage.getItem("userSession");
+      if (!userSession) {
+        alert("Acceso denegado. Debes iniciar sesión para acceder a esta sección.");
+        window.location.href = "index.html";
+        return;
+      }
+      try {
+        const user = JSON.parse(userSession);
+        if (!user || !user.correo) {
+          throw new Error("Sesión inválida");
+        }
+      } catch (e) {
+        sessionStorage.removeItem("userSession");
+        window.location.href = "index.html";
+      }
+    })();
+  </script>
+
   <meta charset="utf-8">
   <title>Solicitud de Coffee Break</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,6 +42,10 @@
     .form-group { margin-bottom: 20px; }
     label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
     input[type="text"], input[type="email"], input[type="datetime-local"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    
+    /* Estilo visual para campos bloqueados */
+    input[readonly] { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
+
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
     .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; }
 
@@ -116,6 +141,9 @@
     let coordenadasActuales = "https://www.google.com/maps?q=20.6767,-103.3475";
 
     window.onload = function() {
+      // Autocompletado de datos del usuario y validación de rol
+      aplicarDatosSesion();
+
       var inicioInput = document.getElementById('fechaInicio');
       var finInput = document.getElementById('fechaFin');
       var ahora = new Date();
@@ -136,6 +164,27 @@
       detectarUbicacionGPS();
       cargarInsumos();
     };
+
+    function aplicarDatosSesion() {
+      const userSession = sessionStorage.getItem("userSession");
+      if (userSession) {
+        const user = JSON.parse(userSession);
+        const inputNombre = document.getElementById('nombre');
+        const inputCorreo = document.getElementById('correo');
+
+        if (inputNombre && inputCorreo) {
+          inputNombre.value = user.nombre || "";
+          inputCorreo.value = user.correo || "";
+
+          // Restricción: Si NO es ADMINISTRADOR, los campos son de solo lectura
+          const esAdmin = user.rol && user.rol.toUpperCase() === "ADMINISTRADOR";
+          if (!esAdmin) {
+            inputNombre.readOnly = true;
+            inputCorreo.readOnly = true;
+          }
+        }
+      }
+    }
 
     function meFormatearFechaIso(d) {
       return d.toISOString().slice(0, 16);
@@ -169,7 +218,6 @@
         .then(data => construirTablaMateriales(data))
         .catch(err => console.error("Error al cargar materiales:", err));
       
-      // Cambio de pestaña a 'Lista de Consumibles'
       fetch(`${URL_SCRIPT}?pestana=Lista+de+Consumibles&v=${Date.now()}`)
         .then(res => res.json())
         .then(data => construirTablaConsumibles(data))
@@ -228,19 +276,11 @@
         return;
       }
     
-      // FILTRO: Solo considerar las filas que tengan valor en la Columna A (Código)
       var consumiblesValidos = data.filter(item => {
-        // Busca la propiedad correspondiente a la Columna A (código)
         var codigoVal = item.codigo || item.Código || item.CODIGO || item["código"] || item["Código"] || item.A;
-        
-        // Opcional: Si el nombre de encabezado en la Col A es dinámico, 
-        // verificamos si la clave de la columna A existe y no está vacía:
         if (!codigoVal) {
-          // Intenta obtener el valor por el nombre exacto del encabezado de la columna A
-          // Ajusta 'Código' si el encabezado en tu hoja de Google Sheets tiene otro nombre
-          codigoVal = Object.values(item)[0]; // Toma el primer valor de la fila (Columna A)
+          codigoVal = Object.values(item)[0];
         }
-    
         return codigoVal !== undefined && codigoVal !== null && codigoVal.toString().trim() !== "";
       });
     
@@ -251,7 +291,6 @@
     
       consumiblesValidos.forEach(item => {
         let nombreCons = item.consumible || item.Consumible || item.nombre || item.Nombre || "Sin nombre";
-        // En "Lista de Consumibles" la columna con la existencia es "Stock"
         let dispCons = item.stock !== undefined ? item.stock : (item.Stock !== undefined ? item.Stock : 0);
     
         tbody.innerHTML += `<tr>
