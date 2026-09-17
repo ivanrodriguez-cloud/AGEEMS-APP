@@ -87,6 +87,7 @@
     th, td { border: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: middle; word-wrap: break-word; }
     th { background-color: #f1f3f4; font-weight: 600; white-space: nowrap; }
     .cant-input { width: 48px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+    .cant-input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .img-tabla { width: 45px; height: 45px; object-fit: contain; border: none !important; padding: 0 !important; background-color: transparent !important; display: block; margin: 0 auto; }
 
     #mapaId { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; z-index: 1; margin-top: 5px; }
@@ -299,36 +300,38 @@
         return;
       }
 
+      // Se muestran todos los materiales cuyo estatus sea ACTIVO independientemente de su disponibilidad
       var materialesActivos = data.filter(item => {
         var estatusVal = item.estatus || item.Estatus;
         var esActivo = true;
         if (estatusVal !== undefined && estatusVal !== null && estatusVal !== "") {
           esActivo = estatusVal.toString().trim().toUpperCase() === 'ACTIVO';
         }
-        var dispVal = item.disponibles || item.disponible || item.Disponibles || item.Disponible || 0;
-        var tieneStock = (parseInt(dispVal) || 0) > 0;
-        return esActivo && tieneStock;
+        return esActivo;
       });
 
       if (materialesActivos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">No hay materiales activos disponibles.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">No hay materiales activos registrados.</td></tr>';
         return;
       }
 
       materialesActivos.forEach(item => {
         let nombreMat = item.material || item.Material || item.nombre || item.Nombre || "Sin nombre";
-        let dispMat = item.disponibles || item.disponible || item.Disponibles || item.Disponible || 0;
+        let dispMat = parseInt(item.disponibles || item.disponible || item.Disponibles || item.Disponible || 0);
         let imgUrl = item.imagen || item.Imagen;
         
         let imgHtml = imgUrl 
           ? `<img src="${imgUrl}" class="img-tabla" alt="${nombreMat}">`
           : `<span style="font-size: 11px; color: #999;">Sin foto</span>`;
 
+        // Si el stock es 0, deshabilitamos la casilla de cantidad
+        let disabledAttr = dispMat <= 0 ? 'disabled' : '';
+
         tbody.innerHTML += `<tr>
           <td style="text-align: center;">${imgHtml}</td>
           <td>${nombreMat}</td>
           <td style="text-align: center;"><strong>${dispMat}</strong></td>
-          <td style="text-align: center;"><input type="number" class="cant-input mat-item" data-nombre="${nombreMat}" min="0" max="${dispMat}" value="0"></td>
+          <td style="text-align: center;"><input type="number" class="cant-input mat-item" data-nombre="${nombreMat}" min="0" max="${dispMat}" value="0" ${disabledAttr}></td>
         </tr>`;
       });
     }
@@ -342,16 +345,20 @@
         return;
       }
     
+      // Se muestran únicamente los consumibles con stock/disponibilidad mayor a 0
       var consumiblesValidos = data.filter(item => {
         var codigoVal = item.codigo || item.Código || item.CODIGO || item["código"] || item["Código"] || item.A;
         if (!codigoVal) {
           codigoVal = Object.values(item)[0];
         }
-        return codigoVal !== undefined && codigoVal !== null && codigoVal.toString().trim() !== "";
+        var tieneCodigo = codigoVal !== undefined && codigoVal !== null && codigoVal.toString().trim() !== "";
+        var dispCons = parseInt(item.stock !== undefined ? item.stock : (item.Stock !== undefined ? item.Stock : 0)) || 0;
+        
+        return tieneCodigo && dispCons > 0;
       });
     
       if (consumiblesValidos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay consumibles activos registrados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No hay consumibles disponibles en stock.</td></tr>';
         return;
       }
     
