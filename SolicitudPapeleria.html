@@ -88,6 +88,21 @@
       box-sizing: border-box; 
     }
 
+    /* Estilo para el buscador de productos */
+    .search-box {
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .search-box input {
+      border: 1px solid var(--primary-orange);
+      background-color: #fff9f5;
+    }
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--primary-pink);
+      box-shadow: 0 0 5px rgba(229, 0, 78, 0.2);
+    }
+
     /* Estilo para campos bloqueados */
     input[readonly] { 
       background-color: #f0f0f0; 
@@ -202,6 +217,12 @@
 
       <div class="form-group">
         <label>Selecciona los Productos requeridos:</label>
+        
+        <!-- Campo Buscador de Productos -->
+        <div class="search-box">
+          <input type="text" id="buscarProducto" placeholder="🔍 Buscar producto por nombre..." onkeyup="filtrarProductos()">
+        </div>
+
         <table id="tablaProductos">
           <thead>
             <tr>
@@ -315,8 +336,8 @@
       }
 
       productosDisponibles.forEach(item => {
-        tbody.innerHTML += `<tr>
-          <td>${item.producto}</td>
+        tbody.innerHTML += `<tr class="fila-producto">
+          <td class="col-producto">${item.producto}</td>
           <td style="text-align: center;"><strong>${item.disp}</strong></td>
           <td style="text-align: center;">
             <input type="number" class="cant-input prod-item" 
@@ -327,6 +348,24 @@
                    min="0" max="${item.disp}" value="0">
           </td>
         </tr>`;
+      });
+    }
+
+    // Función para filtrar los productos sin alterar los valores ingresados en Cant.
+    function filtrarProductos() {
+      const filtro = document.getElementById('buscarProducto').value.toLowerCase().trim();
+      const filas = document.querySelectorAll('#tablaProductos tbody tr.fila-producto');
+
+      filas.forEach(fila => {
+        const celdaProducto = fila.querySelector('.col-producto');
+        if (celdaProducto) {
+          const textoProducto = celdaProducto.textContent.toLowerCase();
+          if (textoProducto.includes(filtro)) {
+            fila.style.display = '';
+          } else {
+            fila.style.display = 'none';
+          }
+        }
       });
     }
 
