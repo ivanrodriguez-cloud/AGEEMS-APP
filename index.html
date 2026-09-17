@@ -125,22 +125,22 @@
     <!-- TABLERO PRINCIPAL DE BOTONES -->
     <div id="tablero" class="tablero-blanco">
       
-      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='IngresoPapeleria.html'">
+      <button id="btnIngresoPapeleria" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='IngresoPapeleria.html'">
         Ingreso de Papelería
       </button> 
-      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='SolicitudPapeleria.html'">
+      <button id="btnSolicitudPapeleria" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='SolicitudPapeleria.html'">
         Solicitud de Papelería
       </button>        
-      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='IngresoConsumibles.html'">
+      <button id="btnIngresoConsumibles" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='IngresoConsumibles.html'">
         Ingreso de Consumible
       </button> 
-      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='coffeeBreak.html'">
+      <button id="btnCoffeeBreak" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='coffeeBreak.html'">
         Solicitud de Coffee Break
       </button>
-      <button class="btn btn-orange" style="margin-bottom: 15px;" onclick="location.href='organigrama.html'">
+      <button id="btnOrganigrama" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='organigrama.html'">
         Organigrama Interactivo
       </button>
-      <button class="btn btn-orange" onclick="mostrarPaginasInteres()">
+      <button id="btnPaginasInteres" class="btn btn-orange" style="display: none;" onclick="mostrarPaginasInteres()">
         Páginas de interés
       </button>
     </div>
@@ -208,7 +208,41 @@
       document.getElementById('userName').innerText = user.nombre;
       document.getElementById('userRole').innerText = user.rol;
       
+      aplicarPermisosRol(user.rol);
       mostrarTablero();
+    }
+
+    // Configuración de visibilidad de los botones según el ROL
+    function aplicarPermisosRol(rol) {
+      const rolNormalizado = rol ? rol.toString().toUpperCase() : "";
+
+      // Ocultar todos los botones inicialmente
+      document.getElementById('btnIngresoPapeleria').style.display = 'none';
+      document.getElementById('btnSolicitudPapeleria').style.display = 'none';
+      document.getElementById('btnIngresoConsumibles').style.display = 'none';
+      document.getElementById('btnCoffeeBreak').style.display = 'none';
+      document.getElementById('btnOrganigrama').style.display = 'none';
+      document.getElementById('btnPaginasInteres').style.display = 'none';
+
+      if (rolNormalizado === "ADMINISTRADOR") {
+        // ADMINISTRADOR: Visualiza todos los botones
+        document.getElementById('btnIngresoPapeleria').style.display = 'block';
+        document.getElementById('btnSolicitudPapeleria').style.display = 'block';
+        document.getElementById('btnIngresoConsumibles').style.display = 'block';
+        document.getElementById('btnCoffeeBreak').style.display = 'block';
+        document.getElementById('btnOrganigrama').style.display = 'block';
+        document.getElementById('btnPaginasInteres').style.display = 'block';
+      } else if (rolNormalizado === "USUARIO" || rolNormalizado === "DIRECTOR") {
+        // USUARIO y DIRECTOR: Solicitud de Papelería, Solicitud de Coffee Break, Organigrama y Páginas de interés
+        document.getElementById('btnSolicitudPapeleria').style.display = 'block';
+        document.getElementById('btnCoffeeBreak').style.display = 'block';
+        document.getElementById('btnOrganigrama').style.display = 'block';
+        document.getElementById('btnPaginasInteres').style.display = 'block';
+      } else if (rolNormalizado === "VISUALIZADOR") {
+        // VISUALIZADOR: Organigrama Interactivo y Páginas de interés
+        document.getElementById('btnOrganigrama').style.display = 'block';
+        document.getElementById('btnPaginasInteres').style.display = 'block';
+      }
     }
 
     function cerrarSesion() {
