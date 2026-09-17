@@ -56,6 +56,30 @@
     /* Estilo visual para campos bloqueados */
     input[readonly] { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
 
+    /* Estilos para los botones de opción (Tipo de Solicitud) */
+    .btn-toggle-group { display: flex; gap: 10px; }
+    .btn-toggle-group input[type="radio"] { display: none; }
+    .btn-toggle-label {
+      flex: 1;
+      text-align: center;
+      padding: 10px 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #fff;
+      color: var(--neutral-gray);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+    .btn-toggle-group input[type="radio"]:checked + .btn-toggle-label {
+      background-color: var(--primary-orange);
+      color: white;
+      border-color: var(--primary-orange);
+      box-shadow: 0 2px 8px rgba(255, 131, 0, 0.3);
+    }
+
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
     .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; border-radius: 6px; }
 
@@ -89,6 +113,19 @@
       <div class="form-group"><label>Nombre del evento *</label><input type="text" id="nombreEvento" required></div>
       <div class="form-group"><label>Nombre de quien solicita el servicio *</label><input type="text" id="nombre" required></div>
       <div class="form-group"><label>Correo de quien solicita el servicio *</label><input type="email" id="correo" required></div>
+      
+      <!-- CAMPO: TIPO DE SOLICITUD -->
+      <div class="form-group">
+        <label>Tipo de solicitud *</label>
+        <div class="btn-toggle-group">
+          <input type="radio" id="tipoOrdinaria" name="tipoSolicitud" value="Ordinaria" checked onchange="actualizarRestriccionHoras()">
+          <label for="tipoOrdinaria" class="btn-toggle-label">Ordinaria</label>
+          
+          <input type="radio" id="tipoExtraordinaria" name="tipoSolicitud" value="Extraordinaria" onchange="actualizarRestriccionHoras()">
+          <label for="tipoExtraordinaria" class="btn-toggle-label">Extraordinaria</label>
+        </div>
+      </div>
+
       <div class="form-group"><label>Fecha y Hora de Inicio del Evento *</label><input type="datetime-local" id="fechaInicio" required onchange="validarFechas()"></div>
       <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
       
@@ -151,15 +188,8 @@
     let coordenadasActuales = "https://www.google.com/maps?q=20.6767,-103.3475";
 
     window.onload = function() {
-      // Autocompletado de datos del usuario y validación de rol
       aplicarDatosSesion();
-
-      var inicioInput = document.getElementById('fechaInicio');
-      var finInput = document.getElementById('fechaFin');
-      var ahora = new Date();
-      ahora.setHours(ahora.getHours() + 48);
-      inicioInput.min = meFormatearFechaIso(ahora);
-      finInput.min = meFormatearFechaIso(ahora);
+      actualizarRestriccionHoras();
       
       mapa = L.map('mapaId').setView([latBase, lonBase], 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
@@ -196,12 +226,38 @@
       }
     }
 
+    // Actualiza dinámicamente la regla de 48 horas según el Tipo de Solicitud
+    function actualizarRestriccionHoras() {
+      const esOrdinaria = document.getElementById('tipoOrdinaria').checked;
+      const inicioInput = document.getElementById('fechaInicio');
+      const finInput = document.getElementById('fechaFin');
+
+      if (esOrdinaria) {
+        var ahora = new Date();
+        ahora.setHours(ahora.getHours() + 48);
+        const minIso = meFormatearFechaIso(ahora);
+        inicioInput.min = minIso;
+        finInput.min = minIso;
+
+        if (inicioInput.value && inicioInput.value < minIso) {
+          inicioInput.value = "";
+          finInput.value = "";
+        }
+      } else {
+        // Extraordinaria: Sin límite de horas en el futuro
+        inicioInput.removeAttribute('min');
+        finInput.removeAttribute('min');
+      }
+    }
+
     function meFormatearFechaIso(d) {
       return d.toISOString().slice(0, 16);
     }
 
     function validarFechas() {
-      document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
+      if (document.getElementById('fechaInicio').value) {
+        document.getElementById('fechaFin').min = document.getElementById('fechaInicio').value;
+      }
     }
 
     function guardarCoordenadasFormulario(lat, lng) {
@@ -322,10 +378,13 @@
       var consumibles = [];
       document.querySelectorAll('.cons-item').forEach(input => { if(parseInt(input.value) > 0) consumibles.push({ nombre: input.dataset.nombre, cantidad: input.value }); });
 
+      const tipoSolicitudSeleccionado = document.querySelector('input[name="tipoSolicitud"]:checked').value;
+
       var datos = {
         nombreEvento: document.getElementById('nombreEvento').value,
         nombre: document.getElementById('nombre').value,
         correo: document.getElementById('correo').value,
+        tipoSolicitud: tipoSolicitudSeleccionado,
         fechaInicio: document.getElementById('fechaInicio').value,
         fechaFin: document.getElementById('fechaFin').value,
         lugar: coordenadasActuales,
@@ -339,6 +398,7 @@
           document.getElementById('mensajeAlerta').innerText = "¡Solicitud registrada con éxito!";
           document.getElementById('miAlerta').style.display = 'flex';
           document.getElementById('coffeeForm').reset();
+          actualizarRestriccionHoras();
           document.getElementById('btnEnviar').disabled = false;
           document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
         }).catch(err => {
