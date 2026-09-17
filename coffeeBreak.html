@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA -->
+  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA CON PERMISOS PARA ADMINISTRADOR, DIRECTOR Y USUARIO -->
   <script>
     (function() {
       const userSession = sessionStorage.getItem("userSession");
@@ -14,6 +14,16 @@
         const user = JSON.parse(userSession);
         if (!user || !user.correo) {
           throw new Error("Sesión inválida");
+        }
+
+        // Validación de Roles permitidos
+        const rolUsuario = user.rol ? user.rol.toString().toUpperCase() : "";
+        const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR", "USUARIO"];
+
+        if (!rolesPermitidos.includes(rolUsuario)) {
+          alert("Acceso denegado. No tienes permisos para acceder a la Solicitud de Coffee Break.");
+          window.location.href = "index.html";
+          return;
         }
       } catch (e) {
         sessionStorage.removeItem("userSession");
@@ -47,7 +57,7 @@
     input[readonly] { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
 
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
-    .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; }
+    .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; border-radius: 6px; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; table-layout: fixed; }
     th, td { border: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: middle; word-wrap: break-word; }
