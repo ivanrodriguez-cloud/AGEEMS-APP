@@ -31,10 +31,51 @@
     
     /* Sección Login */
     .login-container { text-align: center; padding: 20px 0; }
-    .user-info { display: flex; justify-content: space-between; align-items: center; background: #fff3e6; border: 1px solid var(--primary-orange); padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
-    .user-info span { font-weight: 600; color: #333; }
-    .btn-logout { background: transparent; color: var(--primary-pink); border: 1px solid var(--primary-pink); border-radius: 5px; padding: 4px 10px; cursor: pointer; font-size: 12px; font-family: 'Poppins', sans-serif; }
-    .btn-logout:hover { background: var(--primary-pink); color: #fff; }
+    
+    /* Barra de usuario superior transparente */
+    .user-info { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      background: transparent; 
+      border: none; 
+      padding: 0 0 15px 0; 
+      margin-bottom: 10px; 
+      font-size: 14px; 
+    }
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+    .user-name { 
+      font-weight: 600; 
+      color: #333; 
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .user-role { 
+      font-weight: 400; 
+      color: var(--neutral-gray); 
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    .btn-logout { 
+      background: transparent; 
+      color: var(--primary-pink); 
+      border: 1px solid var(--primary-pink); 
+      border-radius: 6px; 
+      padding: 6px 12px; 
+      cursor: pointer; 
+      font-size: 12px; 
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .btn-logout:hover { 
+      background: var(--primary-pink); 
+      color: #fff; 
+    }
 
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
     .btn-orange { background-color: var(--primary-orange); }
@@ -51,6 +92,16 @@
 <body>
 
   <div class="container">
+    
+    <!-- BARRA DE INFORMACIÓN DE USUARIO LOGUEADO (ARRIBA DEL LOGO) -->
+    <div id="userInfoBar" class="user-info" style="display: none;">
+      <div class="user-details">
+        <span id="userName" class="user-name">Cargando...</span>
+        <span id="userRole" class="user-role">ROL</span>
+      </div>
+      <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+
     <div class="header">
       <img src="icono.png" alt="Logo SEMS">
       <h1>SEMS - Gestión Estratégica</h1>
@@ -69,14 +120,6 @@
       <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
       
       <p id="mensajeLogin" style="color: red; margin-top: 15px; font-size: 14px;"></p>
-    </div>
-
-    <!-- BARRA DE INFORMACIÓN DE USUARIO LOGUEADO -->
-    <div id="userInfoBar" class="user-info" style="display: none;">
-      <div>
-        <span id="userName">Cargando...</span> (<span id="userRole">ROL</span>)
-      </div>
-      <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
 
     <!-- TABLERO PRINCIPAL DE BOTONES -->
