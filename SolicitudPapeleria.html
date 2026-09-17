@@ -1,6 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA -->
+  <script>
+    (function() {
+      const userSession = sessionStorage.getItem("userSession");
+      if (!userSession) {
+        alert("Acceso denegado. Debes iniciar sesión para acceder a esta sección.");
+        window.location.href = "index.html";
+        return;
+      }
+      try {
+        const user = JSON.parse(userSession);
+        if (!user || !user.correo) {
+          throw new Error("Sesión inválida");
+        }
+      } catch (e) {
+        sessionStorage.removeItem("userSession");
+        window.location.href = "index.html";
+      }
+    })();
+  </script>
+
   <meta charset="utf-8">
   <title>Solicitud de Papelería</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -56,6 +77,14 @@
       font-family: 'Poppins', sans-serif; 
       box-sizing: border-box; 
     }
+
+    /* Estilo para campos bloqueados */
+    input[readonly] { 
+      background-color: #f0f0f0; 
+      color: #666; 
+      cursor: not-allowed; 
+    }
+
     .btn { 
       background-color: var(--primary-pink); 
       color: white; 
@@ -200,8 +229,30 @@
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzGz3e1GHZFvFwCbQWtCn6nB1UDanMoHq6krOTxVMX7D6MmlSUff5N7LJG1np2e9vw/exec";
 
     window.onload = function() {
+      aplicarDatosSesion();
       cargarProductos();
     };
+
+    function aplicarDatosSesion() {
+      const userSession = sessionStorage.getItem("userSession");
+      if (userSession) {
+        const user = JSON.parse(userSession);
+        const inputNombre = document.getElementById('nombre');
+        const inputCorreo = document.getElementById('correo');
+
+        if (inputNombre && inputCorreo) {
+          inputNombre.value = user.nombre || "";
+          inputCorreo.value = user.correo || "";
+
+          // Restricción: Si NO es ADMINISTRADOR, los campos son de solo lectura
+          const esAdmin = user.rol && user.rol.toUpperCase() === "ADMINISTRADOR";
+          if (!esAdmin) {
+            inputNombre.readOnly = true;
+            inputCorreo.readOnly = true;
+          }
+        }
+      }
+    }
 
     function cargarProductos() {
       fetch(`${URL_SCRIPT}?pestana=Lista%20de%20Papeler%C3%ADa&v=${Date.now()}`)
@@ -225,21 +276,18 @@
 
       var productosDisponibles = [];
 
-      // Evaluar la disponibilidad condicional según la unidad de medida de cada artículo
       data.forEach(item => {
         var stock = Number(item.stock) || 0;
         var unidadesPorPaquete = Number(item.unidadesPorPaquete) || 1;
         var unidadMedida = item.unidadMedida ? item.unidadMedida.toString().toUpperCase() : "PIEZA";
         var disp = 0;
 
-        // Condicional oculto: Si es PAQUETE = Stock / Unidades por paquete; si es PIEZA = Stock
         if (unidadMedida === "PAQUETE") {
           disp = unidadesPorPaquete > 0 ? Math.floor(stock / unidadesPorPaquete) : 0;
         } else {
           disp = stock;
         }
 
-        // Mostrar solo artículos que tengan disponibilidad mayor a 0
         if (disp > 0) {
           productosDisponibles.push({
             codigo: item.codigo,
@@ -282,13 +330,12 @@
           var unidad = input.dataset.unidad;
           var unidadesPorPaquete = parseInt(input.dataset.unidadesPaquete) || 1;
           
-          // Convertir a total de piezas si la unidad de medida es PAQUETE
           var totalPiezas = (unidad === "PAQUETE") ? (val * unidadesPorPaquete) : val;
 
           productos.push({ 
             codigo: input.dataset.codigo,
             nombre: input.dataset.nombre, 
-            cantidad: totalPiezas // Se envía directamente la cantidad calculada en piezas
+            cantidad: totalPiezas
           }); 
         }
       });
