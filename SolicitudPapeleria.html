@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA -->
+  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA CON PERMISOS PARA ADMINISTRADOR, DIRECTOR Y USUARIO -->
   <script>
     (function() {
       const userSession = sessionStorage.getItem("userSession");
@@ -14,6 +14,16 @@
         const user = JSON.parse(userSession);
         if (!user || !user.correo) {
           throw new Error("Sesión inválida");
+        }
+
+        // Validación de Roles permitidos
+        const rolUsuario = user.rol ? user.rol.toString().toUpperCase() : "";
+        const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR", "USUARIO"];
+
+        if (!rolesPermitidos.includes(rolUsuario)) {
+          alert("Acceso denegado. No tienes permisos para acceder a la Solicitud de Papelería.");
+          window.location.href = "index.html";
+          return;
         }
       } catch (e) {
         sessionStorage.removeItem("userSession");
