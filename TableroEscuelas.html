@@ -18,7 +18,7 @@
 
         // Validación de Roles permitidos
         const rolUsuario = user.rol ? user.rol.toString().toUpperCase() : "";
-        const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR", "USUARIO"];
+        const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR"];
 
         if (!rolesPermitidos.includes(rolUsuario)) {
           alert("Acceso denegado. No tienes permisos para acceder al Tablero de Control y Estadística.");
