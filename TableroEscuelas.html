@@ -91,7 +91,7 @@
 
   <!-- Lógica JavaScript de Integración Backend API -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RiKNKZfit_Xt9cA1-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RikNKZfit_Xt9cAl-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
 
     let datosConsolidados = [];
     let mapaLeaflet = null;
@@ -124,29 +124,36 @@
     }
 
     function obtenerDatos() {
-      fetch(API_URL + "?action=getDashboardData")
-        .then(res => res.json())
-        .then(res => {
-          if (res.success) {
-            datosConsolidados = res.general || [];
-            renderizarTabla(datosConsolidados);
-            inicializarMapa(res.estadistica || []);
-            
-            const badge = document.getElementById("status-badge");
-            badge.textContent = "Conectado";
-            badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full";
-          } else {
-            alert("Error del servidor: " + res.error);
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          const badge = document.getElementById("status-badge");
-          badge.textContent = "Error de conexión";
-          badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full";
-        });
-    }
+  const badge = document.getElementById("status-badge");
+  badge.textContent = "Cargando datos...";
+  badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full";
 
+  fetch(API_URL + "?action=getDashboardData", {
+    method: "GET",
+    redirect: "follow" // IMPORTANTE: Permite a fetch seguir la redirección de Google
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Respuesta de red no ok");
+      return res.json();
+    })
+    .then(res => {
+      if (res.success) {
+        datosConsolidados = res.general || [];
+        renderizarTabla(datosConsolidados);
+        inicializarMapa(res.estadistica || []);
+        
+        badge.textContent = "Conectado";
+        badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full";
+      } else {
+        throw new Error(res.error || "Error en la estructura de datos");
+      }
+    })
+    .catch(err => {
+      console.error("Error detallado:", err);
+      badge.textContent = "Error de conexión";
+      badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full";
+    });
+}
     function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
       if (!datos || datos.length === 0) {
