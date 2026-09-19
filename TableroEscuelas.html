@@ -19,10 +19,13 @@
 
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
-  <!-- Encabezado / Header -->
-  <header class="bg-slate-900 text-white shadow-md p-4 flex justify-between items-center">
+  <!-- Encabezado / Header con color personalizdo #C6004C -->
+  <header class="bg-[#C6004C] text-white shadow-md p-4 flex justify-between items-center">
     <div class="flex items-center space-x-3">
-      <div class="bg-blue-600 text-white font-bold rounded-lg p-2 text-sm">SEMS - Gestión Estratégica </div>
+      <!-- Badge SEMS con color personalizado #FF8300 -->
+      <div class="bg-[#FF8300] text-white font-bold rounded-lg p-2 text-sm shadow-sm">
+        SEMS - Gestión Estratégica
+      </div>
       <h1 class="text-xl font-bold tracking-wide">Tablero de Control y Estadística</h1>
     </div>
     <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full">
@@ -36,10 +39,10 @@
     <!-- Barra Lateral de Navegación -->
     <aside class="w-64 bg-white border-r border-slate-200 p-4 space-y-2">
       <nav class="space-y-1">
-        <button onclick="cambiarPestana('general')" id="btn-tab-general" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-blue-50 text-blue-700">
+        <button onclick="cambiarPestana('general')" id="btn-tab-general" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white">
           📊 Tablero General
         </button>
-        <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-50">
+        <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100">
           🗺️ Estadística y Mapa SEMS
         </button>
       </nav>
@@ -52,7 +55,7 @@
       <section id="vista-general" class="space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
           <h2 class="text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
-          <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
@@ -109,13 +112,15 @@
       if (pestana === "general") {
         vGeneral.classList.remove("hidden");
         vEstadistica.classList.add("hidden");
-        btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-blue-50 text-blue-700";
-        btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-50";
+        // Estilo activo con fondo #C6004C y texto blanco
+        btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white";
+        btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100";
       } else {
         vGeneral.classList.add("hidden");
         vEstadistica.classList.remove("hidden");
-        btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-blue-50 text-blue-700";
-        btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-50";
+        // Estilo activo con fondo #C6004C y texto blanco
+        btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white";
+        btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100";
         
         if (mapaLeaflet) {
           setTimeout(() => mapaLeaflet.invalidateSize(), 200);
@@ -124,36 +129,37 @@
     }
 
     function obtenerDatos() {
-  const badge = document.getElementById("status-badge");
-  badge.textContent = "Cargando datos...";
-  badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full";
+      const badge = document.getElementById("status-badge");
+      badge.textContent = "Cargando datos...";
+      badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full";
 
-  fetch(API_URL + "?action=getDashboardData", {
-    method: "GET",
-    redirect: "follow" // IMPORTANTE: Permite a fetch seguir la redirección de Google
-  })
-    .then(res => {
-      if (!res.ok) throw new Error("Respuesta de red no ok");
-      return res.json();
-    })
-    .then(res => {
-      if (res.success) {
-        datosConsolidados = res.general || [];
-        renderizarTabla(datosConsolidados);
-        inicializarMapa(res.estadistica || []);
-        
-        badge.textContent = "Conectado";
-        badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full";
-      } else {
-        throw new Error(res.error || "Error en la estructura de datos");
-      }
-    })
-    .catch(err => {
-      console.error("Error detallado:", err);
-      badge.textContent = "Error de conexión";
-      badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full";
-    });
-}
+      fetch(API_URL + "?action=getDashboardData", {
+        method: "GET",
+        redirect: "follow"
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Respuesta de red no ok");
+          return res.json();
+        })
+        .then(res => {
+          if (res.success) {
+            datosConsolidados = res.general || [];
+            renderizarTabla(datosConsolidados);
+            inicializarMapa(res.estadistica || []);
+            
+            badge.textContent = "Conectado";
+            badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full";
+          } else {
+            throw new Error(res.error || "Error en la estructura de datos");
+          }
+        })
+        .catch(err => {
+          console.error("Error detallado:", err);
+          badge.textContent = "Error de conexión";
+          badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full";
+        });
+    }
+
     function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
       if (!datos || datos.length === 0) {
@@ -163,7 +169,7 @@
 
       tbody.innerHTML = datos.map(item => {
         const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
-        const nombre = item["NOMBRE ESCUELA"] ||item["NOMBRE DEL PLANTEL"]|| item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
+        const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
         const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
 
         return `
@@ -196,7 +202,7 @@
       puntos.forEach(pt => {
         let popup = pt.tipo === "Escuela_2025-2026" ? `
           <div class="font-sans text-xs space-y-1">
-            <h4 class="font-bold text-sm text-blue-600">${pt.nombreEscuela || ''}</h4>
+            <h4 class="font-bold text-sm text-[#C6004C]">${pt.nombreEscuela || ''}</h4>
             <p><b>Clave:</b> ${pt.claveEscuela || ''} | <b>Turno:</b> ${pt.nombreTurno || ''}</p>
             <p><b>Municipio:</b> ${pt.nomun || ''}</p>
             <hr/>
@@ -205,7 +211,7 @@
           </div>
         ` : `
           <div class="font-sans text-xs space-y-1">
-            <h4 class="font-bold text-sm text-amber-600">${pt.nombreEscuela || ''}</h4>
+            <h4 class="font-bold text-sm text-[#FF8300]">${pt.nombreEscuela || ''}</h4>
             <p><b>CCT:</b> ${pt.claveCct || ''} | <b>Turno:</b> ${pt.nombreTurno || ''}</p>
             <p><b>Municipio:</b> ${pt.nomMun || ''}</p>
             <hr/>
