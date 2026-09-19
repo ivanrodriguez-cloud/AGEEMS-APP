@@ -32,9 +32,7 @@
     })();
   </script>
 
-
-
- <!-- Inicio de creación del tablero -->
+  <!-- Inicio de creación del tablero -->
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tablero de Control SEMS</title>
@@ -48,13 +46,57 @@
 
   <style>
     #map { height: 600px; width: 100%; }
+
+    /* Estilos personalizados para el contenedor del botón de regreso */
+    .btn-container-wrapper {
+      background: #ffffff; 
+      width: 100%; 
+      max-width: 700px; 
+      padding: 25px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+      box-sizing: border-box; 
+    }
+
+    @media (max-width: 640px) {
+      .btn-container-wrapper {
+        padding: 12px 8px;
+      }
+    }
+
+    .btn-secundario {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background-color 0.2s, color 0.2s;
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-secundario:hover {
+      background-color: #e2e8f0;
+      color: #0f172a;
+    }
   </style>
 </head>
 
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
-  <!-- Encabezado / Header con color personalizdo #C6004C -->
-  <header class="bg-[#C6004C] text-white shadow-md p-4 flex justify-between items-center">
+  <!-- Sección superior con el contenedor personalizado para Volver al Menú -->
+  <div class="w-full flex justify-center p-4 pb-0">
+    <div class="btn-container-wrapper flex items-center justify-between">
+      <a href="index.html" class="btn-secundario">← Volver al Menú</a>
+      <span class="text-xs text-slate-400 font-medium hidden sm:inline">Navegación del Sistema</span>
+    </div>
+  </div>
+
+  <!-- Encabezado / Header con color personalizado #C6004C -->
+  <header class="bg-[#C6004C] text-white shadow-md p-4 mt-4 flex justify-between items-center">
     <div class="flex items-center space-x-3">
       <!-- Badge SEMS con color personalizado #FF8300 -->
       <div class="bg-[#FF8300] text-white font-bold rounded-lg p-2 text-sm shadow-sm">
@@ -62,6 +104,7 @@
       </div>
       <h1 class="text-xl font-bold tracking-wide">Tablero de Control y Estadística</h1>
     </div>
+
     <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full">
       Cargando datos...
     </div>
@@ -146,13 +189,11 @@
       if (pestana === "general") {
         vGeneral.classList.remove("hidden");
         vEstadistica.classList.add("hidden");
-        // Estilo activo con fondo #C6004C y texto blanco
         btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white";
         btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100";
       } else {
         vGeneral.classList.add("hidden");
         vEstadistica.classList.remove("hidden");
-        // Estilo activo con fondo #C6004C y texto blanco
         btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white";
         btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100";
         
