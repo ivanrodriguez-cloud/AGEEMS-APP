@@ -163,7 +163,7 @@
 
       tbody.innerHTML = datos.map(item => {
         const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
-        const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
+        const nombre = item["NOMBRE ESCUELA"] ||item["NOMBRE DEL PLANTEL"]|| item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
         const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
 
         return `
