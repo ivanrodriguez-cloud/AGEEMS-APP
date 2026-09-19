@@ -143,6 +143,9 @@
       <button id="btnPaginasInteres" class="btn btn-orange" style="display: none;" onclick="mostrarPaginasInteres()">
         Páginas de interés
       </button>
+      <button id="btnTableroEscuelas" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='TableroEscuelas.html'">
+        Tablero de Control y Estadística
+      </button>
     </div>
 
     <!-- SECCIÓN DE PÁGINAS DE INTERÉS -->
@@ -223,6 +226,7 @@
       document.getElementById('btnCoffeeBreak').style.display = 'none';
       document.getElementById('btnOrganigrama').style.display = 'none';
       document.getElementById('btnPaginasInteres').style.display = 'none';
+      document.getElementById('btnTableroEscuela').style.display = 'none';
 
       if (rolNormalizado === "ADMINISTRADOR") {
         // ADMINISTRADOR: Visualiza todos los botones
@@ -232,12 +236,23 @@
         document.getElementById('btnCoffeeBreak').style.display = 'block';
         document.getElementById('btnOrganigrama').style.display = 'block';
         document.getElementById('btnPaginasInteres').style.display = 'block';
-      } else if (rolNormalizado === "USUARIO" || rolNormalizado === "DIRECTOR") {
+        document.getElementById('btnTableroEscuela').style.display = 'block';
+
+      } else if (rolNormalizado === "DIRECTOR") {
         // USUARIO y DIRECTOR: Solicitud de Papelería, Solicitud de Coffee Break, Organigrama y Páginas de interés
         document.getElementById('btnSolicitudPapeleria').style.display = 'block';
         document.getElementById('btnCoffeeBreak').style.display = 'block';
         document.getElementById('btnOrganigrama').style.display = 'block';
         document.getElementById('btnPaginasInteres').style.display = 'block';
+        document.getElementById('btnTableroEscuela').style.display = 'block';
+ 
+      } else if (rolNormalizado === "USUARIO") {
+        // USUARIO y DIRECTOR: Solicitud de Papelería, Solicitud de Coffee Break, Organigrama y Páginas de interés
+        document.getElementById('btnSolicitudPapeleria').style.display = 'block';
+        document.getElementById('btnCoffeeBreak').style.display = 'block';
+        document.getElementById('btnOrganigrama').style.display = 'block';
+        document.getElementById('btnPaginasInteres').style.display = 'block';
+        
       } else if (rolNormalizado === "VISUALIZADOR") {
         // VISUALIZADOR: Organigrama Interactivo y Páginas de interés
         document.getElementById('btnOrganigrama').style.display = 'block';
