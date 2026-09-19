@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA CON PERMISOS PARA ADMINISTRADOR, DIRECTOR Y USUARIO -->
+  <script>
+    (function() {
+      const userSession = sessionStorage.getItem("userSession");
+      if (!userSession) {
+        alert("Acceso denegado. Debes iniciar sesión para acceder a esta sección.");
+        window.location.href = "index.html";
+        return;
+      }
+      try {
+        const user = JSON.parse(userSession);
+        if (!user || !user.correo) {
+          throw new Error("Sesión inválida");
+        }
+
+        // Validación de Roles permitidos
+        const rolUsuario = user.rol ? user.rol.toString().toUpperCase() : "";
+        const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR", "USUARIO"];
+
+        if (!rolesPermitidos.includes(rolUsuario)) {
+          alert("Acceso denegado. No tienes permisos para acceder al Tablero de Control y Estadística.");
+          window.location.href = "index.html";
+          return;
+        }
+      } catch (e) {
+        sessionStorage.removeItem("userSession");
+        window.location.href = "index.html";
+      }
+    })();
+  </script>
+
+
+
+
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tablero de Control SEMS</title>
