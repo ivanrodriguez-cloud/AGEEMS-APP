@@ -140,7 +140,7 @@
       <button id="btnOrganigrama" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='organigrama.html'">
         Organigrama Interactivo
       </button>
-      <button id="btnPaginasInteres" class="btn btn-orange" style="display: none;" onclick="mostrarPaginasInteres()">
+      <button id="btnPaginasInteres" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="mostrarPaginasInteres()">
         Páginas de interés
       </button>
       <button id="btnTableroEscuelas" class="btn btn-orange" style="margin-bottom: 15px; display: none;" onclick="location.href='TableroEscuelas.html'">
@@ -226,7 +226,7 @@
       document.getElementById('btnCoffeeBreak').style.display = 'none';
       document.getElementById('btnOrganigrama').style.display = 'none';
       document.getElementById('btnPaginasInteres').style.display = 'none';
-      document.getElementById('btnTableroEscuela').style.display = 'none';
+      document.getElementById('btnTableroEscuelas').style.display = 'none';
 
       if (rolNormalizado === "ADMINISTRADOR") {
         // ADMINISTRADOR: Visualiza todos los botones
@@ -236,7 +236,7 @@
         document.getElementById('btnCoffeeBreak').style.display = 'block';
         document.getElementById('btnOrganigrama').style.display = 'block';
         document.getElementById('btnPaginasInteres').style.display = 'block';
-        document.getElementById('btnTableroEscuela').style.display = 'block';
+        document.getElementById('btnTableroEscuelas').style.display = 'block';
 
       } else if (rolNormalizado === "DIRECTOR") {
         // DIRECTOR: Solicitud de Papelería, Solicitud de Coffee Break, Organigrama, Páginas de interés y Tablero
@@ -244,7 +244,7 @@
         document.getElementById('btnCoffeeBreak').style.display = 'block';
         document.getElementById('btnOrganigrama').style.display = 'block';
         document.getElementById('btnPaginasInteres').style.display = 'block';
-        document.getElementById('btnTableroEscuela').style.display = 'block';
+        document.getElementById('btnTableroEscuelas').style.display = 'block';
  
       } else if (rolNormalizado === "USUARIO") {
         // USUARIO: Solicitud de Papelería, Solicitud de Coffee Break, Organigrama y Páginas de interés
