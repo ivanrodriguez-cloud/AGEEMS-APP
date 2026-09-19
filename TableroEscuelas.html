@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA CON PERMISOS PARA ADMINISTRADOR, DIRECTOR Y USUARIO -->
+  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA CON PERMISOS PARA ADMINISTRADOR Y DIRECTOR -->
   <script>
     (function() {
       const userSession = sessionStorage.getItem("userSession");
@@ -46,63 +46,25 @@
 
   <style>
     #map { height: 600px; width: 100%; }
-
-    /* Estilos personalizados para el contenedor del botón de regreso */
-    .btn-container-wrapper {
-      background: #ffffff; 
-      width: 100%; 
-      max-width: 700px; 
-      padding: 25px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-      box-sizing: border-box; 
-    }
-
-    @media (max-width: 640px) {
-      .btn-container-wrapper {
-        padding: 12px 8px;
-      }
-    }
-
-    .btn-secundario {
-      display: inline-flex;
-      align-items: center;
-      padding: 8px 16px;
-      background-color: #f1f5f9;
-      color: #334155;
-      font-weight: 600;
-      font-size: 0.875rem;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: background-color 0.2s, color 0.2s;
-      border: 1px solid #cbd5e1;
-    }
-
-    .btn-secundario:hover {
-      background-color: #e2e8f0;
-      color: #0f172a;
-    }
   </style>
 </head>
 
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
-  <!-- Sección superior con el contenedor personalizado para Volver al Menú -->
-  <div class="w-full flex justify-center p-4 pb-0">
-    <div class="btn-container-wrapper flex items-center justify-between">
-      <a href="index.html" class="btn-secundario">← Volver al Menú</a>
-      <span class="text-xs text-slate-400 font-medium hidden sm:inline">Navegación del Sistema</span>
-    </div>
-  </div>
-
   <!-- Encabezado / Header con color personalizado #C6004C -->
-  <header class="bg-[#C6004C] text-white shadow-md p-4 mt-4 flex justify-between items-center">
+  <header class="bg-[#C6004C] text-white shadow-md p-4 flex justify-between items-center">
     <div class="flex items-center space-x-3">
+      <!-- Botón Volver al Menú al lado de SEMS -->
+      <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-2 rounded-lg text-sm transition-all shadow-sm flex items-center">
+        ← Volver al Menú
+      </a>
+
       <!-- Badge SEMS con color personalizado #FF8300 -->
       <div class="bg-[#FF8300] text-white font-bold rounded-lg p-2 text-sm shadow-sm">
         SEMS - Gestión Estratégica
       </div>
-      <h1 class="text-xl font-bold tracking-wide">Tablero de Control y Estadística</h1>
+      
+      <h1 class="text-xl font-bold tracking-wide hidden md:block">Tablero de Control y Estadística</h1>
     </div>
 
     <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full">
