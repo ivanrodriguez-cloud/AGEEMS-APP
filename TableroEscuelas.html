@@ -16,7 +16,6 @@
           throw new Error("Sesión inválida");
         }
 
-        // Validación de Roles permitidos
         const rolUsuario = user.rol ? user.rol.toString().toUpperCase() : "";
         const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR"];
 
@@ -32,7 +31,6 @@
     })();
   </script>
 
-  <!-- Inicio de creación del tablero -->
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tablero de Control SEMS</title>
@@ -42,59 +40,49 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS para los estilos de la interfaz -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Leaflet.js para la cartografía y mapas -->
+  <!-- Leaflet.js -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    /* Aplicar tipografía Poppins de manera general */
     body {
       font-family: 'Poppins', sans-serif;
     }
-
     #map { height: 600px; width: 100%; }
   </style>
 </head>
 
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col w-full overflow-x-hidden">
 
-  <!-- Encabezado / Header Adaptativo sin desbordamiento -->
+  <!-- Encabezado / Header -->
   <header class="bg-[#C6004C] text-white shadow-md p-3 sm:p-4 w-full flex flex-col gap-2">
-    
-    <!-- Primera fila: Botón, Badge y Estatus -->
     <div class="flex items-center justify-between w-full flex-wrap gap-2">
       <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <!-- Botón Volver al Menú -->
         <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all shadow-sm flex items-center whitespace-nowrap">
           ← Volver al Menú
         </a>
-
-        <!-- Badge SEMS -->
         <div class="bg-[#FF8300] text-white font-bold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm shadow-sm whitespace-nowrap">
           SEMS - Gestión Estratégica
         </div>
       </div>
 
-      <!-- Status Badge -->
       <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap">
         Cargando datos...
       </div>
     </div>
 
-    <!-- Segunda fila: Título del Tablero visible en todos los dispositivos -->
     <div>
       <h1 class="text-base sm:text-xl font-bold tracking-wide mt-1">Tablero de Control y Estadística</h1>
     </div>
-
   </header>
 
-  <!-- Contenido principal con barra lateral y pestañas -->
+  <!-- Contenido Principal -->
   <div class="flex flex-col md:flex-row flex-1 w-full max-w-full overflow-hidden">
     
-    <!-- Barra Lateral de Navegación -->
+    <!-- Sidebar -->
     <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
       <nav class="flex md:flex-col gap-2">
         <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white">
@@ -106,19 +94,18 @@
       </nav>
     </aside>
 
-    <!-- Área de Contenido -->
+    <!-- Áreas de Vista -->
     <main class="flex-1 p-3 sm:p-6 min-w-0">
 
-      <!-- Pestaña 1: Tablero General (Tabla de Infraestructura) -->
+      <!-- Pestaña 1: Tablero General -->
       <section id="vista-general" class="space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
           <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
         </div>
 
-        <!-- Contenedor con scroll horizontal exclusivo para la tabla -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
-          <table class="w-full text-left border-collapse text-sm min-w-[700px]">
+          <table class="w-full text-left border-collapse text-sm min-w-[750px]">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
               <tr>
                 <th class="p-3">Rubro</th>
@@ -126,18 +113,19 @@
                 <th class="p-3">Escuela / Plantel</th>
                 <th class="p-3">Descripción / Detalle</th>
                 <th class="p-3">Estatus del Proceso</th>
+                <th class="p-3 text-center">Detalles</th>
               </tr>
             </thead>
             <tbody id="tabla-cuerpo" class="divide-y divide-slate-100">
               <tr>
-                <td colspan="5" class="p-6 text-center text-slate-400">Cargando registros desde Google Sheets...</td>
+                <td colspan="6" class="p-6 text-center text-slate-400">Cargando registros desde Google Sheets...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- Pestaña 2: Estadística SEMS (Mapa Interactivo) -->
+      <!-- Pestaña 2: Mapa -->
       <section id="vista-estadistica" class="hidden space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles y Capacitación</h2>
@@ -152,7 +140,68 @@
     </main>
   </div>
 
-  <!-- Lógica JavaScript de Integración Backend API -->
+  <!-- MODAL / TOGGLETIP DE DETALLES (FONDO DIFUMINADO) -->
+  <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all p-6 relative">
+      
+      <!-- Botón para cerrar -->
+      <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- TÍTULO DEL TOGGLETIP -->
+      <div class="border-b border-slate-100 pb-4 pr-8">
+        <div id="modal-rubro-badge" class="mb-2"></div>
+        <h3 id="modal-escuela" class="text-lg font-bold text-slate-900 leading-snug"></h3>
+        <p id="modal-cct" class="text-xs font-mono text-slate-500 mt-0.5"></p>
+      </div>
+
+      <!-- CUERPO PRINCIPAL -->
+      <div class="py-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 rounded-xl p-3 my-4 border border-slate-100 text-xs">
+        <div>
+          <span class="block font-semibold text-slate-400 uppercase text-[10px]">Clave del Inmueble</span>
+          <span id="modal-clave-inmueble" class="font-medium text-slate-800"></span>
+        </div>
+        <div>
+          <span class="block font-semibold text-slate-400 uppercase text-[10px]">Municipio</span>
+          <span id="modal-municipio" class="font-medium text-slate-800"></span>
+        </div>
+        <div>
+          <span class="block font-semibold text-slate-400 uppercase text-[10px]">OPD</span>
+          <span id="modal-opd" class="font-medium text-slate-800"></span>
+        </div>
+      </div>
+
+      <!-- DETALLES SECUNDARIOS EN LETRA MÁS PEQUEÑA -->
+      <div class="space-y-3 text-xs border-t border-slate-100 pt-3">
+        <div>
+          <span class="font-semibold text-slate-500 block text-[11px]">Descripción / Detalle:</span>
+          <p id="modal-descripcion" class="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 mt-1 leading-relaxed text-[11px]"></p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+          <div><strong class="text-slate-500">Responsable:</strong> <span id="modal-responsable" class="text-slate-800"></span></div>
+          <div><strong class="text-slate-500">Fecha 1ª Solicitud:</strong> <span id="modal-fecha" class="text-slate-800"></span></div>
+          <div><strong class="text-slate-500">Fondo:</strong> <span id="modal-fondo" class="text-slate-800"></span></div>
+          <div><strong class="text-slate-500">ID Interno:</strong> <span id="modal-id-interno" class="text-slate-800 font-mono"></span></div>
+          <div class="col-span-1 sm:col-span-2"><strong class="text-slate-500">Oficios:</strong> <span id="modal-oficios" class="text-slate-800"></span></div>
+          <div><strong class="text-slate-500">Monto Asignado:</strong> <span id="modal-monto-asignado" class="text-emerald-700 font-semibold"></span></div>
+          <div><strong class="text-slate-500">Monto Ejercido:</strong> <span id="modal-monto-ejercido" class="text-blue-700 font-semibold"></span></div>
+        </div>
+      </div>
+
+      <!-- BOTÓN DE EXPEDIENTE INTERNO -->
+      <div class="mt-6 pt-3 border-t border-slate-100 flex justify-end">
+        <a id="btn-modal-expediente" href="#" target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#C6004C] hover:bg-[#a0003d] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-md">
+          📁 Abrir Expediente Interno
+        </a>
+      </div>
+
+    </div>
+  </div>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RikNKZfit_Xt9cAl-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
 
@@ -218,34 +267,20 @@
         });
     }
 
-    // Función auxiliar para formatear la celda del Rubro
     function obtenerBadgeRubro(rubro) {
       const rubroNormalizado = (rubro || '').toString().trim().toLowerCase();
 
       if (rubroNormalizado.includes('equipamiento')) {
-        return `
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF8300]/15 text-[#FF8300]">
-            <span class="text-[10px]">●</span> Equipamiento
-          </span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF8300]/15 text-[#FF8300]"><span class="text-[10px]">●</span> Equipamiento</span>`;
       } else if (rubroNormalizado.includes('obra')) {
-        return `
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#C6004C]/15 text-[#C6004C]">
-            <span class="text-[10px]">●</span> Obra
-          </span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#C6004C]/15 text-[#C6004C]"><span class="text-[10px]">●</span> Obra</span>`;
       } else if (rubroNormalizado.includes('evento')) {
-        return `
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#465055]/15 text-[#465055]">
-            <span class="text-[10px]">●</span> Eventos
-          </span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#465055]/15 text-[#465055]"><span class="text-[10px]">●</span> Eventos</span>`;
       } else {
-        return `
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
-            <span class="text-[10px]">●</span> ${rubro || 'General'}
-          </span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700"><span class="text-[10px]">●</span> ${rubro || 'General'}</span>`;
       }
     }
 
-    // Función auxiliar para formatear los Badges de Estatus del Proceso
     function obtenerBadgeEstatus(estatus) {
       const estNorm = (estatus || '').toString().trim().toUpperCase();
 
@@ -262,24 +297,35 @@
       }
     }
 
+    // Buscar una clave dentro de un objeto con comparaciones flexibles de nombres
+    function obtenerPropiedadFlexible(obj, posiblesNombres) {
+      const keys = Object.keys(obj);
+      for (let pos of posiblesNombres) {
+        const normPos = pos.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        const matchKey = keys.find(k => k.toUpperCase().replace(/[^A-Z0-9]/g, "") === normPos);
+        if (matchKey && obj[matchKey] !== undefined && obj[matchKey] !== "") {
+          return obj[matchKey];
+        }
+      }
+      return "N/A";
+    }
+
     function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
       
-      // Filtrar registros omitiendo los que tengan CCT nula, vacía o "null"
       const datosValidos = datos.filter(item => {
         const cctRaw = item.CCT ?? item["CLAVE ESCUELA"] ?? item.CLAVECCT;
         if (!cctRaw) return false;
-        
         const cctTexto = String(cctRaw).trim().toLowerCase();
         return cctTexto !== "" && cctTexto !== "null" && cctTexto !== "n/a";
       });
 
       if (!datosValidos || datosValidos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No se encontraron registros válidos con CCT.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No se encontraron registros válidos con CCT.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = datosValidos.map(item => {
+      tbody.innerHTML = datosValidos.map((item, index) => {
         const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT;
         const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
         const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
@@ -289,16 +335,87 @@
         const badgeEstatus = obtenerBadgeEstatus(estatusRaw);
 
         return `
-          <tr class="hover:bg-slate-50">
+          <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-3">${badgeRubro}</td>
             <td class="p-3 font-mono text-slate-600">${cct}</td>
             <td class="p-3 font-medium text-slate-900">${nombre}</td>
             <td class="p-3 text-slate-500">${detalle}</td>
             <td class="p-3">${badgeEstatus}</td>
+            <td class="p-3 text-center">
+              <button onclick="abrirModalDetalles(${index})" title="Ver detalles completos" class="p-2 text-slate-500 hover:text-[#C6004C] bg-slate-100 hover:bg-rose-50 rounded-lg transition-all duration-150 inline-flex items-center justify-center">
+                <!-- SVG Icono Ojo -->
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </td>
           </tr>
         `;
       }).join("");
     }
+
+    function abrirModalDetalles(index) {
+      // Usar los registros válidos filtrados
+      const datosValidos = datosConsolidados.filter(item => {
+        const cctRaw = item.CCT ?? item["CLAVE ESCUELA"] ?? item.CLAVECCT;
+        if (!cctRaw) return false;
+        const cctTexto = String(cctRaw).trim().toLowerCase();
+        return cctTexto !== "" && cctTexto !== "null" && cctTexto !== "n/a";
+      });
+
+      const item = datosValidos[index];
+      if (!item) return;
+
+      // Asignar datos al modal
+      document.getElementById("modal-rubro-badge").innerHTML = obtenerBadgeRubro(item.RUBRO_PROYECTO);
+      document.getElementById("modal-escuela").textContent = item["NOMBRE ESCUELA"] || item.ESCUELA || "N/A";
+      document.getElementById("modal-cct").textContent = "CCT: " + (item.CCT || "N/A");
+
+      document.getElementById("modal-clave-inmueble").textContent = obtenerPropiedadFlexible(item, ["CLAVE DEL INMUEBLE", "CLAVE_INMUEBLE", "INMUEBLE"]);
+      document.getElementById("modal-municipio").textContent = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]);
+      document.getElementById("modal-opd").textContent = obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]);
+
+      document.getElementById("modal-descripcion").textContent = item.DESCRIPCION || "Sin descripción disponible.";
+      document.getElementById("modal-responsable").textContent = obtenerPropiedadFlexible(item, ["RESPONSABLE", "RESPONSABLE DE PROYECTO"]);
+      document.getElementById("modal-fecha").textContent = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+      document.getElementById("modal-fondo").textContent = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
+      document.getElementById("modal-id-interno").textContent = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
+      document.getElementById("modal-oficios").textContent = obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
+
+      // Formato para montos
+      const montoAsig = obtenerPropiedadFlexible(item, ["MONTO ASIGNADO", "MONTO_ASIGNADO"]);
+      const montoEjec = obtenerPropiedadFlexible(item, ["MONTO EJERCIDO", "MONTO_EJERCIDO"]);
+      
+      document.getElementById("modal-monto-asignado").textContent = !isNaN(montoAsig) && montoAsig !== "N/A" ? "$" + Number(montoAsig).toLocaleString("es-MX") : montoAsig;
+      document.getElementById("modal-monto-ejercido").textContent = !isNaN(montoEjec) && montoEjec !== "N/A" ? "$" + Number(montoEjec).toLocaleString("es-MX") : montoEjec;
+
+      // Configurar enlace del expediente
+      const btnExpediente = document.getElementById("btn-modal-expediente");
+      const urlExpediente = item.URL_EXPEDIENTE || obtenerPropiedadFlexible(item, ["EXPEDIENTE INTERNO", "EXPEDIENTE", "LINK"]);
+
+      if (urlExpediente && String(urlExpediente).startsWith("http")) {
+        btnExpediente.href = urlExpediente;
+        btnExpediente.classList.remove("opacity-50", "pointer-events-none");
+        btnExpediente.innerHTML = `📁 Abrir Expediente Interno`;
+      } else {
+        btnExpediente.href = "#";
+        btnExpediente.classList.add("opacity-50", "pointer-events-none");
+        btnExpediente.innerHTML = `📁 Expediente No Disponible`;
+      }
+
+      // Mostrar Modal
+      document.getElementById("modal-detalles").classList.remove("hidden");
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal-detalles").classList.add("hidden");
+    }
+
+    // Cerrar modal pulsando la tecla Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") cerrarModal();
+    });
 
     function filtrarTabla() {
       const busqueda = document.getElementById("input-filtro").value.toLowerCase();
