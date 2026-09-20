@@ -62,26 +62,33 @@
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col w-full overflow-x-hidden">
 
   <!-- Encabezado / Header Adaptativo sin desbordamiento -->
-  <header class="bg-[#C6004C] text-white shadow-md p-3 sm:p-4 w-full flex flex-wrap sm:flex-nowrap justify-between items-center gap-3">
+  <header class="bg-[#C6004C] text-white shadow-md p-3 sm:p-4 w-full flex flex-col gap-2">
     
-    <div class="flex items-center flex-wrap gap-2 sm:gap-3">
-      <!-- Botón Volver al Menú -->
-      <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all shadow-sm flex items-center whitespace-nowrap">
-        ← Volver al Menú
-      </a>
+    <!-- Primera fila: Botón, Badge y Estatus -->
+    <div class="flex items-center justify-between w-full flex-wrap gap-2">
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <!-- Botón Volver al Menú -->
+        <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all shadow-sm flex items-center whitespace-nowrap">
+          ← Volver al Menú
+        </a>
 
-      <!-- Badge SEMS -->
-      <div class="bg-[#FF8300] text-white font-bold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm shadow-sm whitespace-nowrap">
-        SEMS - Gestión Estratégica
+        <!-- Badge SEMS -->
+        <div class="bg-[#FF8300] text-white font-bold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm shadow-sm whitespace-nowrap">
+          SEMS - Gestión Estratégica
+        </div>
       </div>
-      
-      <h1 class="text-base sm:text-xl font-bold tracking-wide hidden lg:block">Tablero de Control y Estadística</h1>
+
+      <!-- Status Badge -->
+      <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+        Cargando datos...
+      </div>
     </div>
 
-    <!-- Status Badge -->
-    <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0">
-      Cargando datos...
+    <!-- Segunda fila: Título del Tablero visible en todos los dispositivos -->
+    <div>
+      <h1 class="text-base sm:text-xl font-bold tracking-wide mt-1">Tablero de Control y Estadística</h1>
     </div>
+
   </header>
 
   <!-- Contenido principal con barra lateral y pestañas -->
@@ -181,7 +188,7 @@
     function obtenerDatos() {
       const badge = document.getElementById("status-badge");
       badge.textContent = "Cargando datos...";
-      badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0";
+      badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap";
 
       fetch(API_URL + "?action=getDashboardData", {
         method: "GET",
@@ -198,7 +205,7 @@
             inicializarMapa(res.estadistica || []);
             
             badge.textContent = "Conectado";
-            badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0";
+            badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
           } else {
             throw new Error(res.error || "Error en la estructura de datos");
           }
@@ -206,7 +213,7 @@
         .catch(err => {
           console.error("Error detallado:", err);
           badge.textContent = "Error de conexión";
-          badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0";
+          badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
         });
     }
 
