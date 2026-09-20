@@ -118,18 +118,19 @@
 
         <!-- Contenedor con scroll horizontal exclusivo para la tabla -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
-          <table class="w-full text-left border-collapse text-sm min-w-[600px]">
+          <table class="w-full text-left border-collapse text-sm min-w-[700px]">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
               <tr>
                 <th class="p-3">Rubro</th>
                 <th class="p-3">CCT / Clave</th>
                 <th class="p-3">Escuela / Plantel</th>
                 <th class="p-3">Descripción / Detalle</th>
+                <th class="p-3">Estatus del Proceso</th>
               </tr>
             </thead>
             <tbody id="tabla-cuerpo" class="divide-y divide-slate-100">
               <tr>
-                <td colspan="4" class="p-6 text-center text-slate-400">Cargando registros desde Google Sheets...</td>
+                <td colspan="5" class="p-6 text-center text-slate-400">Cargando registros desde Google Sheets...</td>
               </tr>
             </tbody>
           </table>
@@ -217,7 +218,7 @@
         });
     }
 
-    // Función auxiliar para formatear la celda del Rubro con los estilos de la imagen
+    // Función auxiliar para formatear la celda del Rubro
     function obtenerBadgeRubro(rubro) {
       const rubroNormalizado = (rubro || '').toString().trim().toLowerCase();
 
@@ -244,6 +245,23 @@
       }
     }
 
+    // Función auxiliar para formatear los Badges de Estatus del Proceso
+    function obtenerBadgeEstatus(estatus) {
+      const estNorm = (estatus || '').toString().trim().toUpperCase();
+
+      if (estNorm.includes('CONCLUIDO')) {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white whitespace-nowrap shadow-sm">CONCLUIDO</span>`;
+      } else if (estNorm.includes('EN PROCESO')) {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-400 text-slate-900 whitespace-nowrap shadow-sm">EN PROCESO</span>`;
+      } else if (estNorm.includes('EN ESPERA') || estNorm.includes('INFORMACIÓN') || estNorm.includes('INFORMACION')) {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-800 whitespace-nowrap shadow-sm">EN ESPERA DE INFORMACIÓN</span>`;
+      } else if (estNorm.includes('CANCELADO')) {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-rose-600 text-white whitespace-nowrap shadow-sm">CANCELADO</span>`;
+      } else {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 whitespace-nowrap">${estatus || 'SIN ESTATUS'}</span>`;
+      }
+    }
+
     function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
       
@@ -257,7 +275,7 @@
       });
 
       if (!datosValidos || datosValidos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No se encontraron registros válidos con CCT.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No se encontraron registros válidos con CCT.</td></tr>`;
         return;
       }
 
@@ -265,7 +283,10 @@
         const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT;
         const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
         const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
+        const estatusRaw = item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO;
+        
         const badgeRubro = obtenerBadgeRubro(item.RUBRO_PROYECTO);
+        const badgeEstatus = obtenerBadgeEstatus(estatusRaw);
 
         return `
           <tr class="hover:bg-slate-50">
@@ -273,6 +294,7 @@
             <td class="p-3 font-mono text-slate-600">${cct}</td>
             <td class="p-3 font-medium text-slate-900">${nombre}</td>
             <td class="p-3 text-slate-500">${detalle}</td>
+            <td class="p-3">${badgeEstatus}</td>
           </tr>
         `;
       }).join("");
