@@ -429,13 +429,22 @@
       const btnExpediente = document.getElementById("btn-modal-expediente");
       const urlExpediente = item.URL_EXPEDIENTE || obtenerPropiedadFlexible(item, ["EXPEDIENTE INTERNO", "EXPEDIENTE", "LINK"]);
 
-      if (urlExpediente && String(urlExpediente).startsWith("http")) {
-        btnExpediente.href = urlExpediente;
+      if (urlExpediente && urlExpediente !== "N/A" && String(urlExpediente).trim() !== "") {
+        let urlFinal = String(urlExpediente).trim();
+
+        // Agrega protocolo si no lo tiene
+        if (!urlFinal.toLowerCase().startsWith("http://") && !urlFinal.toLowerCase().startsWith("https://")) {
+          urlFinal = "https://" + urlFinal;
+        }
+
+        btnExpediente.href = urlFinal;
         btnExpediente.classList.remove("opacity-50", "pointer-events-none");
+        btnExpediente.classList.add("cursor-pointer", "hover:bg-[#a0003d]");
         btnExpediente.innerHTML = `📁 Abrir Expediente Interno`;
       } else {
         btnExpediente.href = "#";
         btnExpediente.classList.add("opacity-50", "pointer-events-none");
+        btnExpediente.classList.remove("hover:bg-[#a0003d]");
         btnExpediente.innerHTML = `📁 Expediente No Disponible`;
       }
 
