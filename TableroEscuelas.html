@@ -219,13 +219,23 @@
 
     function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
-      if (!datos || datos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No se encontraron datos registrados.</td></tr>`;
+      
+      // Filtrar registros omitiendo los que tengan CCT nula, vacía o "null"
+      const datosValidos = datos.filter(item => {
+        const cctRaw = item.CCT ?? item["CLAVE ESCUELA"] ?? item.CLAVECCT;
+        if (!cctRaw) return false;
+        
+        const cctTexto = String(cctRaw).trim().toLowerCase();
+        return cctTexto !== "" && cctTexto !== "null" && cctTexto !== "n/a";
+      });
+
+      if (!datosValidos || datosValidos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No se encontraron registros válidos con CCT.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = datos.map(item => {
-        const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
+      tbody.innerHTML = datosValidos.map(item => {
+        const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT;
         const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
         const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
 
