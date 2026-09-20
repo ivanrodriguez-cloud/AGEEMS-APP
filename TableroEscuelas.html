@@ -37,6 +37,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tablero de Control SEMS</title>
 
+  <!-- Google Fonts: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <!-- Tailwind CSS para los estilos de la interfaz -->
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -45,6 +50,11 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
+    /* Aplicar tipografía Poppins de manera general */
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+
     #map { height: 600px; width: 100%; }
   </style>
 </head>
@@ -77,7 +87,7 @@
   <!-- Contenido principal con barra lateral y pestañas -->
   <div class="flex flex-col md:flex-row flex-1 w-full max-w-full overflow-hidden">
     
-    <!-- Barra Lateral de Navegación (En móviles aparece como menú superior) -->
+    <!-- Barra Lateral de Navegación -->
     <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
       <nav class="flex md:flex-col gap-2">
         <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white">
