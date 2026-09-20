@@ -49,56 +49,59 @@
   </style>
 </head>
 
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col w-full overflow-x-hidden">
 
-  <!-- Encabezado / Header con color personalizado #C6004C -->
-  <header class="bg-[#C6004C] text-white shadow-md p-4 flex justify-between items-center">
-    <div class="flex items-center space-x-3">
-      <!-- Botón Volver al Menú al lado de SEMS -->
-      <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-2 rounded-lg text-sm transition-all shadow-sm flex items-center">
+  <!-- Encabezado / Header Adaptativo sin desbordamiento -->
+  <header class="bg-[#C6004C] text-white shadow-md p-3 sm:p-4 w-full flex flex-wrap sm:flex-nowrap justify-between items-center gap-3">
+    
+    <div class="flex items-center flex-wrap gap-2 sm:gap-3">
+      <!-- Botón Volver al Menú -->
+      <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all shadow-sm flex items-center whitespace-nowrap">
         ← Volver al Menú
       </a>
 
-      <!-- Badge SEMS con color personalizado #FF8300 -->
-      <div class="bg-[#FF8300] text-white font-bold rounded-lg p-2 text-sm shadow-sm">
+      <!-- Badge SEMS -->
+      <div class="bg-[#FF8300] text-white font-bold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm shadow-sm whitespace-nowrap">
         SEMS - Gestión Estratégica
       </div>
       
-      <h1 class="text-xl font-bold tracking-wide hidden md:block">Tablero de Control y Estadística</h1>
+      <h1 class="text-base sm:text-xl font-bold tracking-wide hidden lg:block">Tablero de Control y Estadística</h1>
     </div>
 
-    <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full">
+    <!-- Status Badge -->
+    <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0">
       Cargando datos...
     </div>
   </header>
 
   <!-- Contenido principal con barra lateral y pestañas -->
-  <div class="flex flex-1">
+  <div class="flex flex-col md:flex-row flex-1 w-full max-w-full overflow-hidden">
     
-    <!-- Barra Lateral de Navegación -->
-    <aside class="w-64 bg-white border-r border-slate-200 p-4 space-y-2">
-      <nav class="space-y-1">
-        <button onclick="cambiarPestana('general')" id="btn-tab-general" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white">
+    <!-- Barra Lateral de Navegación (En móviles aparece como menú superior) -->
+    <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
+      <nav class="flex md:flex-col gap-2">
+        <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white">
           📊 Tablero General
         </button>
-        <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100">
+        <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100">
           🗺️ Estadística y Mapa SEMS
         </button>
       </nav>
     </aside>
 
     <!-- Área de Contenido -->
-    <main class="flex-1 p-6">
+    <main class="flex-1 p-3 sm:p-6 min-w-0">
 
       <!-- Pestaña 1: Tablero General (Tabla de Infraestructura) -->
       <section id="vista-general" class="space-y-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
-          <h2 class="text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
-          <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
+          <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-          <table class="w-full text-left border-collapse text-sm">
+        <!-- Contenedor con scroll horizontal exclusivo para la tabla -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
+          <table class="w-full text-left border-collapse text-sm min-w-[600px]">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
               <tr>
                 <th class="p-3">Rubro</th>
@@ -151,13 +154,13 @@
       if (pestana === "general") {
         vGeneral.classList.remove("hidden");
         vEstadistica.classList.add("hidden");
-        btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white";
-        btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100";
+        btnGeneral.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white";
+        btnEstadistica.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100";
       } else {
         vGeneral.classList.add("hidden");
         vEstadistica.classList.remove("hidden");
-        btnEstadistica.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors bg-[#C6004C] text-white";
-        btnGeneral.className = "w-full text-left px-4 py-2.5 rounded-lg font-medium transition-colors text-slate-600 hover:bg-slate-100";
+        btnEstadistica.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white";
+        btnGeneral.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100";
         
         if (mapaLeaflet) {
           setTimeout(() => mapaLeaflet.invalidateSize(), 200);
@@ -168,7 +171,7 @@
     function obtenerDatos() {
       const badge = document.getElementById("status-badge");
       badge.textContent = "Cargando datos...";
-      badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full";
+      badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0";
 
       fetch(API_URL + "?action=getDashboardData", {
         method: "GET",
@@ -185,7 +188,7 @@
             inicializarMapa(res.estadistica || []);
             
             badge.textContent = "Conectado";
-            badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full";
+            badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0";
           } else {
             throw new Error(res.error || "Error en la estructura de datos");
           }
@@ -193,7 +196,7 @@
         .catch(err => {
           console.error("Error detallado:", err);
           badge.textContent = "Error de conexión";
-          badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full";
+          badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap ml-auto sm:ml-0";
         });
     }
 
