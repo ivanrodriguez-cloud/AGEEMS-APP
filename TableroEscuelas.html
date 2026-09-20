@@ -217,6 +217,33 @@
         });
     }
 
+    // Función auxiliar para formatear la celda del Rubro con los estilos de la imagen
+    function obtenerBadgeRubro(rubro) {
+      const rubroNormalizado = (rubro || '').toString().trim().toLowerCase();
+
+      if (rubroNormalizado.includes('equipamiento')) {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF8300]/15 text-[#FF8300]">
+            <span class="text-[10px]">●</span> Equipamiento
+          </span>`;
+      } else if (rubroNormalizado.includes('obra')) {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#C6004C]/15 text-[#C6004C]">
+            <span class="text-[10px]">●</span> Obra
+          </span>`;
+      } else if (rubroNormalizado.includes('evento')) {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#465055]/15 text-[#465055]">
+            <span class="text-[10px]">●</span> Eventos
+          </span>`;
+      } else {
+        return `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
+            <span class="text-[10px]">●</span> ${rubro || 'General'}
+          </span>`;
+      }
+    }
+
     function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
       
@@ -238,10 +265,11 @@
         const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT;
         const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item["NOMBRE_ESCUELA"] || item.ESCUELA || "N/A";
         const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
+        const badgeRubro = obtenerBadgeRubro(item.RUBRO_PROYECTO);
 
         return `
           <tr class="hover:bg-slate-50">
-            <td class="p-3"><span class="px-2 py-0.5 text-xs font-semibold rounded bg-slate-100 text-slate-700">${item.RUBRO_PROYECTO || 'General'}</span></td>
+            <td class="p-3">${badgeRubro}</td>
             <td class="p-3 font-mono text-slate-600">${cct}</td>
             <td class="p-3 font-medium text-slate-900">${nombre}</td>
             <td class="p-3 text-slate-500">${detalle}</td>
