@@ -148,7 +148,7 @@
     </main>
   </div>
 
-  <!-- MODAL / TOGGLETIP DE DETALLES -->
+  <!-- MODAL / TOGGLETIP DE DETALLES (FONDO DIFUMINADO Y DISEÑO PULIDO) -->
   <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all p-6 relative">
       
@@ -182,7 +182,7 @@
         </div>
       </div>
 
-      <!-- DETALLES SECUNDARIOS -->
+      <!-- DETALLES SECUNDARIOS (LETRA MÁS PEQUEÑA) -->
       <div class="space-y-3 text-xs border-t border-slate-100 pt-3">
         <div>
           <span class="font-semibold text-slate-500 block text-[11px]">Descripción / Detalle:</span>
@@ -312,6 +312,7 @@
       }
     }
 
+    // Búsqueda flexible de propiedades ignorando mayúsculas, espacios y caracteres especiales
     function obtenerPropiedadFlexible(obj, posiblesNombres) {
       if (!obj) return "N/A";
       const keys = Object.keys(obj);
@@ -325,6 +326,7 @@
       return "N/A";
     }
 
+    // Formatea los oficios separándolos por cualquier espacio en blanco
     function formatearOficios(textoOficios) {
       if (!textoOficios || textoOficios === "N/A" || String(textoOficios).trim() === "") {
         return `<span class="text-slate-400 italic text-[11px]">Sin oficios registrados</span>`;
@@ -394,6 +396,7 @@
       const item = datosValidos[index];
       if (!item) return;
 
+      // Sincronización del Nombre del Plantel y CCT
       const nombrePlantel = obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
       const cctPlantel = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
 
@@ -411,37 +414,32 @@
       document.getElementById("modal-fondo").textContent = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
       document.getElementById("modal-id-interno").textContent = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
 
+      // Formato e individualización de Oficios
       const oficiosRaw = obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
       document.getElementById("modal-oficios").innerHTML = formatearOficios(oficiosRaw);
 
+      // Formato de Montos
       const montoAsig = obtenerPropiedadFlexible(item, ["MONTO ASIGNADO", "MONTO_ASIGNADO"]);
       const montoEjec = obtenerPropiedadFlexible(item, ["MONTO EJERCIDO", "MONTO_EJERCIDO"]);
       
       document.getElementById("modal-monto-asignado").textContent = (!isNaN(montoAsig) && montoAsig !== "N/A") ? "$" + Number(montoAsig).toLocaleString("es-MX") : montoAsig;
       document.getElementById("modal-monto-ejercido").textContent = (!isNaN(montoEjec) && montoEjec !== "N/A") ? "$" + Number(montoEjec).toLocaleString("es-MX") : montoEjec;
 
-      // CONFIGURACIÓN ESTRICTA Y SEGURA DE LA URL DEL EXPEDIENTE
+      // Configuración dinámica del enlace del Expediente
       const btnExpediente = document.getElementById("btn-modal-expediente");
       const urlExpediente = item.URL_EXPEDIENTE || obtenerPropiedadFlexible(item, ["EXPEDIENTE INTERNO", "EXPEDIENTE", "LINK"]);
 
-      // Validar estrictamente que comience con http:// o https:// (evita usar el nombre de archivo como URL)
-      const esUrlValida = urlExpediente && 
-                          urlExpediente !== "N/A" && 
-                          (String(urlExpediente).trim().toLowerCase().startsWith("http://") || 
-                           String(urlExpediente).trim().toLowerCase().startsWith("https://"));
-
-      if (esUrlValida) {
-        btnExpediente.href = String(urlExpediente).trim();
+      if (urlExpediente && String(urlExpediente).startsWith("http")) {
+        btnExpediente.href = urlExpediente;
         btnExpediente.classList.remove("opacity-50", "pointer-events-none");
-        btnExpediente.classList.add("cursor-pointer", "hover:bg-[#a0003d]");
         btnExpediente.innerHTML = `📁 Abrir Expediente Interno`;
       } else {
         btnExpediente.href = "#";
         btnExpediente.classList.add("opacity-50", "pointer-events-none");
-        btnExpediente.classList.remove("hover:bg-[#a0003d]");
         btnExpediente.innerHTML = `📁 Expediente No Disponible`;
       }
 
+      // Desplegar Modal con desenfoque de fondo
       document.getElementById("modal-detalles").classList.remove("hidden");
     }
 
