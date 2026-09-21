@@ -93,7 +93,7 @@
     <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
       <nav class="flex md:flex-col gap-2">
         <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white">
-          📊 Tablero General
+          📊 Tablero Peticiones
         </button>
         <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100">
           🗺️ Estadística y Mapa SEMS
@@ -104,10 +104,10 @@
     <!-- Área de Contenido -->
     <main class="flex-1 p-3 sm:p-6 min-w-0">
 
-      <!-- Pestaña 1: Tablero General -->
+      <!-- Pestaña 1: Tablero Peticiones -->
       <section id="vista-general" class="space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
+          <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Equipamiento, Obras y Eventos)</h2>
           <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
         </div>
 
