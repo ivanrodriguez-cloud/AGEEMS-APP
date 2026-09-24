@@ -53,6 +53,13 @@
     label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: #333; }
     input[type="text"], input[type="email"], input[type="datetime-local"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
     
+    /* Buscador estilitzado */
+    .input-buscar {
+      margin-bottom: 8px;
+      font-size: 13px;
+      padding: 8px 12px;
+    }
+
     /* Estilo visual para campos bloqueados */
     input[readonly] { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
 
@@ -83,7 +90,7 @@
     .btn { background-color: var(--primary-pink); color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.3s; }
     .btn-secundario { background-color: transparent; color: var(--neutral-gray); border: 1px solid #ccc; width: auto; margin-bottom: 20px; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; border-radius: 6px; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; table-layout: fixed; }
+    table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 13px; table-layout: fixed; }
     th, td { border: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: middle; word-wrap: break-word; }
     th { background-color: #f1f3f4; font-weight: 600; white-space: nowrap; }
     .cant-input { width: 48px; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-family: 'Poppins', sans-serif; box-sizing: border-box; }
@@ -137,6 +144,7 @@
 
       <div class="form-group">
         <label>Selecciona el Material Publicitario requerido:</label>
+        <input type="text" class="input-buscar" id="buscarMaterial" placeholder="🔍 Buscar material publicitario..." onkeyup="filtrarTabla('buscarMaterial', 'tablaMateriales')">
         <table id="tablaMateriales">
           <thead>
             <tr>
@@ -152,6 +160,7 @@
 
       <div class="form-group">
         <label>Selecciona los Consumibles requeridos:</label>
+        <input type="text" class="input-buscar" id="buscarConsumible" placeholder="🔍 Buscar consumible..." onkeyup="filtrarTabla('buscarConsumible', 'tablaConsumibles')">
         <table id="tablaConsumibles">
           <thead>
             <tr>
@@ -300,7 +309,6 @@
         return;
       }
 
-      // Se muestran todos los materiales cuyo estatus sea ACTIVO independientemente de su disponibilidad
       var materialesActivos = data.filter(item => {
         var estatusVal = item.estatus || item.Estatus;
         var esActivo = true;
@@ -324,7 +332,6 @@
           ? `<img src="${imgUrl}" class="img-tabla" alt="${nombreMat}">`
           : `<span style="font-size: 11px; color: #999;">Sin foto</span>`;
 
-        // Si el stock es 0, deshabilitamos la casilla de cantidad
         let disabledAttr = dispMat <= 0 ? 'disabled' : '';
 
         tbody.innerHTML += `<tr>
@@ -345,7 +352,6 @@
         return;
       }
     
-      // Se muestran únicamente los consumibles con stock/disponibilidad mayor a 0
       var consumiblesValidos = data.filter(item => {
         var codigoVal = item.codigo || item.Código || item.CODIGO || item["código"] || item["Código"] || item.A;
         if (!codigoVal) {
@@ -371,6 +377,21 @@
           <td style="text-align: center;"><strong>${dispCons}</strong></td>
           <td style="text-align: center;"><input type="number" class="cant-input cons-item" data-nombre="${nombreCons}" min="0" max="${dispCons}" value="0"></td>
         </tr>`;
+      });
+    }
+
+    // Función genérica para filtrar tablas en tiempo real
+    function filtrarTabla(idInput, idTabla) {
+      var filtro = document.getElementById(idInput).value.toUpperCase();
+      var filas = document.querySelectorAll(`#${idTabla} tbody tr`);
+
+      filas.forEach(fila => {
+        var textoFila = fila.textContent || fila.innerText;
+        if (textoFila.toUpperCase().indexOf(filtro) > -1) {
+          fila.style.display = "";
+        } else {
+          fila.style.display = "none";
+        }
       });
     }
     
