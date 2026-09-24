@@ -271,7 +271,7 @@
             datosConsolidados = res.general || [];
             renderizarTabla(datosConsolidados);
             
-            badge.textContent = "Conectado";
+            badge.textContent = res.cached ? "Conectado (Caché 1h)" : "Conectado (Actualizado)";
             badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
           } else {
             throw new Error(res.error || "Error en la estructura de datos");
