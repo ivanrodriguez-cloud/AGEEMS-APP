@@ -44,15 +44,10 @@
   <!-- Tailwind CSS para la interfaz -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Leaflet.js para mapas -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
     body {
       font-family: 'Poppins', sans-serif;
     }
-    #map { height: 600px; width: 100%; }
   </style>
 </head>
 
@@ -93,7 +88,7 @@
     <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
       <nav class="flex md:flex-col gap-2">
         <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white">
-          📊 Tablero Peticiones
+          📊 Tablero General
         </button>
         <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100">
           🗺️ Estadística y Mapa SEMS
@@ -104,10 +99,10 @@
     <!-- Área de Contenido -->
     <main class="flex-1 p-3 sm:p-6 min-w-0">
 
-      <!-- Pestaña 1: Tablero Peticiones -->
+      <!-- Pestaña 1: Tablero General -->
       <section id="vista-general" class="space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Equipamiento, Obras y Eventos)</h2>
+          <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
           <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
         </div>
 
@@ -133,22 +128,30 @@
         </div>
       </section>
 
-      <!-- Pestaña 2: Mapa -->
+      <!-- Pestaña 2: Mapa Personalizado Google My Maps -->
       <section id="vista-estadistica" class="hidden space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles y Capacitación</h2>
-          <p class="text-xs text-slate-500">Haz clic sobre cualquier marcador para ver la ficha estadística detallada del plantel.</p>
+          <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles y Capacitación SEMS</h2>
+          <p class="text-xs text-slate-500">Mapa interactivo institucional con la ubicación geográfica de planteles y equipamiento.</p>
         </div>
 
-        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-          <div id="map" class="rounded-lg"></div>
+        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="w-full h-[600px] rounded-lg overflow-hidden border border-slate-100">
+            <iframe 
+              src="https://www.google.com/maps/d/embed?mid=1sDvA5tro1nqFy2UilU5uvcuScaJNOKA&ehbc=2E312F" 
+              class="w-full h-full border-0" 
+              allowfullscreen="" 
+              loading="lazy" 
+              referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+          </div>
         </div>
       </section>
 
     </main>
   </div>
 
-  <!-- MODAL / TOGGLETIP DE DETALLES (FONDO DIFUMINADO Y DISEÑO PULIDO) -->
+  <!-- MODAL / TOGGLETIP DE DETALLES -->
   <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all p-6 relative">
       
@@ -182,7 +185,7 @@
         </div>
       </div>
 
-      <!-- DETALLES SECUNDARIOS (LETRA MÁS PEQUEÑA) -->
+      <!-- DETALLES SECUNDARIOS -->
       <div class="space-y-3 text-xs border-t border-slate-100 pt-3">
         <div>
           <span class="font-semibold text-slate-500 block text-[11px]">Descripción / Detalle:</span>
@@ -221,7 +224,6 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RikNKZfit_Xt9cAl-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
 
     let datosConsolidados = [];
-    let mapaLeaflet = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       obtenerDatos();
@@ -243,10 +245,6 @@
         vEstadistica.classList.remove("hidden");
         btnEstadistica.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white";
         btnGeneral.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100";
-        
-        if (mapaLeaflet) {
-          setTimeout(() => mapaLeaflet.invalidateSize(), 200);
-        }
       }
     }
 
@@ -267,7 +265,6 @@
           if (res.success) {
             datosConsolidados = res.general || [];
             renderizarTabla(datosConsolidados);
-            inicializarMapa(res.estadistica || []);
             
             badge.textContent = "Conectado";
             badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
@@ -312,7 +309,6 @@
       }
     }
 
-    // Búsqueda flexible de propiedades ignorando mayúsculas, espacios y caracteres especiales
     function obtenerPropiedadFlexible(obj, posiblesNombres) {
       if (!obj) return "N/A";
       const keys = Object.keys(obj);
@@ -326,7 +322,6 @@
       return "N/A";
     }
 
-    // Formatea los oficios separándolos por cualquier espacio en blanco
     function formatearOficios(textoOficios) {
       if (!textoOficios || textoOficios === "N/A" || String(textoOficios).trim() === "") {
         return `<span class="text-slate-400 italic text-[11px]">Sin oficios registrados</span>`;
@@ -396,7 +391,6 @@
       const item = datosValidos[index];
       if (!item) return;
 
-      // Sincronización del Nombre del Plantel y CCT
       const nombrePlantel = obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
       const cctPlantel = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
 
@@ -414,32 +408,36 @@
       document.getElementById("modal-fondo").textContent = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
       document.getElementById("modal-id-interno").textContent = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
 
-      // Formato e individualización de Oficios
       const oficiosRaw = obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
       document.getElementById("modal-oficios").innerHTML = formatearOficios(oficiosRaw);
 
-      // Formato de Montos
       const montoAsig = obtenerPropiedadFlexible(item, ["MONTO ASIGNADO", "MONTO_ASIGNADO"]);
       const montoEjec = obtenerPropiedadFlexible(item, ["MONTO EJERCIDO", "MONTO_EJERCIDO"]);
       
       document.getElementById("modal-monto-asignado").textContent = (!isNaN(montoAsig) && montoAsig !== "N/A") ? "$" + Number(montoAsig).toLocaleString("es-MX") : montoAsig;
       document.getElementById("modal-monto-ejercido").textContent = (!isNaN(montoEjec) && montoEjec !== "N/A") ? "$" + Number(montoEjec).toLocaleString("es-MX") : montoEjec;
 
-      // Configuración dinámica del enlace del Expediente
+      // CONFIGURACIÓN ESTRICTA Y SEGURA DE LA URL DEL EXPEDIENTE
       const btnExpediente = document.getElementById("btn-modal-expediente");
       const urlExpediente = item.URL_EXPEDIENTE || obtenerPropiedadFlexible(item, ["EXPEDIENTE INTERNO", "EXPEDIENTE", "LINK"]);
 
-      if (urlExpediente && String(urlExpediente).startsWith("http")) {
-        btnExpediente.href = urlExpediente;
+      const esUrlValida = urlExpediente && 
+                          urlExpediente !== "N/A" && 
+                          (String(urlExpediente).trim().toLowerCase().startsWith("http://") || 
+                           String(urlExpediente).trim().toLowerCase().startsWith("https://"));
+
+      if (esUrlValida) {
+        btnExpediente.href = String(urlExpediente).trim();
         btnExpediente.classList.remove("opacity-50", "pointer-events-none");
+        btnExpediente.classList.add("cursor-pointer", "hover:bg-[#a0003d]");
         btnExpediente.innerHTML = `📁 Abrir Expediente Interno`;
       } else {
         btnExpediente.href = "#";
         btnExpediente.classList.add("opacity-50", "pointer-events-none");
+        btnExpediente.classList.remove("hover:bg-[#a0003d]");
         btnExpediente.innerHTML = `📁 Expediente No Disponible`;
       }
 
-      // Desplegar Modal con desenfoque de fondo
       document.getElementById("modal-detalles").classList.remove("hidden");
     }
 
@@ -457,38 +455,6 @@
         return Object.values(item).some(val => String(val).toLowerCase().includes(busqueda));
       });
       renderizarTabla(filtrados);
-    }
-
-    function inicializarMapa(puntos) {
-      if (!mapaLeaflet) {
-        mapaLeaflet = L.map('map').setView([20.6597, -103.3496], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap'
-        }).addTo(mapaLeaflet);
-      }
-
-      puntos.forEach(pt => {
-        let popup = pt.tipo === "Escuela_2025-2026" ? `
-          <div class="font-sans text-xs space-y-1">
-            <h4 class="font-bold text-sm text-[#C6004C]">${pt.nombreEscuela || ''}</h4>
-            <p><b>Clave:</b> ${pt.claveEscuela || ''} | <b>Turno:</b> ${pt.nombreTurno || ''}</p>
-            <p><b>Municipio:</b> ${pt.nomun || ''}</p>
-            <hr/>
-            <p><b>Personal:</b> ${pt.totalPersonal || 0} | <b>Aulas:</b> ${pt.aulasExistentes || 0}</p>
-            <p><b>Matrícula:</b> ${pt.matriculaTotal || 0}</p>
-          </div>
-        ` : `
-          <div class="font-sans text-xs space-y-1">
-            <h4 class="font-bold text-sm text-[#FF8300]">${pt.nombreEscuela || ''}</h4>
-            <p><b>CCT:</b> ${pt.claveCct || ''} | <b>Turno:</b> ${pt.nombreTurno || ''}</p>
-            <p><b>Municipio:</b> ${pt.nomMun || ''}</p>
-            <hr/>
-            <p><b>Personal:</b> ${pt.totalPersonal || 0} | <b>Grupos:</b> ${pt.grupos || 0}</p>
-          </div>
-        `;
-
-        L.marker([pt.latitud, pt.longitud]).addTo(mapaLeaflet).bindPopup(popup);
-      });
     }
   </script>
 </body>
