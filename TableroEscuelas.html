@@ -229,6 +229,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RikNKZfit_Xt9cAl-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
 
     let datosConsolidados = [];
+    let datosFiltrados = []; // Guarda los registros actualmente renderizados en la tabla
 
     document.addEventListener("DOMContentLoaded", () => {
       obtenerDatos();
@@ -344,19 +345,20 @@
     function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
       
-      const datosValidos = datos.filter(item => {
+      // Actualiza la variable global con la sublista filtrada que tiene CCTs válidos
+      datosFiltrados = datos.filter(item => {
         const cctRaw = item.CCT ?? item["CLAVE ESCUELA"] ?? item.CLAVECCT;
         if (!cctRaw) return false;
         const cctTexto = String(cctRaw).trim().toLowerCase();
         return cctTexto !== "" && cctTexto !== "null" && cctTexto !== "n/a";
       });
 
-      if (!datosValidos || datosValidos.length === 0) {
+      if (!datosFiltrados || datosFiltrados.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No se encontraron registros válidos con CCT.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = datosValidos.map((item, index) => {
+      tbody.innerHTML = datosFiltrados.map((item, index) => {
         const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT;
         const nombre = obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
         const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
@@ -386,14 +388,8 @@
     }
 
     function abrirModalDetalles(index) {
-      const datosValidos = datosConsolidados.filter(item => {
-        const cctRaw = item.CCT ?? item["CLAVE ESCUELA"] ?? item.CLAVECCT;
-        if (!cctRaw) return false;
-        const cctTexto = String(cctRaw).trim().toLowerCase();
-        return cctTexto !== "" && cctTexto !== "null" && cctTexto !== "n/a";
-      });
-
-      const item = datosValidos[index];
+      // Lee el registro directo de datosFiltrados usando la posición exacta de la tabla visible
+      const item = datosFiltrados[index];
       if (!item) return;
 
       const nombrePlantel = obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
