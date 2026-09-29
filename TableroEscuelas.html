@@ -49,6 +49,11 @@
   <!-- Tailwind CSS para la interfaz -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Librerías externas para exportación (PDF y Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -106,9 +111,21 @@
 
       <!-- Pestaña 1: Tablero General -->
       <section id="vista-general" class="space-y-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
-          <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
+            <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
+            <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+          </div>
+          
+          <!-- Botón de Exportar Datos ubicado abajo del buscador -->
+          <div class="flex justify-end w-full">
+            <button onclick="abrirModalExportar()" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Exportar datos
+            </button>
+          </div>
         </div>
 
         <!-- Tabla dinámica -->
@@ -219,6 +236,97 @@
         <a id="btn-modal-expediente" href="#" target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#C6004C] hover:bg-[#a0003d] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-md">
           📁 Abrir Expediente Interno
         </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL / TOGGLETIP DE EXPORTACIÓN DE DATOS -->
+  <div id="modal-exportar" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all p-6 relative">
+      
+      <!-- Botón de Cierre -->
+      <button onclick="cerrarModalExportar()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Encabezado del Modal -->
+      <div class="border-b border-slate-100 pb-3 pr-8">
+        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <span>📤</span> Configuración de Exportación
+        </h3>
+        <p class="text-xs text-slate-500 mt-1">Selecciona los campos y el formato para descargar los registros filtrados.</p>
+      </div>
+
+      <!-- Contenido de Configuración -->
+      <div class="py-4 space-y-4 text-xs">
+        
+        <!-- Selección de Campos -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-semibold text-slate-700">Campos a incluir en el reporte:</span>
+            <div class="space-x-2">
+              <button onclick="marcarTodosCampos(true)" class="text-[11px] text-[#C6004C] hover:underline font-medium">Marcar todos</button>
+              <span class="text-slate-300">|</span>
+              <button onclick="marcarTodosCampos(false)" class="text-[11px] text-slate-500 hover:underline font-medium">Desmarcar</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 max-h-52 overflow-y-auto" id="contenedor-checkboxes-campos">
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="RUBRO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Rubro</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="CCT" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> CCT / Clave</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="ESCUELA" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Escuela / Plantel</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="DESCRIPCION" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Descripción / Detalle</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="ESTATUS" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Estatus del Proceso</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="CLAVE_INMUEBLE" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Clave del Inmueble</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="MUNICIPIO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Municipio</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="OPD" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> OPD</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="RESPONSABLE" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Responsable</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="FECHA_SOLICITUD" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Fecha 1ª Solicitud</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="FONDO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Fondo</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="ID_INTERNO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> ID Interno</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="OFICIOS" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Oficios</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="MONTO_ASIGNADO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Monto Asignado</label>
+            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="MONTO_EJERCIDO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Monto Ejercido</label>
+          </div>
+        </div>
+
+        <!-- Selección de Formato -->
+        <div>
+          <span class="font-semibold text-slate-700 block mb-2">Formato de descarga:</span>
+          <div class="grid grid-cols-3 gap-3">
+            <label class="border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 transition-all text-center">
+              <input type="radio" name="formato_exportar" value="PDF" checked class="text-[#C6004C] focus:ring-[#C6004C]">
+              <span class="font-bold text-slate-800 text-xs mt-1">PDF</span>
+              <span class="text-[10px] text-slate-400">Documento (.pdf)</span>
+            </label>
+
+            <label class="border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 transition-all text-center">
+              <input type="radio" name="formato_exportar" value="EXCEL" class="text-[#C6004C] focus:ring-[#C6004C]">
+              <span class="font-bold text-slate-800 text-xs mt-1">Excel</span>
+              <span class="text-[10px] text-slate-400">Hoja de cálculo (.xlsx)</span>
+            </label>
+
+            <label class="border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 transition-all text-center">
+              <input type="radio" name="formato_exportar" value="CSV" class="text-[#C6004C] focus:ring-[#C6004C]">
+              <span class="font-bold text-slate-800 text-xs mt-1">CSV</span>
+              <span class="text-[10px] text-slate-400">Texto plano (.csv)</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Acciones -->
+      <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+        <button onclick="cerrarModalExportar()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-xs transition-colors">
+          Cancelar
+        </button>
+        <button onclick="ejecutarExportacion()" class="bg-[#C6004C] hover:bg-[#a0003d] text-white text-xs font-semibold px-5 py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5">
+          <span>🚀</span> Exportar
+        </button>
       </div>
 
     </div>
@@ -447,7 +555,10 @@
     }
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") cerrarModal();
+      if (e.key === "Escape") {
+        cerrarModal();
+        cerrarModalExportar();
+      }
     });
 
     function filtrarTabla() {
@@ -456,6 +567,204 @@
         return Object.values(item).some(val => String(val).toLowerCase().includes(busqueda));
       });
       renderizarTabla(filtrados);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                   LÓGICA DE EXPORTACIÓN Y MODAL DE DATOS                   */
+    /* -------------------------------------------------------------------------- */
+
+    function abrirModalExportar() {
+      document.getElementById("modal-exportar").classList.remove("hidden");
+    }
+
+    function cerrarModalExportar() {
+      document.getElementById("modal-exportar").classList.add("hidden");
+    }
+
+    function marcarTodosCampos(estado) {
+      const checkboxes = document.querySelectorAll("#contenedor-checkboxes-campos input[type='checkbox']");
+      checkboxes.forEach(cb => cb.checked = estado);
+    }
+
+    function obtenerValorPorCampo(item, claveCampo) {
+      switch (claveCampo) {
+        case "RUBRO":
+          return item.RUBRO_PROYECTO || "N/A";
+        case "CCT":
+          return item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
+        case "ESCUELA":
+          return obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
+        case "DESCRIPCION":
+          return item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
+        case "ESTATUS":
+          return item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO || "N/A";
+        case "CLAVE_INMUEBLE":
+          return obtenerPropiedadFlexible(item, ["CLAVE DEL INMUEBLE", "CLAVE_INMUEBLE", "INMUEBLE"]);
+        case "MUNICIPIO":
+          return obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]);
+        case "OPD":
+          return obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]);
+        case "RESPONSABLE":
+          return obtenerPropiedadFlexible(item, ["RESPONSABLE", "RESPONSABLE DE PROYECTO"]);
+        case "FECHA_SOLICITUD":
+          return obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+        case "FONDO":
+          return obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
+        case "ID_INTERNO":
+          return obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
+        case "OFICIOS":
+          return obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
+        case "MONTO_ASIGNADO":
+          const mAsig = obtenerPropiedadFlexible(item, ["MONTO ASIGNADO", "MONTO_ASIGNADO"]);
+          return (!isNaN(mAsig) && mAsig !== "N/A") ? "$" + Number(mAsig).toLocaleString("es-MX") : mAsig;
+        case "MONTO_EJERCIDO":
+          const mEjec = obtenerPropiedadFlexible(item, ["MONTO EJERCIDO", "MONTO_EJERCIDO"]);
+          return (!isNaN(mEjec) && mEjec !== "N/A") ? "$" + Number(mEjec).toLocaleString("es-MX") : mEjec;
+        default:
+          return "N/A";
+      }
+    }
+
+    function ejecutarExportacion() {
+      // 1. Obtener los campos seleccionados
+      const checkboxes = document.querySelectorAll("#contenedor-checkboxes-campos input[type='checkbox']:checked");
+      if (checkboxes.length === 0) {
+        alert("Por favor selecciona al menos un campo para exportar.");
+        return;
+      }
+
+      const columnasSeleccionadas = Array.from(checkboxes).map(cb => ({
+        clave: cb.value,
+        titulo: cb.parentElement.textContent.trim()
+      }));
+
+      // 2. Obtener formato elegido
+      const radioFormato = document.querySelector("input[name='formato_exportar']:checked");
+      const formato = radioFormato ? radioFormato.value : "PDF";
+
+      // 3. Validar si hay datos
+      if (!datosFiltrados || datosFiltrados.length === 0) {
+        alert("No hay registros para exportar con los filtros actuales.");
+        return;
+      }
+
+      const tituloDocumento = "Registros Consolidados (Infraestructura, Obras y Eventos)";
+
+      // Construcción del conjunto de datos filtrados
+      const encabezados = columnasSeleccionadas.map(c => c.titulo);
+      const filas = datosFiltrados.map(item => {
+        return columnasSeleccionadas.map(c => obtenerValorPorCampo(item, c.clave));
+      });
+
+      if (formato === "PDF") {
+        exportarPDF(tituloDocumento, encabezados, filas);
+      } else if (formato === "EXCEL") {
+        exportarExcel(tituloDocumento, encabezados, filas);
+      } else if (formato === "CSV") {
+        exportarCSV(tituloDocumento, encabezados, filas);
+      }
+
+      cerrarModalExportar();
+    }
+
+    function exportarPDF(titulo, encabezados, filas) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+
+      // Título
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(198, 0, 76); // Color Institucional #C6004C
+      doc.text(titulo, 40, 40);
+
+      // Espaciado / Dos saltos de fila implícitos
+      let startY = 70;
+
+      // Generar Tabla
+      doc.autoTable({
+        head: [encabezados],
+        body: filas,
+        startY: startY,
+        styles: {
+          font: "helvetica",
+          fontSize: 8,
+          cellPadding: 4,
+          textColor: [51, 65, 85]
+        },
+        headStyles: {
+          fillColor: [198, 0, 76],
+          textColor: [255, 255, 255],
+          fontStyle: "bold"
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { top: 40, bottom: 40, left: 40, right: 40 },
+        didDrawPage: function (data) {
+          // Pie de página con número de página
+          const strPage = "Página " + doc.internal.getNumberOfPages();
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184);
+          doc.text(strPage, data.settings.margin.left, doc.internal.pageSize.height - 20);
+        }
+      });
+
+      doc.save("Reporte_SEMS_Consolidado.pdf");
+    }
+
+    function exportarExcel(titulo, encabezados, filas) {
+      const wb = XLSX.utils.book_new();
+      
+      // Estructura: Título, 2 renglones vacíos, Encabezados y Filas
+      const wsData = [
+        [titulo],
+        [],
+        [],
+        encabezados,
+        ...filas
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // Ajuste automático de anchos de columna
+      const colWidths = encabezados.map((h, i) => {
+        let maxLen = h.length;
+        filas.forEach(row => {
+          const cellVal = String(row[i] || '');
+          if (cellVal.length > maxLen) maxLen = cellVal.length;
+        });
+        return { wch: Math.min(Math.max(maxLen + 3, 12), 40) };
+      });
+      ws['!cols'] = colWidths;
+
+      XLSX.utils.book_append_sheet(wb, ws, "Registros SEMS");
+      XLSX.writeFile(wb, "Reporte_SEMS_Consolidado.xlsx");
+    }
+
+    function exportarCSV(titulo, encabezados, filas) {
+      let csvContent = "";
+      
+      // Título y 2 saltos de línea
+      csvContent += `"${titulo}"\n\n\n`;
+
+      // Encabezados
+      csvContent += encabezados.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+
+      // Filas de datos
+      filas.forEach(row => {
+        const filaFormateada = row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",");
+        csvContent += filaFormateada + "\n";
+      });
+
+      // Descargar archivo CSV con BOM UTF-8
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "Reporte_SEMS_Consolidado.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 </body>
