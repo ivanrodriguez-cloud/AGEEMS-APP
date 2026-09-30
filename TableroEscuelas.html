@@ -412,10 +412,16 @@
 
       if (estNorm.includes('CONCLUIDO')) {
         return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white whitespace-nowrap shadow-sm">CONCLUIDO</span>`;
+      } else if (estNorm.includes('EN ENTREGA') || estNorm.includes('ENTREGA')) {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400 text-slate-900 whitespace-nowrap shadow-sm">EN ENTREGA</span>`;
       } else if (estNorm.includes('EN PROCESO')) {
         return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-400 text-slate-900 whitespace-nowrap shadow-sm">EN PROCESO</span>`;
+      } else if (estNorm.includes('EN TRÁMITE') || estNorm.includes('EN TRAMITE') || estNorm.includes('TRAMITE') || estNorm.includes('TRÁMITE')) {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-200 text-slate-900 whitespace-nowrap shadow-sm">EN TRÁMITE</span>`;
       } else if (estNorm.includes('EN ESPERA') || estNorm.includes('INFORMACIÓN') || estNorm.includes('INFORMACION')) {
         return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-800 whitespace-nowrap shadow-sm">EN ESPERA DE INFORMACIÓN</span>`;
+      } else if (estNorm.includes('EN PROYECTO') || estNorm.includes('PROYECTO')) {
+        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-sm">EN PROYECTO</span>`;
       } else if (estNorm.includes('CANCELADO')) {
         return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-rose-600 text-white whitespace-nowrap shadow-sm">CANCELADO</span>`;
       } else {
