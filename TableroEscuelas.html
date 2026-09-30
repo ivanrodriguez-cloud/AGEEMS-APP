@@ -442,6 +442,40 @@
         });
     }
 
+    function formatearFechaDDMMYYYY(fechaRaw) {
+      if (!fechaRaw || fechaRaw === "N/A" || String(fechaRaw).trim() === "") return "N/A";
+
+      const str = String(fechaRaw).trim();
+
+      // Si viene en ISO formato ISO (ej. 2026-04-15T06:00:00.000Z)
+      if (str.includes("T")) {
+        const partesFecha = str.split("T")[0].split("-");
+        if (partesFecha.length === 3) {
+          const anio = partesFecha[0];
+          const mes = partesFecha[1].padStart(2, "0");
+          const dia = partesFecha[2].padStart(2, "0");
+          return `${dia}-${mes}-${anio}`;
+        }
+      }
+
+      // Si ya está en formato AAAA-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const [a, m, d] = str.split("-");
+        return `${d}-${m}-${a}`;
+      }
+
+      // Intento estándar con objeto Date (extrayendo UTC para evitar desfasaje por zona horaria)
+      const dObj = new Date(str);
+      if (!isNaN(dObj.getTime())) {
+        const dia = String(dObj.getUTCDate()).padStart(2, "0");
+        const mes = String(dObj.getUTCMonth() + 1).padStart(2, "0");
+        const anio = dObj.getUTCFullYear();
+        return `${dia}-${mes}-${anio}`;
+      }
+
+      return str;
+    }
+
     function extraerAnioFecha(fechaRaw) {
       if (!fechaRaw || fechaRaw === "N/A") return null;
       const strFecha = String(fechaRaw);
@@ -615,7 +649,11 @@
 
       document.getElementById("modal-descripcion").textContent = item.DESCRIPCION || "Sin descripción disponible.";
       document.getElementById("modal-responsable").textContent = obtenerPropiedadFlexible(item, ["RESPONSABLE", "RESPONSABLE DE PROYECTO"]);
-      document.getElementById("modal-fecha").textContent = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+      
+      // FORMATEO DE FECHA SOLICITUD A DD-MM-YYYY
+      const fechaRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+      document.getElementById("modal-fecha").textContent = formatearFechaDDMMYYYY(fechaRaw);
+
       document.getElementById("modal-fondo").textContent = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
       document.getElementById("modal-id-interno").textContent = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
 
@@ -750,7 +788,8 @@
         case "RESPONSABLE":
           return obtenerPropiedadFlexible(item, ["RESPONSABLE", "RESPONSABLE DE PROYECTO"]);
         case "FECHA_SOLICITUD":
-          return obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+          const fRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+          return formatearFechaDDMMYYYY(fRaw);
         case "FONDO":
           return obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
         case "ID_INTERNO":
