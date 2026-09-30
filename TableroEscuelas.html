@@ -112,6 +112,8 @@
       <!-- Pestaña 1: Tablero General -->
       <section id="vista-general" class="space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
+          
+          <!-- Fila superior: Título y Buscador de texto -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
             <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
             <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
@@ -126,6 +128,52 @@
               Exportar datos
             </button>
           </div>
+
+          <!-- SECCIÓN DE FILTROS ESPECÍFICOS DE LA TABLA -->
+          <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 text-xs">
+            <div>
+              <label for="select-filtro-municipio" class="block font-semibold text-slate-600 mb-1">Municipio</label>
+              <select id="select-filtro-municipio" onchange="filtrarTabla()" class="w-full border border-slate-300 rounded-lg p-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+                <option value="">Todos los municipios</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="select-filtro-opd" class="block font-semibold text-slate-600 mb-1">OPD</label>
+              <select id="select-filtro-opd" onchange="filtrarTabla()" class="w-full border border-slate-300 rounded-lg p-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+                <option value="">Todos los OPD</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="select-filtro-estatus" class="block font-semibold text-slate-600 mb-1">Estatus</label>
+              <select id="select-filtro-estatus" onchange="filtrarTabla()" class="w-full border border-slate-300 rounded-lg p-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+                <option value="">Todos los estatus</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="select-filtro-fondo" class="block font-semibold text-slate-600 mb-1">Fondo</label>
+              <select id="select-filtro-fondo" onchange="filtrarTabla()" class="w-full border border-slate-300 rounded-lg p-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+                <option value="">Todos los fondos</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="select-filtro-anio" class="block font-semibold text-slate-600 mb-1">Año de Solicitud</label>
+              <select id="select-filtro-anio" onchange="filtrarTabla()" class="w-full border border-slate-300 rounded-lg p-2 text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+                <option value="">Todos los años</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Botón auxiliar para resetear filtros rápidamente -->
+          <div class="flex justify-end pt-1">
+            <button onclick="limpiarFiltros()" class="text-[11px] text-[#C6004C] hover:underline font-medium flex items-center gap-1">
+              <span>🧹</span> Limpiar todos los filtros
+            </button>
+          </div>
+
         </div>
 
         <!-- Tabla dinámica -->
@@ -378,6 +426,7 @@
         .then(res => {
           if (res.success) {
             datosConsolidados = res.general || [];
+            poblarSelectsFiltros(datosConsolidados);
             renderizarTabla(datosConsolidados);
             
             badge.textContent = res.cached ? "Conectado (Caché 1h)" : "Conectado (Actualizado)";
@@ -391,6 +440,53 @@
           badge.textContent = "Error de conexión";
           badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
         });
+    }
+
+    function extraerAnioFecha(fechaRaw) {
+      if (!fechaRaw || fechaRaw === "N/A") return null;
+      const strFecha = String(fechaRaw);
+      const match = strFecha.match(/\b(19|20)\d{2}\b/);
+      return match ? match[0] : null;
+    }
+
+    function poblarSelectsFiltros(datos) {
+      const municipios = new Set();
+      const opds = new Set();
+      const estatusSet = new Set();
+      const fondos = new Set();
+      const anios = new Set();
+
+      datos.forEach(item => {
+        const mun = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]);
+        if (mun && mun !== "N/A") municipios.add(mun.trim());
+
+        const opd = obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]);
+        if (opd && opd !== "N/A") opds.add(opd.trim());
+
+        const est = item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO;
+        if (est && est !== "N/A") estatusSet.add(String(est).trim().toUpperCase());
+
+        const fnd = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
+        if (fnd && fnd !== "N/A") fondos.add(fnd.trim());
+
+        const fechaRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+        const anio = extraerAnioFecha(fechaRaw);
+        if (anio) anios.add(anio);
+      });
+
+      poblarSelect("select-filtro-municipio", Array.from(municipios).sort(), "Todos los municipios");
+      poblarSelect("select-filtro-opd", Array.from(opds).sort(), "Todos los OPD");
+      poblarSelect("select-filtro-estatus", Array.from(estatusSet).sort(), "Todos los estatus");
+      poblarSelect("select-filtro-fondo", Array.from(fondos).sort(), "Todos los fondos");
+      poblarSelect("select-filtro-anio", Array.from(anios).sort((a, b) => b - a), "Todos los años");
+    }
+
+    function poblarSelect(idSelect, opciones, placeholder) {
+      const select = document.getElementById(idSelect);
+      select.innerHTML = `<option value="">${placeholder}</option>`;
+      opciones.forEach(opc => {
+        select.innerHTML += `<option value="${opc}">${opc}</option>`;
+      });
     }
 
     function obtenerBadgeRubro(rubro) {
@@ -468,7 +564,7 @@
       });
 
       if (!datosFiltrados || datosFiltrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No se encontraron registros válidos con CCT.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No se encontraron registros válidos con los filtros seleccionados.</td></tr>`;
         return;
       }
 
@@ -569,10 +665,51 @@
 
     function filtrarTabla() {
       const busqueda = document.getElementById("input-filtro").value.toLowerCase();
+      const munSel = document.getElementById("select-filtro-municipio").value.toLowerCase();
+      const opdSel = document.getElementById("select-filtro-opd").value.toLowerCase();
+      const estSel = document.getElementById("select-filtro-estatus").value.toLowerCase();
+      const fndSel = document.getElementById("select-filtro-fondo").value.toLowerCase();
+      const anioSel = document.getElementById("select-filtro-anio").value;
+
       const filtrados = datosConsolidados.filter(item => {
-        return Object.values(item).some(val => String(val).toLowerCase().includes(busqueda));
+        // 1. Coincidencia de texto global
+        const coincideTexto = busqueda === "" || Object.values(item).some(val => String(val).toLowerCase().includes(busqueda));
+
+        // 2. Coincidencia Municipio
+        const munVal = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]).toLowerCase();
+        const coincideMun = munSel === "" || munVal.includes(munSel);
+
+        // 3. Coincidencia OPD
+        const opdVal = obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]).toLowerCase();
+        const coincideOpd = opdSel === "" || opdVal.includes(opdSel);
+
+        // 4. Coincidencia Estatus
+        const estVal = String(item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO || "").toLowerCase();
+        const coincideEst = estSel === "" || estVal.includes(estSel);
+
+        // 5. Coincidencia Fondo
+        const fndVal = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]).toLowerCase();
+        const coincideFnd = fndSel === "" || fndVal.includes(fndSel);
+
+        // 6. Coincidencia Año
+        const fechaRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
+        const anioVal = extraerAnioFecha(fechaRaw);
+        const coincideAnio = anioSel === "" || (anioVal && anioVal === anioSel);
+
+        return coincideTexto && coincideMun && coincideOpd && coincideEst && coincideFnd && coincideAnio;
       });
+
       renderizarTabla(filtrados);
+    }
+
+    function limpiarFiltros() {
+      document.getElementById("input-filtro").value = "";
+      document.getElementById("select-filtro-municipio").value = "";
+      document.getElementById("select-filtro-opd").value = "";
+      document.getElementById("select-filtro-estatus").value = "";
+      document.getElementById("select-filtro-fondo").value = "";
+      document.getElementById("select-filtro-anio").value = "";
+      filtrarTabla();
     }
 
     /* -------------------------------------------------------------------------- */
