@@ -103,6 +103,9 @@
         <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100">
           🗺️ Estadística y Mapa SEMS
         </button>
+        <button onclick="cambiarPestana('distritos')" id="btn-tab-distritos" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100">
+          📊 Distritos y Lista nominal
+        </button>
       </nav>
     </aside>
 
@@ -213,6 +216,26 @@
               allowfullscreen="" 
               loading="lazy" 
               referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pestaña 3: Distritos y Lista Nominal -->
+      <section id="vista-distritos" class="hidden space-y-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-lg font-bold text-slate-800">Distritos electores y Lista Nominal de Jalisco</h2>
+          <p class="text-xs text-slate-500">Tablero interactivo con datos del IEPC e INE</p>
+        </div>
+
+        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="w-full h-[600px] rounded-lg overflow-hidden border border-slate-100">
+            <iframe 
+              title="Distritos_Jalisco" 
+              class="w-full h-full border-0" 
+              src="https://app.powerbi.com/view?r=eyJrIjoiNGZhNzkyMTctMjdiMC00OTgzLThlN2ItYjllODhkNTcwNGI0IiwidCI6IjRjOGFiNTYzLWRiNzMtNDMwMS05NDM5LTk1ZDY1YjEyOTBkZSJ9" 
+              frameborder="0" 
+              allowFullScreen="true">
             </iframe>
           </div>
         </div>
@@ -394,19 +417,36 @@
     function cambiarPestana(pestana) {
       const vGeneral = document.getElementById("vista-general");
       const vEstadistica = document.getElementById("vista-estadistica");
+      const vDistritos = document.getElementById("vista-distritos");
+
       const btnGeneral = document.getElementById("btn-tab-general");
       const btnEstadistica = document.getElementById("btn-tab-estadistica");
+      const btnDistritos = document.getElementById("btn-tab-distritos");
 
+      // Estilos reutilizables
+      const estiloActivo = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white";
+      const estiloInactivo = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100";
+
+      // Ocultar todas las pestañas primero
+      vGeneral.classList.add("hidden");
+      vEstadistica.classList.add("hidden");
+      vDistritos.classList.add("hidden");
+
+      // Resetear estilo de botones
+      btnGeneral.className = estiloInactivo;
+      btnEstadistica.className = estiloInactivo;
+      btnDistritos.className = estiloInactivo;
+
+      // Mostrar la pestaña correspondiente
       if (pestana === "general") {
         vGeneral.classList.remove("hidden");
-        vEstadistica.classList.add("hidden");
-        btnGeneral.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white";
-        btnEstadistica.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100";
-      } else {
-        vGeneral.classList.add("hidden");
+        btnGeneral.className = estiloActivo;
+      } else if (pestana === "estadistica") {
         vEstadistica.classList.remove("hidden");
-        btnEstadistica.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white";
-        btnGeneral.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100";
+        btnEstadistica.className = estiloActivo;
+      } else if (pestana === "distritos") {
+        vDistritos.classList.remove("hidden");
+        btnDistritos.className = estiloActivo;
       }
     }
 
