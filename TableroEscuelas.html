@@ -793,7 +793,6 @@
       const cctPlantel = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
 
       document.getElementById("modal-rubro-badge").innerHTML = obtenerBadgeRubro(item.RUBRO_PROYECTO);
-      document.getElementById("modal-[#C6004C]").textContent = nombrePlantel; // id modal-escuela
       document.getElementById("modal-escuela").textContent = nombrePlantel;
       document.getElementById("modal-cct").textContent = "CCT: " + cctPlantel;
 
