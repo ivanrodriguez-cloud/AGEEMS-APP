@@ -132,9 +132,25 @@
             </button>
           </div>
 
-          <!-- SECCIÓN DE FILTROS ESPECÍFICOS CON SELECCIÓN MÚLTIPLE -->
-          <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 text-xs">
+          <!-- SECCIÓN DE FILTROS ESPECÍFICOS CON SELECCIÓN MÚLTIPLE (6 COLUMNAS EN LG) -->
+          <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-xs">
             
+            <!-- Filtro Rubro -->
+            <div class="relative dropdown-container" id="container-filtro-rubro">
+              <label class="block font-semibold text-slate-600 mb-1">Rubro</label>
+              <button onclick="toggleDropdown('dropdown-rubro')" type="button" class="w-full border border-slate-300 rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
+                <span id="btn-text-rubro" class="truncate">Todos los rubros</span>
+                <span class="text-slate-400 text-[10px] ml-1">▼</span>
+              </button>
+              <div id="dropdown-rubro" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
+                <div class="flex justify-between border-b border-slate-100 pb-1.5 mb-1.5 text-[10px]">
+                  <button onclick="marcarTodosFiltro('rubro', true)" class="text-[#C6004C] hover:underline font-semibold">Seleccionar todos</button>
+                  <button onclick="marcarTodosFiltro('rubro', false)" class="text-slate-400 hover:underline">Limpiar</button>
+                </div>
+                <div id="opts-rubro" class="space-y-1"></div>
+              </div>
+            </div>
+
             <!-- Filtro Municipio -->
             <div class="relative dropdown-container" id="container-filtro-municipio">
               <label class="block font-semibold text-slate-600 mb-1">Municipio</label>
@@ -594,6 +610,7 @@
     }
 
     function poblarSelectsFiltros(datos) {
+      const rubros = new Set();
       const municipios = new Set();
       const opds = new Set();
       const estatusSet = new Set();
@@ -601,6 +618,9 @@
       const anios = new Set();
 
       datos.forEach(item => {
+        const rub = item.RUBRO_PROYECTO;
+        if (rub && rub !== "N/A") rubros.add(String(rub).trim());
+
         const mun = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]);
         if (mun && mun !== "N/A") municipios.add(mun.trim());
 
@@ -618,6 +638,7 @@
         if (anio) anios.add(anio);
       });
 
+      renderCheckboxesFiltro("rubro", Array.from(rubros).sort());
       renderCheckboxesFiltro("municipio", Array.from(municipios).sort());
       renderCheckboxesFiltro("opd", Array.from(opds).sort());
       renderCheckboxesFiltro("estatus", Array.from(estatusSet).sort());
@@ -654,6 +675,7 @@
       const btnSpan = document.getElementById(`btn-text-${claveFiltro}`);
       
       const etiquetasPlural = {
+        rubro: "Todos los rubros",
         municipio: "Todos los municipios",
         opd: "Todos los OPD",
         estatus: "Todos los estatus",
@@ -871,6 +893,7 @@
     function filtrarTabla() {
       const busqueda = document.getElementById("input-filtro").value.toLowerCase();
       
+      const rubsSel = obtenerValoresSeleccionados("rubro");
       const munsSel = obtenerValoresSeleccionados("municipio");
       const opdsSel = obtenerValoresSeleccionados("opd");
       const estsSel = obtenerValoresSeleccionados("estatus");
@@ -881,28 +904,32 @@
         // 1. Coincidencia de texto global
         const coincideTexto = busqueda === "" || Object.values(item).some(val => String(val).toLowerCase().includes(busqueda));
 
-        // 2. Coincidencia Municipio (Multiselección)
+        // 2. Coincidencia Rubro (Multiselección)
+        const rubVal = String(item.RUBRO_PROYECTO || "").toLowerCase();
+        const coincideRub = rubsSel.length === 0 || rubsSel.some(sel => rubVal.includes(sel));
+
+        // 3. Coincidencia Municipio (Multiselección)
         const munVal = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]).toLowerCase();
         const coincideMun = munsSel.length === 0 || munsSel.some(sel => munVal.includes(sel));
 
-        // 3. Coincidencia OPD (Multiselección)
+        // 4. Coincidencia OPD (Multiselección)
         const opdVal = obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]).toLowerCase();
         const coincideOpd = opdsSel.length === 0 || opdsSel.some(sel => opdVal.includes(sel));
 
-        // 4. Coincidencia Estatus (Multiselección)
+        // 5. Coincidencia Estatus (Multiselección)
         const estVal = String(item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO || "").toLowerCase();
         const coincideEst = estsSel.length === 0 || estsSel.some(sel => estVal.includes(sel));
 
-        // 5. Coincidencia Fondo (Multiselección)
+        // 6. Coincidencia Fondo (Multiselección)
         const fndVal = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]).toLowerCase();
         const coincideFnd = fndsSel.length === 0 || fndsSel.some(sel => fndVal.includes(sel));
 
-        // 6. Coincidencia Año (Multiselección)
+        // 7. Coincidencia Año (Multiselección)
         const fechaRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
         const anioVal = extraerAnioFecha(fechaRaw);
         const coincideAnio = aniosSel.length === 0 || (anioVal && aniosSel.includes(anioVal.toLowerCase()));
 
-        return coincideTexto && coincideMun && coincideOpd && coincideEst && coincideFnd && coincideAnio;
+        return coincideTexto && coincideRub && coincideMun && coincideOpd && coincideEst && coincideFnd && coincideAnio;
       });
 
       renderizarTabla(filtrados);
@@ -911,7 +938,7 @@
     function limpiarFiltros() {
       document.getElementById("input-filtro").value = "";
       
-      const categorias = ["municipio", "opd", "estatus", "fondo", "anio"];
+      const categorias = ["rubro", "municipio", "opd", "estatus", "fondo", "anio"];
       categorias.forEach(cat => {
         const checkboxes = document.querySelectorAll(`.filter-check-${cat}`);
         checkboxes.forEach(cb => cb.checked = false);
