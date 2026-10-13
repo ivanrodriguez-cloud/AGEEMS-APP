@@ -679,8 +679,12 @@
     function obtenerBadgeRubro(rubro) {
       const rubroNormalizado = (rubro || '').toString().trim().toLowerCase();
 
-      if (rubroNormalizado.includes('equipamiento')) {
+      if (rubroNormalizado.includes('equipamiento infejal')) {
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-600/15 text-amber-700"><span class="text-[10px]">●</span> Equipamiento INFEJAL</span>`;
+      } else if (rubroNormalizado.includes('equipamiento')) {
         return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF8300]/15 text-[#FF8300]"><span class="text-[10px]">●</span> Equipamiento</span>`;
+      } else if (rubroNormalizado.includes('obra infejal')) {
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-700/15 text-purple-800"><span class="text-[10px]">●</span> Obra INFEJAL</span>`;
       } else if (rubroNormalizado.includes('obra')) {
         return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#C6004C]/15 text-[#C6004C]"><span class="text-[10px]">●</span> Obra</span>`;
       } else if (rubroNormalizado.includes('evento')) {
@@ -808,7 +812,17 @@
       document.getElementById("modal-fecha").textContent = formatearFechaDDMMYYYY(fechaRaw);
 
       document.getElementById("modal-fondo").textContent = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
-      document.getElementById("modal-id-interno").textContent = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
+      
+      // FORZADO A TEXTO PLANO DEL ID INTERNO
+      const idRaw = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
+      let idTexto = (idRaw !== null && idRaw !== undefined) ? String(idRaw).trim() : "N/A";
+      if (idTexto.includes("T00:00:00") || idTexto.includes("GMT")) {
+        const fObj = new Date(idTexto);
+        if (!isNaN(fObj.getTime())) {
+          idTexto = `${fObj.getUTCDate()}-${fObj.getUTCMonth() + 1}`;
+        }
+      }
+      document.getElementById("modal-id-interno").textContent = idTexto;
 
       const oficiosRaw = obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
       document.getElementById("modal-oficios").innerHTML = formatearOficios(oficiosRaw);
@@ -950,7 +964,15 @@
         case "FONDO":
           return obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
         case "ID_INTERNO":
-          return obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
+          const idRaw = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
+          let idTexto = (idRaw !== null && idRaw !== undefined) ? String(idRaw).trim() : "N/A";
+          if (idTexto.includes("T00:00:00") || idTexto.includes("GMT")) {
+            const fObj = new Date(idTexto);
+            if (!isNaN(fObj.getTime())) {
+              idTexto = `${fObj.getUTCDate()}-${fObj.getUTCMonth() + 1}`;
+            }
+          }
+          return idTexto;
         case "OFICIOS":
           return obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
         case "MONTO_ASIGNADO":
