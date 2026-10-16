@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Icono de la pestaña (Favicon) -->
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
+  
+  <meta charset="utf-8">
+  <title>Páginas de interés - SEMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-orange: #FF8300;
+      --primary-pink: #E5004E;
+      --neutral-gray: #5B6670;
+      --light-bg: #f8f9fa;
+    }
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background-color: var(--light-bg); 
+      color: var(--neutral-gray); 
+      margin: 0; 
+      padding: 15px; 
+      display: flex; 
+      justify-content: center; 
+    }
+    .container { 
+      background: #ffffff; 
+      width: 100%; 
+      max-width: 700px; 
+      padding: 25px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+      box-sizing: border-box; 
+    }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header img { max-width: 150px; height: auto; border-radius: 15px; }
+    h1 { color: var(--primary-pink); font-size: 22px; font-weight: 600; text-align: left; margin-bottom: 20px; }
+    
+    .btn-secundario { 
+      background-color: transparent; 
+      color: var(--neutral-gray); 
+      border: 1px solid #ccc; 
+      width: auto; 
+      margin-bottom: 20px; 
+      padding: 8px 16px; 
+      font-size: 14px; 
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .grid-paginas { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 20px; 
+      margin-top: 20px; 
+    }
+    .card-enlace { 
+      border: 1px solid #eee; 
+      border-radius: 10px; 
+      padding: 20px; 
+      text-align: center; 
+      text-decoration: none; 
+      color: inherit; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+      transition: transform 0.2s, box-shadow 0.2s; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .card-enlace:hover { 
+      transform: translateY(-3px); 
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1); 
+      border-color: var(--primary-orange); 
+    }
+    .card-enlace img { max-width: 120px; max-height: 80px; width: auto; height: auto; margin-bottom: 12px; object-fit: contain; }
+    .card-enlace span { font-weight: 600; font-size: 16px; color: #333; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <img src="icono.png" alt="Logo SEMS">
+    </div>
+
+    <button class="btn-secundario" onclick="location.href='index.html'">← Volver al Menú</button>
+    
+    <h1>Páginas de interés</h1>
+    
+    <div class="grid-paginas">
+      <!-- BOTÓN SIGE - INFEJAL -->
+      <a href="https://sinfejal.jalisco.gob.mx/sige" target="_blank" class="card-enlace">
+        <img src="INFEJAL.png" alt="Logo SIGE">
+        <span>SIGE - INFEJAL</span>
+      </a>
+      
+      <!-- BOTÓN CONSULTA PÚBLICA - SIOP -->
+      <a href="https://obrastrasparencia.jalisco.gob.mx/secip/obrastransparencia" target="_blank" class="card-enlace">
+        <img src="SIOP.png" alt="Logo SIOP">
+        <span>Consulta Pública - SIOP</span>
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>
