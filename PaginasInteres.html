@@ -4,7 +4,22 @@
   <!-- Icono de la pestaña (Favicon) -->
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
-  
+
+  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA CON PERMISOS PARA ADMINISTRADOR, DIRECTOR Y USUARIO -->
+  <script>
+    (function() {
+      const userSession = sessionStorage.getItem("userSession");
+      if (!userSession) {
+        alert("Acceso denegado. Debes iniciar sesión para acceder a esta sección.");
+        window.location.href = "index.html";
+        return;
+      }
+      try {
+        const user = JSON.parse(userSession);
+        if (!user || !user.correo) {
+          throw new Error("Sesión inválida");
+        }
+<!-- Inicio de la página -->
   <meta charset="utf-8">
   <title>Páginas de interés - SEMS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
