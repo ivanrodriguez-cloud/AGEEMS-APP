@@ -118,7 +118,7 @@
           
           <!-- Fila superior: Título y Buscador de texto -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
-            <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Eventos)</h2>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Sedes Alternas)</h2>
             <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
           </div>
           
@@ -539,7 +539,7 @@
             poblarSelectsFiltros(datosConsolidados);
             renderizarTabla(datosConsolidados);
             
-            badge.textContent = res.cached ? "Conectado (Caché 1/2 h)" : "Conectado (Actualizado)";
+            badge.textContent = res.cached ? "Conectado (Caché 10 min)" : "Conectado (Actualizado)";
             badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
           } else {
             throw new Error(res.error || "Error en la estructura de datos");
@@ -709,8 +709,8 @@
         return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-700/15 text-purple-800"><span class="text-[10px]">●</span> Obra INFEJAL</span>`;
       } else if (rubroNormalizado.includes('obra')) {
         return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#C6004C]/15 text-[#C6004C]"><span class="text-[10px]">●</span> Obra</span>`;
-      } else if (rubroNormalizado.includes('evento')) {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#465055]/15 text-[#465055]"><span class="text-[10px]">●</span> Eventos</span>`;
+      } else if (rubroNormalizado.includes('sedes alternas') || rubroNormalizado.includes('sede')) {
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-cyan-700/15 text-cyan-800"><span class="text-[10px]">●</span> Sedes alternas</span>`;
       } else {
         return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700"><span class="text-[10px]">●</span> ${rubro || 'General'}</span>`;
       }
@@ -784,7 +784,7 @@
       tbody.innerHTML = datosFiltrados.map((item, index) => {
         const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT;
         const nombre = obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
-        const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
+        const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.SEDE || item.EVENTO || "Sin detalle";
         const estatusRaw = item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO;
         
         const badgeRubro = obtenerBadgeRubro(item.RUBRO_PROYECTO);
@@ -974,7 +974,7 @@
         case "ESCUELA":
           return obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
         case "DESCRIPCION":
-          return item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.EVENTO || "Sin detalle";
+          return item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.SEDE || item.EVENTO || "Sin detalle";
         case "ESTATUS":
           return item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO || "N/A";
         case "CLAVE_INMUEBLE":
@@ -1036,7 +1036,7 @@
         return;
       }
 
-      const tituloDocumento = "Registros Consolidados (Infraestructura, Obras y Eventos)";
+      const tituloDocumento = "Registros Consolidados (Infraestructura, Obras y Sedes Alternas)";
 
       // Construcción del conjunto de datos filtrados
       const encabezados = columnasSeleccionadas.map(c => c.titulo);
