@@ -17,7 +17,6 @@
           throw new Error("Sesión inválida");
         }
 
-        // Roles permitidos para ver el organigrama
         const rolUsuario = user.rol ? user.rol.toString().toUpperCase() : "";
         const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR", "USUARIO", "VISUALIZADOR"];
 
@@ -44,6 +43,10 @@
   <!-- Fuente Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   
+  <!-- SDKs OFICIALES DE GOOGLE API Y GOOGLE IDENTITY SERVICES -->
+  <script src="https://apis.google.com/js/api.js" async defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <style>
     :root {
       --primary-orange: #ff8300;
@@ -135,7 +138,6 @@
       border-color: var(--primary-orange);
     }
 
-    /* ESTILOS DEL BOTÓN Y PANEL AGENDAR CUMPLEAÑOS */
     .btn-cumpleanos {
       background-color: var(--primary-orange);
       color: #ffffff;
@@ -164,7 +166,7 @@
       padding: 20px;
       margin-bottom: 30px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      display: none; /* Oculto inicialmente */
+      display: none;
     }
 
     .panel-cumpleanos h3 {
@@ -268,7 +270,6 @@
 
     .btn-eliminar:hover { background-color: #c82333; }
 
-    /* Árbol Jerárquico */
     .tree-node {
       margin-bottom: 15px;
       position: relative;
@@ -286,7 +287,6 @@
       display: block;
     }
 
-    /* Estilo de Tarjetas */
     .card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -398,7 +398,7 @@
       </div>
     </div>
 
-    <!-- BOTÓN AGENDAR CUMPLEAÑOS (SOLO ADMINISTRADOR, DIRECTOR Y USUARIO) -->
+    <!-- BOTÓN AGENDAR CUMPLEAÑOS -->
     <button id="btnAbrirCumpleanos" class="btn-cumpleanos" style="display: none;" onclick="togglePanelCumpleanos()">
       🎂 Agendar cumpleaños
     </button>
@@ -408,20 +408,17 @@
       <h3>Configurar Cumpleaños en Google Calendar</h3>
       <div class="grid-cumpleanos">
         
-        <!-- Lista desplegable de Años (Múltiple) -->
         <div class="form-group-cumple">
           <label>Años a considerar (Selecciona uno o varios):</label>
           <select id="selectAnos" class="select-multiple" multiple></select>
           <small style="color: #718096; margin-top: 4px;">Usa Ctrl/Cmd para seleccionar varios.</small>
         </div>
 
-        <!-- Lista desplegable de Personas (Múltiple) -->
         <div class="form-group-cumple">
           <label>Personas (DIRECTORIO SEMS):</label>
           <select id="selectPersonas" class="select-multiple" multiple></select>
         </div>
 
-        <!-- Botones de Alertas -->
         <div class="form-group-cumple">
           <div class="alertas-container">
             <label>Alertas / Recordatorios:</label>
@@ -438,7 +435,6 @@
 
       </div>
 
-      <!-- Botones de Acción -->
       <div class="acciones-cumpleanos">
         <button type="button" class="btn-anadir" onclick="procesarCumpleanos('agregar')">Añadir</button>
         <button type="button" class="btn-eliminar" onclick="procesarCumpleanos('eliminar')">Eliminar</button>
@@ -452,15 +448,40 @@
 
   <script>
     const URL_SCRIPT_DIRECTORIO = "https://script.google.com/macros/s/AKfycbydAlhc1CbJhdHry5DrlOgWEr9IqLV7bJGhBssTQBGK5ftGS6yZLUyJU2D_UTCeIyhtwg/exec";
+    
+    // CLIENT ID OAUTH DE GOOGLE CLOUD
+    const CLIENT_ID_OAUTH = "287359960751-l4p24dep46nrtc41if0n8naabn1vi1lu.apps.googleusercontent.com";
+    const SCOPES_CALENDAR = "https://www.googleapis.com/auth/calendar.events";
 
     let datosGlobales = [];
     let usuarioLogueado = null;
+    let tokenClientCalendar = null;
+    let gapiCalendarIniciado = false;
 
     window.onload = function() {
       validarRolYBotonCumpleanos();
       obtenerDatosDirectorio();
       inicializarListaAnos();
+      inicializarGoogleCalendarSDK();
     };
+
+    function inicializarGoogleCalendarSDK() {
+      if (typeof gapi !== 'undefined') {
+        gapi.load('client', async () => {
+          await gapi.client.init({
+            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+          });
+          gapiCalendarIniciado = true;
+        });
+      }
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+        tokenClientCalendar = google.accounts.oauth2.initTokenClient({
+          client_id: CLIENT_ID_OAUTH,
+          scope: SCOPES_CALENDAR,
+          callback: '', 
+        });
+      }
+    }
 
     function validarRolYBotonCumpleanos() {
       const userSession = sessionStorage.getItem("userSession");
@@ -482,7 +503,7 @@
         const option = document.createElement('option');
         option.value = anioActual + i;
         option.textContent = anioActual + i;
-        if (i === 0) option.selected = true; // Selecciona el año actual por defecto
+        if (i === 0) option.selected = true;
         selectAnos.appendChild(option);
       }
     }
@@ -518,7 +539,6 @@
       const select = document.getElementById('selectPersonas');
       select.innerHTML = '';
 
-      // Ordenar alfabéticamente por Nombre Público / Completo
       const personasOrdenadas = [...lista].sort((a, b) => {
         const nomA = obtenerValor(a, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]);
         const nomB = obtenerValor(b, ["NOMBRE PÚBLICO", "NOMBRE COMPLETO", "NOMBRE"]);
@@ -537,6 +557,7 @@
       });
     }
 
+    // MANEJO DE CUMPLEAÑOS DIRECTAMENTE EN NAVEGADOR (CON PERMISO DE GOOGLE)
     function procesarCumpleanos(tipoAccion) {
       const selectAnos = document.getElementById('selectAnos');
       const anosSeleccionados = Array.from(selectAnos.selectedOptions).map(opt => opt.value);
@@ -560,60 +581,121 @@
       const alertaUnDia = document.getElementById('btnAlertaUnDia').classList.contains('active');
       const alertaMismoDia = document.getElementById('btnAlertaMismoDia').classList.contains('active');
 
-      if (!usuarioLogueado || !usuarioLogueado.correo) {
-        alert("Error de sesión: No se pudo verificar la cuenta del usuario.");
-        return;
+      if (!tokenClientCalendar || !gapiCalendarIniciado) {
+        inicializarGoogleCalendarSDK();
       }
 
-      const payload = {
-        accion: tipoAccion === 'agregar' ? 'agregarCumpleanos' : 'eliminarCumpleanos',
-        correoUsuario: usuarioLogueado.correo,
-        personas: personasSeleccionadas,
-        anos: anosSeleccionados,
-        alertas: {
-          unDiaAntes: alertaUnDia,
-          mismoDia: alertaMismoDia
-        }
-      };
+      // Función que realiza la llamada a Google Calendar API del usuario
+      const ejecutarAccionCalendar = async () => {
+        const btnProcesar = event.target;
+        const textoOriginal = btnProcesar.textContent;
+        btnProcesar.disabled = true;
+        btnProcesar.textContent = "Procesando...";
 
-      const btnProcesar = event.target;
-      const textoOriginal = btnProcesar.textContent;
-      btnProcesar.disabled = true;
-      btnProcesar.textContent = "Procesando...";
+        try {
+          let exitosos = 0;
+          let yaAgendados = [];
+          let noEncontrados = [];
 
-      fetch(URL_SCRIPT_DIRECTORIO, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(data => {
-        btnProcesar.disabled = false;
-        btnProcesar.textContent = textoOriginal;
+          for (let persona of personasSeleccionadas) {
+            const curp = persona.curp ? persona.curp.toString().trim() : "";
+            const nombre = persona.nombre ? persona.nombre.toString().trim() : "Personal";
+            if (curp.length < 10) continue;
 
-        if (data.status === "success") {
+            const mesStr = curp.substring(6, 8);
+            const diaStr = curp.substring(8, 10);
+
+            for (let anio of anosSeleccionados) {
+              const fechaStr = `${anio}-${mesStr}-${diaStr}`;
+              const tituloEvento = `Cumpleaños de ${nombre}`;
+
+              // Buscar si ya existe el evento en esa fecha
+              const resList = await gapi.client.calendar.events.list({
+                'calendarId': 'primary',
+                'timeMin': `${fechaStr}T00:00:00Z`,
+                'timeMax': `${fechaStr}T23:59:59Z`,
+                'q': tituloEvento,
+                'singleEvents': true
+              });
+
+              const eventoExistente = resList.result.items.find(e => e.summary.toLowerCase() === tituloEvento.toLowerCase());
+
+              if (tipoAccion === 'agregar') {
+                if (eventoExistente) {
+                  yaAgendados.push(nombre);
+                } else {
+                  let overrides = [];
+                  if (alertaUnDia) overrides.push({ method: 'popup', minutes: 840 });
+                  if (alertaMismoDia) overrides.push({ method: 'popup', minutes: 0 });
+
+                  const nuevoEvento = {
+                    'summary': tituloEvento,
+                    'start': { 'date': fechaStr },
+                    'end': { 'date': fechaStr },
+                    'reminders': {
+                      'useDefault': false,
+                      'overrides': overrides
+                    }
+                  };
+
+                  await gapi.client.calendar.events.insert({
+                    'calendarId': 'primary',
+                    'resource': nuevoEvento
+                  });
+                  exitosos++;
+                }
+              } else if (tipoAccion === 'eliminar') {
+                if (eventoExistente) {
+                  await gapi.client.calendar.events.delete({
+                    'calendarId': 'primary',
+                    'eventId': eventoExistente.id
+                  });
+                  exitosos++;
+                } else {
+                  noEncontrados.push(nombre);
+                }
+              }
+            }
+          }
+
+          btnProcesar.disabled = false;
+          btnProcesar.textContent = textoOriginal;
+
           if (tipoAccion === 'agregar') {
-            let msg = `Proceso completado. Cumpleaños agendados correctamente.`;
-            if (data.yaAgendados && data.yaAgendados.length > 0) {
-              msg += `\n\nLos siguientes cumpleaños ya se encontraban agendados:\n- ` + data.yaAgendados.join("\n- ");
+            let msg = `Proceso completado. Cumpleaños agendados correctamente: ${exitosos}.`;
+            if (yaAgendados.length > 0) {
+              msg += `\n\nLos siguientes ya estaban agendados:\n- ` + [...new Set(yaAgendados)].join("\n- ");
             }
             alert(msg);
-          } else if (tipoAccion === 'eliminar') {
-            let msg = `Proceso completado. Cumpleaños eliminados correctamente.`;
-            if (data.noEstabanAgendados && data.noEstabanAgendados.length > 0) {
-              msg += `\n\nLos siguientes cumpleaños no estaban agendados:\n- ` + data.noEstabanAgendados.join("\n- ");
+          } else {
+            let msg = `Proceso completado. Cumpleaños eliminados correctamente: ${exitosos}.`;
+            if (noEncontrados.length > 0) {
+              msg += `\n\nLos siguientes no estaban agendados:\n- ` + [...new Set(noEncontrados)].join("\n- ");
             }
             alert(msg);
           }
-        } else {
-          alert("Error: " + (data.message || "No se pudo procesar la solicitud."));
+
+        } catch (err) {
+          console.error("Error al procesar eventos en Google Calendar:", err);
+          btnProcesar.disabled = false;
+          btnProcesar.textContent = textoOriginal;
+          alert("Ocurrió un error al agendar los eventos en tu Google Calendar.");
         }
-      })
-      .catch(err => {
-        console.error("Error al procesar cumpleaños:", err);
-        btnProcesar.disabled = false;
-        btnProcesar.textContent = textoOriginal;
-        alert("Ocurrió un error al conectar con el servidor.");
-      });
+      };
+
+      // Si no tenemos token concedido, abrir ventana emergente de permisos de Google
+      if (gapi.client.getToken() === null) {
+        tokenClientCalendar.callback = async (resp) => {
+          if (resp.error !== undefined) {
+            alert("No se otorgaron los permisos necesarios para acceder a tu Google Calendar.");
+            return;
+          }
+          await ejecutarAccionCalendar();
+        };
+        tokenClientCalendar.requestAccessToken({ prompt: 'consent', hint: usuarioLogueado.correo });
+      } else {
+        ejecutarAccionCalendar();
+      }
     }
 
     function obtenerValor(item, listaNombres) {
