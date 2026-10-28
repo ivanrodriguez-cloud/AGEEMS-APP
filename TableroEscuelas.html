@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tablero de Control SEMS - Gestión Integral</title>
+  <title>Tablero de Control SEMS</title>
 
-  <!-- Favicon e Iconos -->
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
 
@@ -15,22 +15,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Leaflet CSS y JS (Mapas) -->
+  <!-- Leaflet Maps CSS/JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Chart.js para Gráficas -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Librerías de Exportación -->
+  <!-- Exportación a PDF/Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
     body { font-family: 'Poppins', sans-serif; }
-    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 
   <!-- Guardián de Sesión -->
@@ -70,7 +68,7 @@
           SEMS - Gestión Estratégica
         </div>
       </div>
-      <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full">
+      <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap">
         Cargando datos...
       </div>
     </div>
@@ -79,10 +77,10 @@
     </div>
   </header>
 
-  <!-- Estructura Principal -->
+  <!-- Contenedor Principal -->
   <div class="flex flex-col md:flex-row flex-1 w-full max-w-full overflow-hidden">
     
-    <!-- BARRA LATERAL CON PESTAÑAS PRINCIPALES -->
+    <!-- BARRA LATERAL GENERAL -->
     <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
       <nav class="flex md:flex-col gap-2 overflow-x-auto">
         <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white whitespace-nowrap">
@@ -100,7 +98,7 @@
       </nav>
     </aside>
 
-    <!-- ÁREA DE CONTENIDO CENTRAL -->
+    <!-- ÁREA DE VISTAS -->
     <main class="flex-1 p-3 sm:p-6 min-w-0">
 
       <!-- PESTAÑA 1: TABLERO GENERAL -->
@@ -108,92 +106,183 @@
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
             <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados</h2>
-            <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:ring-2 focus:ring-[#C6004C]">
+            <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
           </div>
           <div class="flex justify-end w-full">
-            <button onclick="abrirModalExportar()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg">Exportar datos</button>
+            <button onclick="abrirModalExportar()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all">Exportar datos</button>
+          </div>
+
+          <!-- FILTROS DE SELECCIÓN MÚLTIPLE -->
+          <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-xs">
+            <div class="relative dropdown-container" id="container-filtro-rubro">
+              <label class="block font-semibold text-slate-600 mb-1">Rubro</label>
+              <button onclick="toggleDropdown('dropdown-rubro')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
+                <span id="btn-text-rubro" class="truncate">Todos los rubros</span>▼
+              </button>
+              <div id="dropdown-rubro" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
+                  <button onclick="marcarTodosFiltro('rubro', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
+                  <button onclick="marcarTodosFiltro('rubro', false)" class="text-slate-400">Limpiar</button>
+                </div>
+                <div id="opts-rubro" class="space-y-1"></div>
+              </div>
+            </div>
+
+            <div class="relative dropdown-container" id="container-filtro-municipio">
+              <label class="block font-semibold text-slate-600 mb-1">Municipio</label>
+              <button onclick="toggleDropdown('dropdown-municipio')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
+                <span id="btn-text-municipio" class="truncate">Todos los municipios</span>▼
+              </button>
+              <div id="dropdown-municipio" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
+                  <button onclick="marcarTodosFiltro('municipio', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
+                  <button onclick="marcarTodosFiltro('municipio', false)" class="text-slate-400">Limpiar</button>
+                </div>
+                <div id="opts-municipio" class="space-y-1"></div>
+              </div>
+            </div>
+
+            <div class="relative dropdown-container" id="container-filtro-opd">
+              <label class="block font-semibold text-slate-600 mb-1">OPD</label>
+              <button onclick="toggleDropdown('dropdown-opd')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
+                <span id="btn-text-opd" class="truncate">Todos los OPD</span>▼
+              </button>
+              <div id="dropdown-opd" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
+                  <button onclick="marcarTodosFiltro('opd', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
+                  <button onclick="marcarTodosFiltro('opd', false)" class="text-slate-400">Limpiar</button>
+                </div>
+                <div id="opts-opd" class="space-y-1"></div>
+              </div>
+            </div>
+
+            <div class="relative dropdown-container" id="container-filtro-estatus">
+              <label class="block font-semibold text-slate-600 mb-1">Estatus</label>
+              <button onclick="toggleDropdown('dropdown-estatus')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
+                <span id="btn-text-estatus" class="truncate">Todos los estatus</span>▼
+              </button>
+              <div id="dropdown-estatus" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
+                  <button onclick="marcarTodosFiltro('estatus', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
+                  <button onclick="marcarTodosFiltro('estatus', false)" class="text-slate-400">Limpiar</button>
+                </div>
+                <div id="opts-estatus" class="space-y-1"></div>
+              </div>
+            </div>
+
+            <div class="relative dropdown-container" id="container-filtro-fondo">
+              <label class="block font-semibold text-slate-600 mb-1">Fondo</label>
+              <button onclick="toggleDropdown('dropdown-fondo')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
+                <span id="btn-text-fondo" class="truncate">Todos los fondos</span>▼
+              </button>
+              <div id="dropdown-fondo" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
+                  <button onclick="marcarTodosFiltro('fondo', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
+                  <button onclick="marcarTodosFiltro('fondo', false)" class="text-slate-400">Limpiar</button>
+                </div>
+                <div id="opts-fondo" class="space-y-1"></div>
+              </div>
+            </div>
+
+            <div class="relative dropdown-container" id="container-filtro-anio">
+              <label class="block font-semibold text-slate-600 mb-1">Año de Solicitud</label>
+              <button onclick="toggleDropdown('dropdown-anio')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
+                <span id="btn-text-anio" class="truncate">Todos los años</span>▼
+              </button>
+              <div id="dropdown-anio" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
+                  <button onclick="marcarTodosFiltro('anio', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
+                  <button onclick="marcarTodosFiltro('anio', false)" class="text-slate-400">Limpiar</button>
+                </div>
+                <div id="opts-anio" class="space-y-1"></div>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end pt-1">
+            <button onclick="limpiarFiltros()" class="text-[11px] text-[#C6004C] font-medium">🧹 Limpiar todos los filtros</button>
           </div>
         </div>
 
+        <!-- Tabla dinámica -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
           <table class="w-full text-left border-collapse text-sm min-w-[750px]">
-            <thead class="bg-slate-50 border-b text-slate-600 uppercase text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
               <tr>
                 <th class="p-3">Rubro</th>
                 <th class="p-3">CCT / Clave</th>
                 <th class="p-3">Escuela / Plantel</th>
-                <th class="p-3">Descripción</th>
-                <th class="p-3">Estatus</th>
-                <th class="p-3 text-center">Acciones</th>
+                <th class="p-3">Descripción / Detalle</th>
+                <th class="p-3">Estatus del Proceso</th>
+                <th class="p-3 text-center">Detalles</th>
               </tr>
             </thead>
             <tbody id="tabla-cuerpo" class="divide-y divide-slate-100">
-              <tr><td colspan="6" class="p-6 text-center text-slate-400">Cargando registros...</td></tr>
+              <tr><td colspan="6" class="p-6 text-center text-slate-400">Cargando registros desde Google Sheets...</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- PESTAÑA 2: MAPA PERSONALIZADO -->
+      <!-- PESTAÑA 2: ESTADÍSTICA Y MAPA -->
       <section id="vista-estadistica" class="hidden space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles</h2>
+          <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles SEMS</h2>
         </div>
-        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-          <iframe src="https://www.google.com/maps/d/embed?mid=1sDvA5tro1nqFy2UilU5uvcuScaJNOKA&ehbc=2E312F" class="w-full h-[600px] rounded-lg border-0"></iframe>
+        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <iframe src="https://www.google.com/maps/d/embed?mid=1sDvA5tro1nqFy2UilU5uvcuScaJNOKA&ehbc=2E312F" class="w-full h-[600px] border-0 rounded-lg"></iframe>
         </div>
       </section>
 
       <!-- PESTAÑA 3: DISTRITOS -->
       <section id="vista-distritos" class="hidden space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 class="text-lg font-bold text-slate-800">Distritos y Lista Nominal</h2>
+          <h2 class="text-lg font-bold text-slate-800">Distritos Electorales y Lista Nominal</h2>
         </div>
-        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <iframe class="w-full h-[600px] border-0 rounded-lg" src="https://app.powerbi.com/view?r=eyJrIjoiNGZhNzkyMTctMjdiMC00OTgzLThlN2ItYjllODhkNTcwNGI0IiwidCI6IjRjOGFiNTYzLWRiNzMtNDMwMS05NDM5LTk1ZDY1YjEyOTBkZSJ9"></iframe>
         </div>
       </section>
 
-      <!-- PESTAÑA 4: PAPELERÍA Y CONSUMIBLES (NUEVA) -->
+      <!-- PESTAÑA 4: PAPELERÍA Y CONSUMIBLES -->
       <section id="vista-papeleria-consumibles" class="hidden space-y-4">
         
-        <!-- Menú Superior de 3 Subpestañas -->
+        <!-- SUBMENÚ 3 PESTAÑAS -->
         <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex gap-2">
-          <button onclick="cambiarSubPestana('papeleria')" id="btn-sub-papeleria" class="px-4 py-2 rounded-lg font-semibold text-xs transition-all bg-[#C6004C] text-white">
+          <button onclick="cambiarSubPestana('papeleria')" id="btn-sub-papeleria" class="px-4 py-2 rounded-lg font-semibold text-xs bg-[#C6004C] text-white">
             📄 Papelería
           </button>
-          <button onclick="cambiarSubPestana('consumibles')" id="btn-sub-consumibles" class="px-4 py-2 rounded-lg font-semibold text-xs transition-all text-slate-600 hover:bg-slate-100">
+          <button onclick="cambiarSubPestana('consumibles')" id="btn-sub-consumibles" class="px-4 py-2 rounded-lg font-semibold text-xs text-slate-600 hover:bg-slate-100">
             🧪 Consumibles
           </button>
-          <button onclick="cambiarSubPestana('eventos')" id="btn-sub-eventos" class="px-4 py-2 rounded-lg font-semibold text-xs transition-all text-slate-600 hover:bg-slate-100">
+          <button onclick="cambiarSubPestana('eventos')" id="btn-sub-eventos" class="px-4 py-2 rounded-lg font-semibold text-xs text-slate-600 hover:bg-slate-100">
             📍 Eventos
           </button>
         </div>
 
-        <!-- SUBPESTAÑA 1: PAPELERÍA -->
+        <!-- SUBPESTAÑA PAPELERÍA -->
         <div id="subvista-papeleria" class="space-y-4">
-          <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 justify-between items-center text-xs">
-            <input type="text" id="filtro-papeleria" onkeyup="renderizarModuloPapeleria()" placeholder="🔍 Buscar producto o código..." class="border p-2 rounded-lg w-full sm:w-64">
+          <div class="bg-white p-3 rounded-xl border flex justify-between items-center text-xs">
+            <input type="text" id="filtro-papeleria" onkeyup="renderizarModuloPapeleria()" placeholder="🔍 Buscar por código o producto..." class="border p-2 rounded-lg w-64">
             <div id="resumen-rotacion-papeleria" class="font-bold text-slate-600">Promedio Categoría: -- días</div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
             <div class="lg:col-span-5 space-y-4">
-              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Solicitudes por Mes</h3>
                 <canvas id="chart-solicitudes-papeleria" class="max-h-48"></canvas>
               </div>
-              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Productos Solicitados</h3>
                 <div id="top10-papeleria" class="space-y-1 text-xs"></div>
               </div>
-              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Costo del Stock Seleccionado</h3>
-                <canvas id="chart-costo-papeleria" class="max-h-44"></canvas>
+                <canvas id="chart-costo-papeleria" class="max-h-40"></canvas>
               </div>
             </div>
 
-            <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-3 overflow-x-auto">
+            <div class="lg:col-span-7 bg-white rounded-xl border p-3 overflow-x-auto">
               <table class="w-full text-left border-collapse text-xs">
                 <thead class="bg-slate-50 border-b uppercase text-slate-600">
                   <tr>
@@ -202,8 +291,8 @@
                     <th class="p-2 text-center">Ingresos</th>
                     <th class="p-2 text-center">Salidas</th>
                     <th class="p-2 text-center">Stock</th>
-                    <th class="p-2">U.M.</th>
-                    <th class="p-2">Rotación Promedio</th>
+                    <th class="p-2">Unidad de medida</th>
+                    <th class="p-2">Tiempo promedio de rotación</th>
                   </tr>
                 </thead>
                 <tbody id="tabla-papeleria-cuerpo" class="divide-y divide-slate-100"></tbody>
@@ -212,30 +301,30 @@
           </div>
         </div>
 
-        <!-- SUBPESTAÑA 2: CONSUMIBLES -->
+        <!-- SUBPESTAÑA CONSUMIBLES -->
         <div id="subvista-consumibles" class="hidden space-y-4">
-          <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 justify-between items-center text-xs">
-            <input type="text" id="filtro-consumibles" onkeyup="renderizarModuloConsumibles()" placeholder="🔍 Buscar consumible..." class="border p-2 rounded-lg w-full sm:w-64">
+          <div class="bg-white p-3 rounded-xl border flex justify-between items-center text-xs">
+            <input type="text" id="filtro-consumibles" onkeyup="renderizarModuloConsumibles()" placeholder="🔍 Buscar consumible..." class="border p-2 rounded-lg w-64">
             <div id="resumen-rotacion-consumibles" class="font-bold text-slate-600">Promedio Categoría: -- días</div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
             <div class="lg:col-span-5 space-y-4">
-              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Solicitudes por Mes</h3>
                 <canvas id="chart-solicitudes-consumibles" class="max-h-48"></canvas>
               </div>
-              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Consumibles Solicitados</h3>
                 <div id="top10-consumibles" class="space-y-1 text-xs"></div>
               </div>
-              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Costo del Stock Seleccionado</h3>
-                <canvas id="chart-costo-consumibles" class="max-h-44"></canvas>
+                <canvas id="chart-costo-consumibles" class="max-h-40"></canvas>
               </div>
             </div>
 
-            <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-3 overflow-x-auto">
+            <div class="lg:col-span-7 bg-white rounded-xl border p-3 overflow-x-auto">
               <table class="w-full text-left border-collapse text-xs">
                 <thead class="bg-slate-50 border-b uppercase text-slate-600">
                   <tr>
@@ -244,8 +333,8 @@
                     <th class="p-2 text-center">Ingresos</th>
                     <th class="p-2 text-center">Salidas</th>
                     <th class="p-2 text-center">Stock</th>
-                    <th class="p-2">U.M.</th>
-                    <th class="p-2">Rotación Promedio</th>
+                    <th class="p-2">Unidad de medida</th>
+                    <th class="p-2">Tiempo promedio de rotación</th>
                   </tr>
                 </thead>
                 <tbody id="tabla-consumibles-cuerpo" class="divide-y divide-slate-100"></tbody>
@@ -254,15 +343,14 @@
           </div>
         </div>
 
-        <!-- SUBPESTAÑA 3: EVENTOS -->
+        <!-- SUBPESTAÑA EVENTOS -->
         <div id="subvista-eventos" class="hidden space-y-4">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div class="lg:col-span-7 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+            <div class="lg:col-span-7 bg-white p-2 rounded-xl border shadow-sm">
               <div id="mapa-eventos" class="w-full h-[450px] rounded-lg"></div>
             </div>
-
-            <div class="lg:col-span-5 space-y-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-              <h3 class="text-xs font-bold text-slate-700">Eventos en la Ubicación</h3>
+            <div class="lg:col-span-5 space-y-3 bg-white p-4 rounded-xl border">
+              <h3 class="text-xs font-bold text-slate-700">Eventos en esta Ubicación</h3>
               <select id="select-eventos-ubicacion" onchange="mostrarDetalleEventoSeleccionado()" class="w-full border p-2 rounded-lg text-xs">
                 <option value="">Selecciona un marcador en el mapa...</option>
               </select>
@@ -272,25 +360,25 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 overflow-x-auto">
-            <h3 class="text-xs font-bold text-slate-700 mb-2">Detalles del Evento Aceptado</h3>
+          <div class="bg-white rounded-xl border p-4 overflow-x-auto">
+            <h3 class="text-xs font-bold text-slate-700 mb-2">Detalles del Evento (Aceptados)</h3>
             <table class="w-full text-left border-collapse text-xs min-w-[900px]">
               <thead class="bg-slate-50 border-b uppercase">
                 <tr>
-                  <th class="p-2">Fecha Reg.</th>
-                  <th class="p-2">Evento</th>
-                  <th class="p-2">Solicitante</th>
+                  <th class="p-2">Fecha Registro</th>
+                  <th class="p-2">Nombre del Evento</th>
+                  <th class="p-2">Nombre</th>
                   <th class="p-2">Correo</th>
-                  <th class="p-2">Tipo</th>
-                  <th class="p-2">Inicio</th>
-                  <th class="p-2">Fin</th>
-                  <th class="p-2">Materiales</th>
-                  <th class="p-2">Consumibles</th>
+                  <th class="p-2">Tipo Solicitud</th>
+                  <th class="p-2">Inicio Evento</th>
+                  <th class="p-2">Fin Evento</th>
+                  <th class="p-2">Materiales Solicitados</th>
+                  <th class="p-2">Consumibles Solicitados</th>
                   <th class="p-2">Observaciones</th>
                 </tr>
               </thead>
               <tbody id="tabla-evento-detalle">
-                <tr><td colspan="10" class="p-4 text-center text-slate-400">Selecciona un evento para visualizar detalles.</td></tr>
+                <tr><td colspan="10" class="p-4 text-center text-slate-400">Selecciona un evento del mapa para ver los datos.</td></tr>
               </tbody>
             </table>
           </div>
@@ -301,7 +389,39 @@
     </main>
   </div>
 
-  <!-- SCRIPT DE LÓGICA E INTEGRACIÓN -->
+  <!-- MODAL DETALLES TOGGLETIP -->
+  <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 relative">
+      <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">✕</button>
+      <div class="border-b pb-3">
+        <div id="modal-rubro-badge" class="mb-1"></div>
+        <h3 id="modal-escuela" class="text-lg font-bold text-slate-900"></h3>
+        <p id="modal-cct" class="text-xs font-mono text-slate-500"></p>
+      </div>
+      <div class="py-3 grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl my-3 text-xs">
+        <div><span class="block text-slate-400 text-[10px]">INMUEBLE</span><span id="modal-clave-inmueble" class="font-medium"></span></div>
+        <div><span class="block text-slate-400 text-[10px]">MUNICIPIO</span><span id="modal-municipio" class="font-medium"></span></div>
+        <div><span class="block text-slate-400 text-[10px]">OPD</span><span id="modal-opd" class="font-medium"></span></div>
+      </div>
+      <div class="space-y-2 text-xs">
+        <p id="modal-descripcion" class="text-slate-700 bg-slate-50 p-2 rounded border"></p>
+        <div class="grid grid-cols-2 gap-2">
+          <div><strong>Responsable:</strong> <span id="modal-responsable"></span></div>
+          <div><strong>Fecha 1ª Solicitud:</strong> <span id="modal-fecha"></span></div>
+          <div><strong>Fondo:</strong> <span id="modal-fondo"></span></div>
+          <div><strong>ID Interno:</strong> <span id="modal-id-interno"></span></div>
+          <div class="col-span-2"><strong>Oficios:</strong> <div id="modal-oficios" class="flex flex-wrap gap-1 mt-1"></div></div>
+          <div><strong>Monto Asignado:</strong> <span id="modal-monto-asignado" class="text-emerald-700 font-bold"></span></div>
+          <div><strong>Monto Ejercido:</strong> <span id="modal-monto-ejercido" class="text-blue-700 font-bold"></span></div>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t flex justify-end">
+        <a id="btn-modal-expediente" href="#" target="_blank" class="bg-[#C6004C] text-white text-xs font-bold px-4 py-2 rounded-xl">📁 Abrir Expediente Interno</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT FRONTEND COMPLETO -->
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RikNKZfit_Xt9cAl-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
 
@@ -309,13 +429,16 @@
     let datosFiltrados = [];
     let rawInventariosData = null;
     let mapaEventosObj = null;
-    let gruposEventosUbicacion = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      obtenerDatosGenerales();
+      obtenerDatosTableroGeneral();
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".dropdown-container")) {
+          document.querySelectorAll("[id^='dropdown-']").forEach(el => el.classList.add("hidden"));
+        }
+      });
     });
 
-    // NAVEGACIÓN PRINCIPAL
     function cambiarPestana(pestana) {
       ["general", "estadistica", "distritos", "papeleria-consumibles"].forEach(p => {
         document.getElementById(`vista-${p}`).classList.add("hidden");
@@ -326,57 +449,130 @@
       document.getElementById(`btn-tab-${pestana}`).className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white whitespace-nowrap";
 
       if (pestana === "papeleria-consumibles" && !rawInventariosData) {
-        cargarDatosInventariosYEventos();
+        cargarInventariosYEventos();
       }
     }
 
-    // NAVEGACIÓN DE SUBPESTAÑAS
     function cambiarSubPestana(sub) {
       ["papeleria", "consumibles", "eventos"].forEach(s => {
         document.getElementById(`subvista-${s}`).classList.add("hidden");
-        document.getElementById(`btn-sub-${s}`).className = "px-4 py-2 rounded-lg font-semibold text-xs transition-all text-slate-600 hover:bg-slate-100";
+        document.getElementById(`btn-sub-${s}`).className = "px-4 py-2 rounded-lg font-semibold text-xs text-slate-600 hover:bg-slate-100";
       });
 
       document.getElementById(`subvista-${sub}`).classList.remove("hidden");
-      document.getElementById(`btn-sub-${sub}`).className = "px-4 py-2 rounded-lg font-semibold text-xs transition-all bg-[#C6004C] text-white";
+      document.getElementById(`btn-sub-${sub}`).className = "px-4 py-2 rounded-lg font-semibold text-xs bg-[#C6004C] text-white";
 
       if (sub === "eventos" && mapaEventosObj) {
         setTimeout(() => mapaEventosObj.invalidateSize(), 200);
       }
     }
 
-    // PETICIÓN GENERAL
-    function obtenerDatosGenerales() {
+    /* -------------------------------------------------------------------------- */
+    /* LÓGICA TABLERO GENERAL                                                     */
+    /* -------------------------------------------------------------------------- */
+
+    function obtenerDatosTableroGeneral() {
       fetch(API_URL + "?action=getDashboardData")
         .then(res => res.json())
         .then(res => {
           if (res.success) {
             datosConsolidados = res.general || [];
-            renderizarTablaGeneral(datosConsolidados);
-            document.getElementById("status-badge").textContent = "Conectado";
-            document.getElementById("status-badge").className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full";
+            poblarSelectsFiltros(datosConsolidados);
+            renderizarTabla(datosConsolidados);
+            document.getElementById("status-badge").textContent = res.cached ? "Conectado (Caché)" : "Conectado";
+            document.getElementById("status-badge").className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
           }
         });
     }
 
-    function renderizarTablaGeneral(datos) {
+    function obtenerBadgeRubro(rubro) {
+      const r = (rubro || '').toLowerCase();
+      if (r.includes('equipamiento infejal')) return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">● Equipamiento INFEJAL</span>`;
+      if (r.includes('equipamiento')) return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800">● Equipamiento</span>`;
+      if (r.includes('obra infejal')) return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">● Obra INFEJAL</span>`;
+      if (r.includes('obra')) return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">● Obra</span>`;
+      return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">● ${rubro || 'General'}</span>`;
+    }
+
+    function obtenerBadgeEstatus(est) {
+      const e = (est || '').toUpperCase();
+      if (e.includes('CONCLUIDO')) return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white">CONCLUIDO</span>`;
+      if (e.includes('EN PROCESO')) return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-900">EN PROCESO</span>`;
+      return `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">${est || 'SIN ESTATUS'}</span>`;
+    }
+
+    function renderizarTabla(datos) {
       const tbody = document.getElementById("tabla-cuerpo");
       datosFiltrados = datos;
 
-      tbody.innerHTML = datos.map((item) => `
-        <tr class="hover:bg-slate-50">
-          <td class="p-3 font-bold">${item.RUBRO_PROYECTO}</td>
-          <td class="p-3 font-mono">${item.CCT || 'N/A'}</td>
-          <td class="p-3">${item["NOMBRE ESCUELA"] || 'N/A'}</td>
-          <td class="p-3">${item.DESCRIPCION || 'Sin detalle'}</td>
-          <td class="p-3">${item.ESTATUS_PROCESO || 'SIN ESTATUS'}</td>
-          <td class="p-3 text-center">--</td>
-        </tr>
-      `).join("");
+      if (!datosFiltrados || datosFiltrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No se encontraron registros.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = datosFiltrados.map((item, index) => {
+        const cct = item.CCT || item["CLAVE ESCUELA"] || 'N/A';
+        const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item.ESCUELA || 'N/A';
+        const detalle = item.DESCRIPCION || item.OBRA || 'Sin detalle';
+        const estatus = item.ESTATUS_PROCESO || item.ESTATUS || 'N/A';
+
+        return `
+          <tr class="hover:bg-slate-50 border-b">
+            <td class="p-3">${obtenerBadgeRubro(item.RUBRO_PROYECTO)}</td>
+            <td class="p-3 font-mono text-slate-600">${cct}</td>
+            <td class="p-3 font-medium text-slate-900">${nombre}</td>
+            <td class="p-3 text-slate-500">${detalle}</td>
+            <td class="p-3">${obtenerBadgeEstatus(estatus)}</td>
+            <td class="p-3 text-center">
+              <button onclick="abrirModalDetalles(${index})" class="p-2 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-[#C6004C] rounded-lg transition-all" title="Ver detalles">
+                👁️
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
     }
 
-    // CARGA DE PAPELERÍA, CONSUMIBLES Y EVENTOS
-    function cargarDatosInventariosYEventos() {
+    function abrirModalDetalles(idx) {
+      const item = datosFiltrados[idx];
+      if (!item) return;
+
+      document.getElementById("modal-rubro-badge").innerHTML = obtenerBadgeRubro(item.RUBRO_PROYECTO);
+      document.getElementById("modal-escuela").textContent = item["NOMBRE ESCUELA"] || item.ESCUELA || "N/A";
+      document.getElementById("modal-cct").textContent = "CCT: " + (item.CCT || "N/A");
+      document.getElementById("modal-clave-inmueble").textContent = item["CLAVE DEL INMUEBLE"] || "N/A";
+      document.getElementById("modal-municipio").textContent = item.MUNICIPIO || "N/A";
+      document.getElementById("modal-opd").textContent = item.OPD || "N/A";
+      document.getElementById("modal-descripcion").textContent = item.DESCRIPCION || "Sin descripción.";
+      document.getElementById("modal-responsable").textContent = item.RESPONSABLE || "N/A";
+      document.getElementById("modal-fecha").textContent = item["FECHA DE PRIMERA SOLICITUD"] || "N/A";
+      document.getElementById("modal-fondo").textContent = item.FONDO || "N/A";
+      document.getElementById("modal-id-interno").textContent = item["IDENTIFICADOR INTERNO"] || "N/A";
+      document.getElementById("modal-oficios").innerHTML = (item.OFICIOS || "N/A").split(/\s+/).map(o => `<span class="bg-slate-100 border px-1.5 py-0.5 rounded text-[10px] font-mono">${o}</span>`).join("");
+      document.getElementById("modal-monto-asignado").textContent = item["MONTO ASIGNADO"] ? "$" + Number(item["MONTO ASIGNADO"]).toLocaleString() : "N/A";
+      document.getElementById("modal-monto-ejercido").textContent = item["MONTO EJERCIDO"] ? "$" + Number(item["MONTO EJERCIDO"]).toLocaleString() : "N/A";
+
+      const btnExp = document.getElementById("btn-modal-expediente");
+      if (item.URL_EXPEDIENTE) {
+        btnExp.href = item.URL_EXPEDIENTE;
+        btnExp.classList.remove("opacity-50", "pointer-events-none");
+      } else {
+        btnExp.href = "#";
+        btnExp.classList.add("opacity-50", "pointer-events-none");
+      }
+
+      document.getElementById("modal-detalles").classList.remove("hidden");
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal-detalles").classList.add("hidden");
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* LÓGICA PAPELERÍA Y CONSUMIBLES                                             */
+    /* -------------------------------------------------------------------------- */
+
+    function cargarInventariosYEventos() {
       fetch(API_URL + "?action=getInventariosData")
         .then(res => res.json())
         .then(res => {
@@ -392,13 +588,18 @@
     function renderizarTablaInventario(datos, idTabla, idFiltro, promedioCat) {
       const tbody = document.getElementById(idTabla);
       const filtro = document.getElementById(idFiltro).value.toLowerCase();
-      const filtrados = datos.filter(p => p.producto.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro));
+      const filtrados = (datos || []).filter(p => p.producto.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro));
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Sin registros disponibles</td></tr>`;
+        return;
+      }
 
       tbody.innerHTML = filtrados.map(p => {
         let porcentajeBarra = Math.min(100, Math.round((p.diasRotacionPromedio / (promedioCat * 2 || 1)) * 100));
 
         return `
-          <tr class="hover:bg-slate-50">
+          <tr class="hover:bg-slate-50 border-b">
             <td class="p-2 font-mono text-slate-500">${p.codigo}</td>
             <td class="p-2 font-medium text-slate-800">${p.producto}</td>
             <td class="p-2 text-center text-emerald-600 font-bold">${p.ingresos}</td>
@@ -408,7 +609,7 @@
             <td class="p-2">
               <div class="flex items-center gap-2">
                 <span class="w-10 text-right font-semibold">${p.diasRotacionPromedio} d</span>
-                <div class="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div class="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
                   <div class="bg-[#FF8300] h-full" style="width: ${porcentajeBarra}%"></div>
                 </div>
               </div>
@@ -454,26 +655,28 @@
       });
     }
 
-    // MAPA Y EVENTOS AGRUPADOS <30M
+    /* -------------------------------------------------------------------------- */
+    /* LÓGICA MAPA DE EVENTOS (<30 METROS)                                        */
+    /* -------------------------------------------------------------------------- */
+
     function inicializarMapaEventos(eventos) {
       if (mapaEventosObj) return;
 
       mapaEventosObj = L.map('mapa-eventos').setView([20.6767, -103.3475], 11);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaEventosObj);
 
-      gruposEventosUbicacion = [];
+      let grupos = [];
       eventos.forEach(ev => {
-        let grupo = gruposEventosUbicacion.find(g => calcularDistanciaMetros(g.lat, g.lng, ev.latitud, ev.longitud) <= 30);
+        let grupo = grupos.find(g => calcularDistanciaMetros(g.lat, g.lng, ev.latitud, ev.longitud) <= 30);
         if (grupo) {
           grupo.eventos.push(ev);
         } else {
-          gruposEventosUbicacion.push({ lat: ev.latitud, lng: ev.longitud, eventos: [ev] });
+          grupos.push({ lat: ev.latitud, lng: ev.longitud, eventos: [ev] });
         }
       });
 
-      gruposEventosUbicacion.forEach(g => {
+      grupos.forEach(g => {
         let cant = g.eventos.length;
-        let opacidad = cant === 1 ? 0.5 : Math.min(1.0, 0.5 + (cant * 0.15));
         let colorPin = cant === 1 ? "#FF8300" : "#C6004C";
 
         let marker = L.circleMarker([g.lat, g.lng], {
@@ -481,18 +684,16 @@
           fillColor: colorPin,
           color: "#ffffff",
           weight: 2,
-          fillOpacity: opacidad
+          fillOpacity: cant === 1 ? 0.6 : 0.9
         }).addTo(mapaEventosObj);
 
-        marker.on('click', () => alSeleccionarPin(g));
+        marker.on('click', () => {
+          const select = document.getElementById("select-eventos-ubicacion");
+          select.innerHTML = g.eventos.map(e => `<option value="${e.id}">${e.nombreEvento} (${e.inicioEvento})</option>`).join("");
+          document.getElementById("tarjeta-contador-eventos").innerHTML = `📍 <strong>${cant}</strong> evento(s) en esta ubicación`;
+          mostrarDetalleEventoSeleccionado();
+        });
       });
-    }
-
-    function alSeleccionarPin(grupo) {
-      const select = document.getElementById("select-eventos-ubicacion");
-      select.innerHTML = grupo.eventos.map(e => `<option value="${e.id}">${e.nombreEvento} (${e.inicioEvento})</option>`).join("");
-      document.getElementById("tarjeta-contador-eventos").innerHTML = `📍 <strong>${grupo.eventos.length}</strong> evento(s) realizado(s) en este punto`;
-      mostrarDetalleEventoSeleccionado();
     }
 
     function mostrarDetalleEventoSeleccionado() {
@@ -501,7 +702,7 @@
       if (!evento) return;
 
       document.getElementById("tabla-evento-detalle").innerHTML = `
-        <tr>
+        <tr class="border-b">
           <td class="p-2">${evento.fechaRegistro}</td>
           <td class="p-2 font-bold">${evento.nombreEvento}</td>
           <td class="p-2">${evento.nombreSolicitante}</td>
@@ -509,9 +710,9 @@
           <td class="p-2 font-bold text-[#FF8300]">${evento.tipoSolicitud}</td>
           <td class="p-2">${evento.inicioEvento}</td>
           <td class="p-2">${evento.finEvento}</td>
-          <td class="p-2">${evento.materialesSolicitados || 'N/A'}</td>
-          <td class="p-2">${evento.consumiblesSolicitados || 'N/A'}</td>
-          <td class="p-2 italic text-slate-500">${evento.observaciones || 'Sin observaciones'}</td>
+          <td class="p-2">${evento.materialesSolicitados}</td>
+          <td class="p-2">${evento.consumiblesSolicitados}</td>
+          <td class="p-2 italic text-slate-500">${evento.observaciones}</td>
         </tr>
       `;
     }
@@ -524,6 +725,80 @@
                 Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                 Math.sin(dLon/2) * Math.sin(dLon/2);
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* DROPDOWNS MULTISELECCIÓN                                                  */
+    /* -------------------------------------------------------------------------- */
+
+    function toggleDropdown(id) {
+      const el = document.getElementById(id);
+      const isHidden = el.classList.contains("hidden");
+      document.querySelectorAll("[id^='dropdown-']").forEach(d => d.classList.add("hidden"));
+      if (isHidden) el.classList.remove("hidden");
+    }
+
+    function poblarSelectsFiltros(datos) {
+      const cats = { rubro: new Set(), municipio: new Set(), opd: new Set(), estatus: new Set(), fondo: new Set(), anio: new Set() };
+      datos.forEach(item => {
+        if (item.RUBRO_PROYECTO) cats.rubro.add(item.RUBRO_PROYECTO);
+        if (item.MUNICIPIO) cats.municipio.add(item.MUNICIPIO);
+        if (item.OPD) cats.opd.add(item.OPD);
+        if (item.ESTATUS_PROCESO) cats.estatus.add(item.ESTATUS_PROCESO);
+        if (item.FONDO) cats.fondo.add(item.FONDO);
+        if (item["FECHA DE PRIMERA SOLICITUD"]) {
+          const m = String(item["FECHA DE PRIMERA SOLICITUD"]).match(/\b(19|20)\d{2}\b/);
+          if (m) cats.anio.add(m[0]);
+        }
+      });
+
+      Object.keys(cats).forEach(k => {
+        const cont = document.getElementById(`opts-${k}`);
+        cont.innerHTML = Array.from(cats[k]).sort().map(val => `
+          <label class="flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer text-slate-700">
+            <input type="checkbox" value="${val}" onchange="filtrarTabla()" class="filter-check-${k} text-[#C6004C]">
+            <span class="truncate">${val}</span>
+          </label>
+        `).join("");
+      });
+    }
+
+    function marcarTodosFiltro(k, estado) {
+      document.querySelectorAll(`.filter-check-${k}`).forEach(cb => cb.checked = estado);
+      filtrarTabla();
+    }
+
+    function obtenerValoresSeleccionados(k) {
+      return Array.from(document.querySelectorAll(`.filter-check-${k}:checked`)).map(cb => cb.value.toLowerCase());
+    }
+
+    function filtrarTabla() {
+      const busqueda = document.getElementById("input-filtro").value.toLowerCase();
+      const r = obtenerValoresSeleccionados("rubro");
+      const m = obtenerValoresSeleccionados("municipio");
+      const o = obtenerValoresSeleccionados("opd");
+      const e = obtenerValoresSeleccionados("estatus");
+      const f = obtenerValoresSeleccionados("fondo");
+      const a = obtenerValoresSeleccionados("anio");
+
+      const res = datosConsolidados.filter(item => {
+        const txt = busqueda === "" || Object.values(item).some(v => String(v).toLowerCase().includes(busqueda));
+        const cR = r.length === 0 || r.includes(String(item.RUBRO_PROYECTO || "").toLowerCase());
+        const cM = m.length === 0 || m.includes(String(item.MUNICIPIO || "").toLowerCase());
+        const cO = o.length === 0 || o.includes(String(item.OPD || "").toLowerCase());
+        const cE = e.length === 0 || e.includes(String(item.ESTATUS_PROCESO || "").toLowerCase());
+        const cF = f.length === 0 || f.includes(String(item.FONDO || "").toLowerCase());
+        const cA = a.length === 0 || a.some(an => String(item["FECHA DE PRIMERA SOLICITUD"] || "").includes(an));
+
+        return txt && cR && cM && cO && cE && cF && cA;
+      });
+
+      renderizarTabla(res);
+    }
+
+    function limpiarFiltros() {
+      document.getElementById("input-filtro").value = "";
+      ["rubro", "municipio", "opd", "estatus", "fondo", "anio"].forEach(k => marcarTodosFiltro(k, false));
     }
   </script>
 </body>
