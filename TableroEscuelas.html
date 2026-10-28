@@ -1,12 +1,26 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tablero de Control SEMS</title>
 
-  <!-- Icono de la pestaña (Favicon) -->
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
-  
-  <!-- GUARDIÁN DE SESIÓN EN PRIMERA LÍNEA CON PERMISOS PARA ADMINISTRADOR Y DIRECTOR -->
+
+  <!-- Estilos y Tipografía -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet.js para Mapa -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js para Gráficas -->
+  <script src="https://cdn.jsdelivr.com/npm/chart.js"></script>
+
+  <!-- Guardián de Sesión -->
   <script>
     (function() {
       const userSession = sessionStorage.getItem("userSession");
@@ -17,18 +31,10 @@
       }
       try {
         const user = JSON.parse(userSession);
-        if (!user || !user.correo) {
-          throw new Error("Sesión inválida");
-        }
-
-        // Validación de Roles permitidos
         const rolUsuario = user.rol ? user.rol.toString().toUpperCase() : "";
-        const rolesPermitidos = ["ADMINISTRADOR", "DIRECTOR"];
-
-        if (!rolesPermitidos.includes(rolUsuario)) {
-          alert("Acceso denegado. No tienes permisos para acceder al Tablero de Control y Estadística.");
+        if (!["ADMINISTRADOR", "DIRECTOR"].includes(rolUsuario)) {
+          alert("Acceso denegado. Permisos insuficientes.");
           window.location.href = "index.html";
-          return;
         }
       } catch (e) {
         sessionStorage.removeItem("userSession");
@@ -37,1122 +43,442 @@
     })();
   </script>
 
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tablero de Control SEMS</title>
-
-  <!-- Google Fonts: Poppins -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Tailwind CSS para la interfaz -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Librerías externas para exportación (PDF y Excel) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-    }
+    body { font-family: 'Poppins', sans-serif; }
   </style>
 </head>
 
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col w-full overflow-x-hidden">
 
-  <!-- Encabezado / Header Adaptativo -->
+  <!-- Encabezado Superior -->
   <header class="bg-[#C6004C] text-white shadow-md p-3 sm:p-4 w-full flex flex-col gap-2">
-    
-    <!-- Primera fila: Botón, Badge y Estatus -->
     <div class="flex items-center justify-between w-full flex-wrap gap-2">
       <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-all shadow-sm flex items-center whitespace-nowrap">
+        <a href="index.html" class="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-3 py-1.5 rounded-lg text-xs sm:text-sm shadow-sm">
           ← Volver al Menú
         </a>
-
-        <div class="bg-[#FF8300] text-white font-bold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm shadow-sm whitespace-nowrap">
+        <div class="bg-[#FF8300] text-white font-bold rounded-lg px-2.5 py-1.5 text-xs sm:text-sm shadow-sm">
           SEMS - Gestión Estratégica
         </div>
       </div>
-
-      <!-- Status Badge -->
-      <div id="status-badge" class="text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap">
-        Cargando datos...
+      <div id="status-badge" class="text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full">
+        Sistema Activo
       </div>
     </div>
-
-    <!-- Segunda fila: Título -->
-    <div>
-      <h1 class="text-base sm:text-xl font-bold tracking-wide mt-1">Tablero de Control y Estadística</h1>
-    </div>
-
+    <h1 class="text-base sm:text-xl font-bold tracking-wide mt-1">Tablero de Control y Estadística</h1>
   </header>
 
-  <!-- Contenido principal -->
+  <!-- Layout Principal: Menú Lateral + Contenido -->
   <div class="flex flex-col md:flex-row flex-1 w-full max-w-full overflow-hidden">
     
-    <!-- Barra Lateral -->
+    <!-- Navegación Lateral Lateral Principal -->
     <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
       <nav class="flex md:flex-col gap-2">
-        <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white">
+        <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm bg-[#C6004C] text-white">
           📊 Tablero General
         </button>
-        <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100">
+        <button onclick="cambiarPestana('estadistica')" id="btn-tab-estadistica" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-slate-600 hover:bg-slate-100">
           🗺️ Estadística y Mapa SEMS
         </button>
-        <button onclick="cambiarPestana('distritos')" id="btn-tab-distritos" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100">
+        <button onclick="cambiarPestana('distritos')" id="btn-tab-distritos" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-slate-600 hover:bg-slate-100">
           📊 Distritos y Lista nominal
+        </button>
+        <!-- NUEVA PESTAÑA LATERAL REQUERIDA -->
+        <button onclick="cambiarPestana('papeleria-consumibles')" id="btn-tab-papeleria" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-slate-600 hover:bg-slate-100">
+          📦 Papelería y Consumibles
         </button>
       </nav>
     </aside>
 
-    <!-- Área de Contenido -->
+    <!-- Áreas de Vista de las Pestañas -->
     <main class="flex-1 p-3 sm:p-6 min-w-0">
 
-      <!-- Pestaña 1: Tablero General -->
+      <!-- PESTAÑA 1: TABLERO GENERAL -->
       <section id="vista-general" class="space-y-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
-          
-          <!-- Fila superior: Título y Buscador de texto -->
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
-            <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados (Infraestructura, Obras y Sedes Alternas)</h2>
-            <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
-          </div>
-          
-          <!-- Botón de Exportar Datos ubicado abajo del buscador -->
-          <div class="flex justify-end w-full">
-            <button onclick="abrirModalExportar()" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all shadow-sm">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              Exportar datos
-            </button>
-          </div>
-
-          <!-- SECCIÓN DE FILTROS ESPECÍFICOS CON SELECCIÓN MÚLTIPLE (6 COLUMNAS EN LG) -->
-          <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-xs">
-            
-            <!-- Filtro Rubro -->
-            <div class="relative dropdown-container" id="container-filtro-rubro">
-              <label class="block font-semibold text-slate-600 mb-1">Rubro</label>
-              <button onclick="toggleDropdown('dropdown-rubro')" type="button" class="w-full border border-slate-300 rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
-                <span id="btn-text-rubro" class="truncate">Todos los rubros</span>
-                <span class="text-slate-400 text-[10px] ml-1">▼</span>
-              </button>
-              <div id="dropdown-rubro" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b border-slate-100 pb-1.5 mb-1.5 text-[10px]">
-                  <button onclick="marcarTodosFiltro('rubro', true)" class="text-[#C6004C] hover:underline font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('rubro', false)" class="text-slate-400 hover:underline">Limpiar</button>
-                </div>
-                <div id="opts-rubro" class="space-y-1"></div>
-              </div>
-            </div>
-
-            <!-- Filtro Municipio -->
-            <div class="relative dropdown-container" id="container-filtro-municipio">
-              <label class="block font-semibold text-slate-600 mb-1">Municipio</label>
-              <button onclick="toggleDropdown('dropdown-municipio')" type="button" class="w-full border border-slate-300 rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
-                <span id="btn-text-municipio" class="truncate">Todos los municipios</span>
-                <span class="text-slate-400 text-[10px] ml-1">▼</span>
-              </button>
-              <div id="dropdown-municipio" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b border-slate-100 pb-1.5 mb-1.5 text-[10px]">
-                  <button onclick="marcarTodosFiltro('municipio', true)" class="text-[#C6004C] hover:underline font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('municipio', false)" class="text-slate-400 hover:underline">Limpiar</button>
-                </div>
-                <div id="opts-municipio" class="space-y-1"></div>
-              </div>
-            </div>
-
-            <!-- Filtro OPD -->
-            <div class="relative dropdown-container" id="container-filtro-opd">
-              <label class="block font-semibold text-slate-600 mb-1">OPD</label>
-              <button onclick="toggleDropdown('dropdown-opd')" type="button" class="w-full border border-slate-300 rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
-                <span id="btn-text-opd" class="truncate">Todos los OPD</span>
-                <span class="text-slate-400 text-[10px] ml-1">▼</span>
-              </button>
-              <div id="dropdown-opd" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b border-slate-100 pb-1.5 mb-1.5 text-[10px]">
-                  <button onclick="marcarTodosFiltro('opd', true)" class="text-[#C6004C] hover:underline font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('opd', false)" class="text-slate-400 hover:underline">Limpiar</button>
-                </div>
-                <div id="opts-opd" class="space-y-1"></div>
-              </div>
-            </div>
-
-            <!-- Filtro Estatus -->
-            <div class="relative dropdown-container" id="container-filtro-estatus">
-              <label class="block font-semibold text-slate-600 mb-1">Estatus</label>
-              <button onclick="toggleDropdown('dropdown-estatus')" type="button" class="w-full border border-slate-300 rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
-                <span id="btn-text-estatus" class="truncate">Todos los estatus</span>
-                <span class="text-slate-400 text-[10px] ml-1">▼</span>
-              </button>
-              <div id="dropdown-estatus" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b border-slate-100 pb-1.5 mb-1.5 text-[10px]">
-                  <button onclick="marcarTodosFiltro('estatus', true)" class="text-[#C6004C] hover:underline font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('estatus', false)" class="text-slate-400 hover:underline">Limpiar</button>
-                </div>
-                <div id="opts-estatus" class="space-y-1"></div>
-              </div>
-            </div>
-
-            <!-- Filtro Fondo -->
-            <div class="relative dropdown-container" id="container-filtro-fondo">
-              <label class="block font-semibold text-slate-600 mb-1">Fondo</label>
-              <button onclick="toggleDropdown('dropdown-fondo')" type="button" class="w-full border border-slate-300 rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
-                <span id="btn-text-fondo" class="truncate">Todos los fondos</span>
-                <span class="text-slate-400 text-[10px] ml-1">▼</span>
-              </button>
-              <div id="dropdown-fondo" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b border-slate-100 pb-1.5 mb-1.5 text-[10px]">
-                  <button onclick="marcarTodosFiltro('fondo', true)" class="text-[#C6004C] hover:underline font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('fondo', false)" class="text-slate-400 hover:underline">Limpiar</button>
-                </div>
-                <div id="opts-fondo" class="space-y-1"></div>
-              </div>
-            </div>
-
-            <!-- Filtro Año de Solicitud -->
-            <div class="relative dropdown-container" id="container-filtro-anio">
-              <label class="block font-semibold text-slate-600 mb-1">Año de Solicitud</label>
-              <button onclick="toggleDropdown('dropdown-anio')" type="button" class="w-full border border-slate-300 rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
-                <span id="btn-text-anio" class="truncate">Todos los años</span>
-                <span class="text-slate-400 text-[10px] ml-1">▼</span>
-              </button>
-              <div id="dropdown-anio" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b border-slate-100 pb-1.5 mb-1.5 text-[10px]">
-                  <button onclick="marcarTodosFiltro('anio', true)" class="text-[#C6004C] hover:underline font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('anio', false)" class="text-slate-400 hover:underline">Limpiar</button>
-                </div>
-                <div id="opts-anio" class="space-y-1"></div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Botón auxiliar para resetear filtros rápidamente -->
-          <div class="flex justify-end pt-1">
-            <button onclick="limpiarFiltros()" class="text-[11px] text-[#C6004C] hover:underline font-medium flex items-center gap-1">
-              <span>🧹</span> Limpiar todos los filtros
-            </button>
-          </div>
-
-        </div>
-
-        <!-- Tabla dinámica -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
-          <table class="w-full text-left border-collapse text-sm min-w-[750px]">
-            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
-              <tr>
-                <th class="p-3">Rubro</th>
-                <th class="p-3">CCT / Clave</th>
-                <th class="p-3">Escuela / Plantel</th>
-                <th class="p-3">Descripción / Detalle</th>
-                <th class="p-3">Estatus del Proceso</th>
-                <th class="p-3 text-center">Detalles</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-cuerpo" class="divide-y divide-slate-100">
-              <tr>
-                <td colspan="6" class="p-6 text-center text-slate-400">Cargando registros desde Google Sheets...</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-base font-bold text-slate-700">Resumen General de Proyectos e Infraestructura</h2>
+          <p class="text-xs text-slate-500 mt-1">Registros consolidados de Equipamiento, Obras y Sedes Alternas del SEMS.</p>
         </div>
       </section>
 
-      <!-- Pestaña 2: Mapa Personalizado Google My Maps -->
+      <!-- PESTAÑA 2: ESTADÍSTICA -->
       <section id="vista-estadistica" class="hidden space-y-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles y Capacitación SEMS</h2>
-          <p class="text-xs text-slate-500">Mapa interactivo institucional con la ubicación geográfica de planteles.</p>
-        </div>
-
-        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="w-full h-[600px] rounded-lg overflow-hidden border border-slate-100">
-            <iframe 
-              src="https://www.google.com/maps/d/embed?mid=1sDvA5tro1nqFy2UilU5uvcuScaJNOKA&ehbc=2E312F" 
-              class="w-full h-full border-0" 
-              allowfullscreen="" 
-              loading="lazy" 
-              referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
-          </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-base font-bold text-slate-700">Geolocalización Institucional de Planteles</h2>
         </div>
       </section>
 
-      <!-- Pestaña 3: Distritos y Lista Nominal -->
+      <!-- PESTAÑA 3: DISTRITOS -->
       <section id="vista-distritos" class="hidden space-y-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 class="text-lg font-bold text-slate-800">Distritos electores y Lista Nominal de Jalisco</h2>
-          <p class="text-xs text-slate-500">Tablero interactivo con datos del IEPC e INE</p>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-base font-bold text-slate-700">Estadística por Distritos Electorales IEPC / INE</h2>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 4: PAPELERÍA Y CONSUMIBLES -->
+      <section id="vista-papeleria-consumibles" class="hidden space-y-4">
+        
+        <!-- Menú Superior de 3 Subpestañas -->
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex gap-2">
+          <button onclick="cambiarSubpestana('papeleria')" id="btn-sub-papeleria" class="px-4 py-2 rounded-lg text-xs font-bold bg-[#FF8300] text-white">📝 Papelería</button>
+          <button onclick="cambiarSubpestana('consumibles')" id="btn-sub-consumibles" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">☕ Consumibles</button>
+          <button onclick="cambiarSubpestana('eventos')" id="btn-sub-eventos" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">📍 Eventos</button>
         </div>
 
-        <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="w-full h-[600px] rounded-lg overflow-hidden border border-slate-100">
-            <iframe 
-              title="Distritos_Jalisco" 
-              class="w-full h-full border-0" 
-              src="https://app.powerbi.com/view?r=eyJrIjoiNGZhNzkyMTctMjdiMC00OTgzLThlN2ItYjllODhkNTcwNGI0IiwidCI6IjRjOGFiNTYzLWRiNzMtNDMwMS05NDM5LTk1ZDY1YjEyOTBkZSJ9" 
-              frameborder="0" 
-              allowFullScreen="true">
-            </iframe>
+        <!-- SUBPESTAÑA PAPELERÍA -->
+        <div id="subvista-papeleria" class="space-y-4">
+          <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center justify-between text-xs">
+            <input type="text" id="filtro-papeleria" onkeyup="renderizarModuloPapeleria()" placeholder="🔍 Buscar producto o código..." class="border p-2 rounded-lg w-full sm:w-64">
+            <div class="text-slate-500 font-semibold" id="resumen-rotacion-papeleria">Promedio Rotación Categoría: -- días</div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- Izquierda: Gráficas y Top 10 -->
+            <div class="lg:col-span-5 space-y-4">
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Solicitudes Realizadas por Mes</h3>
+                <canvas id="chart-solicitudes-papeleria" class="max-h-48"></canvas>
+              </div>
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Productos Más Solicitados</h3>
+                <div id="top10-papeleria" class="space-y-1.5 text-xs"></div>
+              </div>
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Costo del Stock Seleccionado</h3>
+                <canvas id="chart-costo-papeleria" class="max-h-44"></canvas>
+              </div>
+            </div>
+
+            <!-- Derecha: Tabla con Tiempo de Rotación y Barra Visual -->
+            <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-3 overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-50 border-b text-slate-600 uppercase">
+                  <tr>
+                    <th class="p-2">Código</th>
+                    <th class="p-2">Producto</th>
+                    <th class="p-2 text-center">Ingresos</th>
+                    <th class="p-2 text-center">Salidas</th>
+                    <th class="p-2 text-center">Stock</th>
+                    <th class="p-2">U.M.</th>
+                    <th class="p-2">Tiempo Prom. Rotación</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-papeleria-cuerpo" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
+        <!-- SUBPESTAÑA CONSUMIBLES -->
+        <div id="subvista-consumibles" class="hidden space-y-4">
+          <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center justify-between text-xs">
+            <input type="text" id="filtro-consumibles" onkeyup="renderizarModuloConsumibles()" placeholder="🔍 Buscar consumible o código..." class="border p-2 rounded-lg w-full sm:w-64">
+            <div class="text-slate-500 font-semibold" id="resumen-rotacion-consumibles">Promedio Rotación Categoría: -- días</div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- Izquierda: Gráficas y Top 10 -->
+            <div class="lg:col-span-5 space-y-4">
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Solicitudes Realizadas por Mes</h3>
+                <canvas id="chart-solicitudes-consumibles" class="max-h-48"></canvas>
+              </div>
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Consumibles Más Solicitados</h3>
+                <div id="top10-consumibles" class="space-y-1.5 text-xs"></div>
+              </div>
+              <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Costo del Stock Seleccionado</h3>
+                <canvas id="chart-costo-consumibles" class="max-h-44"></canvas>
+              </div>
+            </div>
+
+            <!-- Derecha: Tabla con Tiempo de Rotación y Barra Visual -->
+            <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 p-3 overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-50 border-b text-slate-600 uppercase">
+                  <tr>
+                    <th class="p-2">Código</th>
+                    <th class="p-2">Producto</th>
+                    <th class="p-2 text-center">Ingresos</th>
+                    <th class="p-2 text-center">Salidas</th>
+                    <th class="p-2 text-center">Stock</th>
+                    <th class="p-2">U.M.</th>
+                    <th class="p-2">Tiempo Prom. Rotación</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-consumibles-cuerpo" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBPESTAÑA EVENTOS -->
+        <div id="subvista-eventos" class="hidden space-y-4">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- Mapa (Izquierda) -->
+            <div class="lg:col-span-7 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+              <div id="mapa-eventos" class="w-full h-[450px] rounded-lg"></div>
+            </div>
+
+            <!-- Menú desplegable y tarjeta contador (Derecha) -->
+            <div class="lg:col-span-5 space-y-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+              <h3 class="text-xs font-bold text-slate-700">Eventos en la Ubicación Seleccionada</h3>
+              <select id="select-eventos-ubicacion" onchange="mostrarDetalleEventoSeleccionado()" class="w-full border p-2 rounded-lg text-xs">
+                <option value="">Selecciona un marcador en el mapa...</option>
+              </select>
+              <div id="tarjeta-contador-eventos" class="bg-rose-50 border border-rose-200 text-[#C6004C] p-3 rounded-lg text-center font-bold text-xs">
+                📍 Haz clic en un marcador del mapa para filtrar.
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Tabla de Detalle del Evento Seleccionado -->
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 overflow-x-auto">
+            <h3 class="text-xs font-bold text-slate-700 mb-2">Detalle de la Solicitud del Evento (Aceptado)</h3>
+            <table class="w-full text-left border-collapse text-xs min-w-[900px]">
+              <thead class="bg-slate-50 border-b uppercase">
+                <tr>
+                  <th class="p-2">Fecha Reg.</th>
+                  <th class="p-2">Nombre del Evento</th>
+                  <th class="p-2">Solicitante</th>
+                  <th class="p-2">Correo</th>
+                  <th class="p-2">Tipo</th>
+                  <th class="p-2">Inicio Evento</th>
+                  <th class="p-2">Fin Evento</th>
+                  <th class="p-2">Materiales</th>
+                  <th class="p-2">Consumibles</th>
+                  <th class="p-2">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-evento-detalle">
+                <tr><td colspan="10" class="p-4 text-center text-slate-400">Selecciona un evento para visualizar la información.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </section>
 
     </main>
   </div>
 
-  <!-- MODAL / TOGGLETIP DE DETALLES -->
-  <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all p-6 relative">
-      
-      <!-- Botón de Cierre -->
-      <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-
-      <!-- TÍTULO DEL TOGGLETIP -->
-      <div class="border-b border-slate-100 pb-4 pr-8">
-        <div id="modal-rubro-badge" class="mb-2"></div>
-        <h3 id="modal-escuela" class="text-lg font-bold text-slate-900 leading-snug"></h3>
-        <p id="modal-cct" class="text-xs font-mono text-slate-500 mt-0.5"></p>
-      </div>
-
-      <!-- CUERPO PRINCIPAL -->
-      <div class="py-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 rounded-xl p-3 my-4 border border-slate-100 text-xs">
-        <div>
-          <span class="block font-semibold text-slate-400 uppercase text-[10px]">Clave del Inmueble</span>
-          <span id="modal-clave-inmueble" class="font-medium text-slate-800"></span>
-        </div>
-        <div>
-          <span class="block font-semibold text-slate-400 uppercase text-[10px]">Municipio</span>
-          <span id="modal-municipio" class="font-medium text-slate-800"></span>
-        </div>
-        <div>
-          <span class="block font-semibold text-slate-400 uppercase text-[10px]">OPD</span>
-          <span id="modal-opd" class="font-medium text-slate-800"></span>
-        </div>
-      </div>
-
-      <!-- DETALLES SECUNDARIOS -->
-      <div class="space-y-3 text-xs border-t border-slate-100 pt-3">
-        <div>
-          <span class="font-semibold text-slate-500 block text-[11px]">Descripción / Detalle:</span>
-          <p id="modal-descripcion" class="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 mt-1 leading-relaxed text-[11px]"></p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-          <div><strong class="text-slate-500">Responsable:</strong> <span id="modal-responsable" class="text-slate-800"></span></div>
-          <div><strong class="text-slate-500">Fecha 1ª Solicitud:</strong> <span id="modal-fecha" class="text-slate-800"></span></div>
-          <div><strong class="text-slate-500">Fondo:</strong> <span id="modal-fondo" class="text-slate-800"></span></div>
-          <div><strong class="text-slate-500">ID Interno:</strong> <span id="modal-id-interno" class="text-slate-800 font-mono"></span></div>
-          
-          <!-- SECCIÓN DE OFICIOS INDIVIDUALIZADOS -->
-          <div class="col-span-1 sm:col-span-2 mt-1">
-            <strong class="text-slate-500 block mb-1">Oficios:</strong> 
-            <div id="modal-oficios" class="flex flex-wrap gap-1.5"></div>
-          </div>
-
-          <div class="mt-2"><strong class="text-slate-500">Monto Asignado:</strong> <span id="modal-monto-asignado" class="text-emerald-700 font-semibold"></span></div>
-          <div class="mt-2"><strong class="text-slate-500">Monto Ejercido:</strong> <span id="modal-monto-ejercido" class="text-blue-700 font-semibold"></span></div>
-        </div>
-      </div>
-
-      <!-- BOTÓN EXPEDIENTE INTERNO -->
-      <div class="mt-6 pt-3 border-t border-slate-100 flex justify-end">
-        <a id="btn-modal-expediente" href="#" target="_blank" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#C6004C] hover:bg-[#a0003d] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-md">
-          📁 Abrir Expediente Interno
-        </a>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- MODAL / TOGGLETIP DE EXPORTACIÓN DE DATOS -->
-  <div id="modal-exportar" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all p-6 relative">
-      
-      <!-- Botón de Cierre -->
-      <button onclick="cerrarModalExportar()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-
-      <!-- Encabezado del Modal -->
-      <div class="border-b border-slate-100 pb-3 pr-8">
-        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-          <span>📤</span> Configuración de Exportación
-        </h3>
-        <p class="text-xs text-slate-500 mt-1">Selecciona los campos y el formato para descargar los registros filtrados.</p>
-      </div>
-
-      <!-- Contenido de Configuración -->
-      <div class="py-4 space-y-4 text-xs">
-        
-        <!-- Selección de Campos -->
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <span class="font-semibold text-slate-700">Campos a incluir en el reporte:</span>
-            <div class="space-x-2">
-              <button onclick="marcarTodosCampos(true)" class="text-[11px] text-[#C6004C] hover:underline font-medium">Marcar todos</button>
-              <span class="text-slate-300">|</span>
-              <button onclick="marcarTodosCampos(false)" class="text-[11px] text-slate-500 hover:underline font-medium">Desmarcar</button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 max-h-52 overflow-y-auto" id="contenedor-checkboxes-campos">
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="RUBRO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Rubro</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="CCT" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> CCT / Clave</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="ESCUELA" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Escuela / Plantel</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="DESCRIPCION" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Descripción / Detalle</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="ESTATUS" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Estatus del Proceso</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="CLAVE_INMUEBLE" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Clave del Inmueble</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="MUNICIPIO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Municipio</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="OPD" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> OPD</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="RESPONSABLE" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Responsable</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="FECHA_SOLICITUD" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Fecha 1ª Solicitud</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="FONDO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Fondo</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="ID_INTERNO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> ID Interno</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="OFICIOS" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Oficios</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="MONTO_ASIGNADO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Monto Asignado</label>
-            <label class="flex items-center gap-2 text-slate-700"><input type="checkbox" value="MONTO_EJERCIDO" checked class="rounded text-[#C6004C] focus:ring-[#C6004C]"> Monto Ejercido</label>
-          </div>
-        </div>
-
-        <!-- Selección de Formato -->
-        <div>
-          <span class="font-semibold text-slate-700 block mb-2">Formato de descarga:</span>
-          <div class="grid grid-cols-3 gap-3">
-            <label class="border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 transition-all text-center">
-              <input type="radio" name="formato_exportar" value="PDF" checked class="text-[#C6004C] focus:ring-[#C6004C]">
-              <span class="font-bold text-slate-800 text-xs mt-1">PDF</span>
-              <span class="text-[10px] text-slate-400">Documento (.pdf)</span>
-            </label>
-
-            <label class="border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 transition-all text-center">
-              <input type="radio" name="formato_exportar" value="EXCEL" class="text-[#C6004C] focus:ring-[#C6004C]">
-              <span class="font-bold text-slate-800 text-xs mt-1">Excel</span>
-              <span class="text-[10px] text-slate-400">Hoja de cálculo (.xlsx)</span>
-            </label>
-
-            <label class="border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-50 transition-all text-center">
-              <input type="radio" name="formato_exportar" value="CSV" class="text-[#C6004C] focus:ring-[#C6004C]">
-              <span class="font-bold text-slate-800 text-xs mt-1">CSV</span>
-              <span class="text-[10px] text-slate-400">Texto plano (.csv)</span>
-            </label>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Acciones -->
-      <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
-        <button onclick="cerrarModalExportar()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-xs transition-colors">
-          Cancelar
-        </button>
-        <button onclick="ejecutarExportacion()" class="bg-[#C6004C] hover:bg-[#a0003d] text-white text-xs font-semibold px-5 py-2 rounded-xl transition-all shadow-md flex items-center gap-1.5">
-          <span>🚀</span> Exportar
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Lógica JavaScript de Integración -->
+  <!-- JavaScript Central del Dashboard -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RikNKZfit_Xt9cAl-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
-
-    let datosConsolidados = [];
-    let datosFiltrados = []; // Guarda los registros actualmente renderizados en la tabla
-
-    document.addEventListener("DOMContentLoaded", () => {
-      obtenerDatos();
-      
-      // Cerrar desplegables de filtro al hacer clic fuera
-      document.addEventListener("click", (e) => {
-        if (!e.target.closest(".dropdown-container")) {
-          document.querySelectorAll("[id^='dropdown-']").forEach(el => el.classList.add("hidden"));
-        }
-      });
-    });
+    let rawInventariosData = null;
+    let mapaEventosObj = null;
+    let gruposEventosUbicacion = [];
+    let chartMesPapeleria, chartCostoPapeleria, chartMesConsumibles, chartCostoConsumibles;
 
     function cambiarPestana(pestana) {
-      const vGeneral = document.getElementById("vista-general");
-      const vEstadistica = document.getElementById("vista-estadistica");
-      const vDistritos = document.getElementById("vista-distritos");
+      const secciones = ['general', 'estadistica', 'distritos', 'papeleria-consumibles'];
+      secciones.forEach(s => {
+        const vista = document.getElementById(`vista-${s}`);
+        const btn = document.getElementById(`btn-tab-${s === 'papeleria-consumibles' ? 'papeleria' : s}`);
+        
+        if (s === pestana) {
+          vista.classList.remove('hidden');
+          btn.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm bg-[#C6004C] text-white";
+        } else {
+          vista.classList.add('hidden');
+          btn.className = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm text-slate-600 hover:bg-slate-100";
+        }
+      });
 
-      const btnGeneral = document.getElementById("btn-tab-general");
-      const btnEstadistica = document.getElementById("btn-tab-estadistica");
-      const btnDistritos = document.getElementById("btn-tab-distritos");
-
-      // Estilos reutilizables
-      const estiloActivo = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white";
-      const estiloInactivo = "flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors text-slate-600 hover:bg-slate-100";
-
-      // Ocultar todas las pestañas primero
-      vGeneral.classList.add("hidden");
-      vEstadistica.classList.add("hidden");
-      vDistritos.classList.add("hidden");
-
-      // Resetear estilo de botones
-      btnGeneral.className = estiloInactivo;
-      btnEstadistica.className = estiloInactivo;
-      btnDistritos.className = estiloInactivo;
-
-      // Mostrar la pestaña correspondiente
-      if (pestana === "general") {
-        vGeneral.classList.remove("hidden");
-        btnGeneral.className = estiloActivo;
-      } else if (pestana === "estadistica") {
-        vEstadistica.classList.remove("hidden");
-        btnEstadistica.className = estiloActivo;
-      } else if (pestana === "distritos") {
-        vDistritos.classList.remove("hidden");
-        btnDistritos.className = estiloActivo;
+      if (pestana === 'papeleria-consumibles') {
+        cargarDatosInventariosYEventos();
       }
     }
 
-    function obtenerDatos() {
-      const badge = document.getElementById("status-badge");
-      badge.textContent = "Cargando datos...";
-      badge.className = "text-xs bg-yellow-500 text-slate-900 font-semibold px-3 py-1 rounded-full whitespace-nowrap";
+    function cambiarSubpestana(sub) {
+      const subs = ['papeleria', 'consumibles', 'eventos'];
+      subs.forEach(s => {
+        const subvista = document.getElementById(`subvista-${s}`);
+        const btn = document.getElementById(`btn-sub-${s}`);
+        if (s === sub) {
+          subvista.classList.remove('hidden');
+          btn.className = "px-4 py-2 rounded-lg text-xs font-bold bg-[#FF8300] text-white";
+        } else {
+          subvista.classList.add('hidden');
+          btn.className = "px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200";
+        }
+      });
 
-      fetch(API_URL + "?action=getDashboardData", {
-        method: "GET",
-        redirect: "follow"
-      })
-        .then(res => {
-          if (!res.ok) throw new Error("Respuesta de red no ok");
-          return res.json();
-        })
+      if (sub === 'eventos' && window.mapaEventos) {
+        setTimeout(() => window.mapaEventos.invalidateSize(), 300);
+      }
+    }
+
+    function cargarDatosInventariosYEventos() {
+      if (rawInventariosData) return;
+
+      const urlScript = window.location.href.split('?')[0];
+      fetch(urlScript + "?action=getInventariosData")
+        .then(res => res.json())
         .then(res => {
           if (res.success) {
-            datosConsolidados = res.general || [];
-            poblarSelectsFiltros(datosConsolidados);
-            renderizarTabla(datosConsolidados);
-            
-            badge.textContent = res.cached ? "Conectado (Caché 10 min)" : "Conectado (Actualizado)";
-            badge.className = "text-xs bg-emerald-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
-          } else {
-            throw new Error(res.error || "Error en la estructura de datos");
+            rawInventariosData = res;
+            renderizarModuloPapeleria();
+            renderizarModuloConsumibles();
+            inicializarMapaEventos(res.eventos || []);
           }
-        })
-        .catch(err => {
-          console.error("Error detallado:", err);
-          badge.textContent = "Error de conexión";
-          badge.className = "text-xs bg-red-500 text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap";
         });
     }
 
-    function formatearFechaDDMMYYYY(fechaRaw) {
-      if (!fechaRaw || fechaRaw === "N/A" || String(fechaRaw).trim() === "") return "N/A";
+    function renderizarTablaInventario(datos, idTabla, idFiltro, promedioCat) {
+      const tbody = document.getElementById(idTabla);
+      const filtro = document.getElementById(idFiltro).value.toLowerCase();
 
-      const str = String(fechaRaw).trim();
+      const filtrados = datos.filter(p => p.producto.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro));
 
-      // Si viene en ISO formato ISO (ej. 2026-04-15T06:00:00.000Z)
-      if (str.includes("T")) {
-        const partesFecha = str.split("T")[0].split("-");
-        if (partesFecha.length === 3) {
-          const anio = partesFecha[0];
-          const mes = partesFecha[1].padStart(2, "0");
-          const dia = partesFecha[2].padStart(2, "0");
-          return `${dia}-${mes}-${anio}`;
-        }
-      }
-
-      // Si ya está en formato AAAA-MM-DD
-      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-        const [a, m, d] = str.split("-");
-        return `${d}-${m}-${a}`;
-      }
-
-      // Intento estándar con objeto Date (extrayendo UTC para evitar desfasaje por zona horaria)
-      const dObj = new Date(str);
-      if (!isNaN(dObj.getTime())) {
-        const dia = String(dObj.getUTCDate()).padStart(2, "0");
-        const mes = String(dObj.getUTCMonth() + 1).padStart(2, "0");
-        const anio = dObj.getUTCFullYear();
-        return `${dia}-${mes}-${anio}`;
-      }
-
-      return str;
-    }
-
-    function extraerAnioFecha(fechaRaw) {
-      if (!fechaRaw || fechaRaw === "N/A") return null;
-      const strFecha = String(fechaRaw);
-      const match = strFecha.match(/\b(19|20)\d{2}\b/);
-      return match ? match[0] : null;
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*              GESTIÓN DE DESPLEGABLES CON SELECCIÓN MÚLTIPLE                 */
-    /* -------------------------------------------------------------------------- */
-
-    function toggleDropdown(idDropdown) {
-      const target = document.getElementById(idDropdown);
-      const isOpen = !target.classList.contains("hidden");
-      
-      // Cerrar todos los demás
-      document.querySelectorAll("[id^='dropdown-']").forEach(el => el.classList.add("hidden"));
-      
-      if (!isOpen) {
-        target.classList.remove("hidden");
-      }
-    }
-
-    function poblarSelectsFiltros(datos) {
-      const rubros = new Set();
-      const municipios = new Set();
-      const opds = new Set();
-      const estatusSet = new Set();
-      const fondos = new Set();
-      const anios = new Set();
-
-      datos.forEach(item => {
-        const rub = item.RUBRO_PROYECTO;
-        if (rub && rub !== "N/A") rubros.add(String(rub).trim());
-
-        const mun = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]);
-        if (mun && mun !== "N/A") municipios.add(mun.trim());
-
-        const opd = obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]);
-        if (opd && opd !== "N/A") opds.add(opd.trim());
-
-        const est = item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO;
-        if (est && est !== "N/A") estatusSet.add(String(est).trim().toUpperCase());
-
-        const fnd = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
-        if (fnd && fnd !== "N/A") fondos.add(fnd.trim());
-
-        const fechaRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
-        const anio = extraerAnioFecha(fechaRaw);
-        if (anio) anios.add(anio);
-      });
-
-      renderCheckboxesFiltro("rubro", Array.from(rubros).sort());
-      renderCheckboxesFiltro("municipio", Array.from(municipios).sort());
-      renderCheckboxesFiltro("opd", Array.from(opds).sort());
-      renderCheckboxesFiltro("estatus", Array.from(estatusSet).sort());
-      renderCheckboxesFiltro("fondo", Array.from(fondos).sort());
-      renderCheckboxesFiltro("anio", Array.from(anios).sort((a, b) => b - a));
-    }
-
-    function renderCheckboxesFiltro(claveFiltro, opciones) {
-      const contenedor = document.getElementById(`opts-${claveFiltro}`);
-      contenedor.innerHTML = opciones.map(opc => `
-        <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded cursor-pointer text-slate-700 select-none">
-          <input type="checkbox" value="${opc}" onchange="actualizarTextoDropdown('${claveFiltro}'); filtrarTabla();" class="filter-check-${claveFiltro} rounded text-[#C6004C] focus:ring-[#C6004C]">
-          <span class="truncate">${opc}</span>
-        </label>
-      `).join("");
-      
-      actualizarTextoDropdown(claveFiltro);
-    }
-
-    function marcarTodosFiltro(claveFiltro, estado) {
-      const checkboxes = document.querySelectorAll(`.filter-check-${claveFiltro}`);
-      checkboxes.forEach(cb => cb.checked = estado);
-      actualizarTextoDropdown(claveFiltro);
-      filtrarTabla();
-    }
-
-    function obtenerValoresSeleccionados(claveFiltro) {
-      const checkboxes = document.querySelectorAll(`.filter-check-${claveFiltro}:checked`);
-      return Array.from(checkboxes).map(cb => cb.value.toLowerCase());
-    }
-
-    function actualizarTextoDropdown(claveFiltro) {
-      const seleccionados = obtenerValoresSeleccionados(claveFiltro);
-      const btnSpan = document.getElementById(`btn-text-${claveFiltro}`);
-      
-      const etiquetasPlural = {
-        rubro: "Todos los rubros",
-        municipio: "Todos los municipios",
-        opd: "Todos los OPD",
-        estatus: "Todos los estatus",
-        fondo: "Todos los fondos",
-        anio: "Todos los años"
-      };
-
-      if (seleccionados.length === 0) {
-        btnSpan.textContent = etiquetasPlural[claveFiltro];
-        btnSpan.classList.remove("font-bold", "text-[#C6004C]");
-      } else if (seleccionados.length === 1) {
-        const checkboxOriginal = document.querySelector(`.filter-check-${claveFiltro}:checked`);
-        btnSpan.textContent = checkboxOriginal ? checkboxOriginal.value : "1 seleccionado";
-        btnSpan.classList.add("font-bold", "text-[#C6004C]");
-      } else {
-        btnSpan.textContent = `${seleccionados.length} seleccionados`;
-        btnSpan.classList.add("font-bold", "text-[#C6004C]");
-      }
-    }
-
-    /* -------------------------------------------------------------------------- */
-
-    function obtenerBadgeRubro(rubro) {
-      const rubroNormalizado = (rubro || '').toString().trim().toLowerCase();
-
-      if (rubroNormalizado.includes('equipamiento infejal')) {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-600/15 text-amber-700"><span class="text-[10px]">●</span> Equipamiento INFEJAL</span>`;
-      } else if (rubroNormalizado.includes('equipamiento')) {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF8300]/15 text-[#FF8300]"><span class="text-[10px]">●</span> Equipamiento</span>`;
-      } else if (rubroNormalizado.includes('obra infejal')) {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-700/15 text-purple-800"><span class="text-[10px]">●</span> Obra INFEJAL</span>`;
-      } else if (rubroNormalizado.includes('obra')) {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#C6004C]/15 text-[#C6004C]"><span class="text-[10px]">●</span> Obra</span>`;
-      } else if (rubroNormalizado.includes('sedes alternas') || rubroNormalizado.includes('sede')) {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-cyan-700/15 text-cyan-800"><span class="text-[10px]">●</span> Sedes alternas</span>`;
-      } else {
-        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700"><span class="text-[10px]">●</span> ${rubro || 'General'}</span>`;
-      }
-    }
-
-    function obtenerBadgeEstatus(estatus) {
-      const estNorm = (estatus || '').toString().trim().toUpperCase();
-
-      if (estNorm.includes('CONCLUIDO')) {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white whitespace-nowrap shadow-sm">CONCLUIDO</span>`;
-      } else if (estNorm.includes('EN ENTREGA') || estNorm.includes('ENTREGA')) {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400 text-slate-900 whitespace-nowrap shadow-sm">EN ENTREGA</span>`;
-      } else if (estNorm.includes('EN PROCESO')) {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-400 text-slate-900 whitespace-nowrap shadow-sm">EN PROCESO</span>`;
-      } else if (estNorm.includes('EN TRÁMITE') || estNorm.includes('EN TRAMITE') || estNorm.includes('TRAMITE') || estNorm.includes('TRÁMITE')) {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-200 text-slate-900 whitespace-nowrap shadow-sm">EN TRÁMITE</span>`;
-      } else if (estNorm.includes('EN ESPERA') || estNorm.includes('INFORMACIÓN') || estNorm.includes('INFORMACION')) {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-800 whitespace-nowrap shadow-sm">EN ESPERA DE INFORMACIÓN</span>`;
-      } else if (estNorm.includes('EN PROYECTO') || estNorm.includes('PROYECTO')) {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-sm">EN PROYECTO</span>`;
-      } else if (estNorm.includes('CANCELADO')) {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-rose-600 text-white whitespace-nowrap shadow-sm">CANCELADO</span>`;
-      } else {
-        return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 whitespace-nowrap">${estatus || 'SIN ESTATUS'}</span>`;
-      }
-    }
-
-    function obtenerPropiedadFlexible(obj, posiblesNombres) {
-      if (!obj) return "N/A";
-      const keys = Object.keys(obj);
-      for (let pos of posiblesNombres) {
-        const normPos = pos.toUpperCase().replace(/[^A-Z0-9]/g, "");
-        const matchKey = keys.find(k => k.toUpperCase().replace(/[^A-Z0-9]/g, "") === normPos);
-        if (matchKey && obj[matchKey] !== undefined && obj[matchKey] !== null && obj[matchKey] !== "") {
-          return obj[matchKey];
-        }
-      }
-      return "N/A";
-    }
-
-    function formatearOficios(textoOficios) {
-      if (!textoOficios || textoOficios === "N/A" || String(textoOficios).trim() === "") {
-        return `<span class="text-slate-400 italic text-[11px]">Sin oficios registrados</span>`;
-      }
-
-      const listaOficios = String(textoOficios).trim().split(/\s+/);
-
-      return listaOficios.map(oficio => `
-        <span class="inline-block bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded text-[10px] font-mono shadow-sm">
-          ${oficio}
-        </span>
-      `).join("");
-    }
-
-    function renderizarTabla(datos) {
-      const tbody = document.getElementById("tabla-cuerpo");
-      
-      // Actualiza la variable global con la sublista filtrada que tiene CCTs válidos
-      datosFiltrados = datos.filter(item => {
-        const cctRaw = item.CCT ?? item["CLAVE ESCUELA"] ?? item.CLAVECCT;
-        if (!cctRaw) return false;
-        const cctTexto = String(cctRaw).trim().toLowerCase();
-        return cctTexto !== "" && cctTexto !== "null" && cctTexto !== "n/a";
-      });
-
-      if (!datosFiltrados || datosFiltrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No se encontraron registros válidos con los filtros seleccionados.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = datosFiltrados.map((item, index) => {
-        const cct = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT;
-        const nombre = obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
-        const detalle = item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.SEDE || item.EVENTO || "Sin detalle";
-        const estatusRaw = item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO;
-        
-        const badgeRubro = obtenerBadgeRubro(item.RUBRO_PROYECTO);
-        const badgeEstatus = obtenerBadgeEstatus(estatusRaw);
+      tbody.innerHTML = filtrados.map(p => {
+        let porcentajeBarra = Math.min(100, Math.round((p.diasRotacionPromedio / (promedioCat * 2 || 1)) * 100));
 
         return `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-3">${badgeRubro}</td>
-            <td class="p-3 font-mono text-slate-600">${cct}</td>
-            <td class="p-3 font-medium text-slate-900">${nombre}</td>
-            <td class="p-3 text-slate-500">${detalle}</td>
-            <td class="p-3">${badgeEstatus}</td>
-            <td class="p-3 text-center">
-              <button onclick="abrirModalDetalles(${index})" title="Ver detalles completos" class="p-2 text-slate-500 hover:text-[#C6004C] bg-slate-100 hover:bg-rose-50 rounded-lg transition-all duration-150 inline-flex items-center justify-center">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </button>
+          <tr class="hover:bg-slate-50">
+            <td class="p-2 font-mono text-slate-500">${p.codigo}</td>
+            <td class="p-2 font-medium text-slate-800">${p.producto}</td>
+            <td class="p-2 text-center text-emerald-600 font-bold">${p.ingresos}</td>
+            <td class="p-2 text-center text-rose-600 font-bold">${p.salidas}</td>
+            <td class="p-2 text-center font-bold">${p.stock}</td>
+            <td class="p-2 text-slate-400">${p.unidadMedida}</td>
+            <td class="p-2">
+              <div class="flex items-center gap-2">
+                <span class="w-12 text-right font-semibold">${p.diasRotacionPromedio} d</span>
+                <div class="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                  <div class="bg-[#FF8300] h-full" style="width: ${porcentajeBarra}%"></div>
+                </div>
+              </div>
             </td>
           </tr>
         `;
       }).join("");
     }
 
-    function abrirModalDetalles(index) {
-      // Lee el registro directo de datosFiltrados usando la posición exacta de la tabla visible
-      const item = datosFiltrados[index];
-      if (!item) return;
-
-      const nombrePlantel = obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
-      const cctPlantel = item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
-
-      document.getElementById("modal-rubro-badge").innerHTML = obtenerBadgeRubro(item.RUBRO_PROYECTO);
-      document.getElementById("modal-escuela").textContent = nombrePlantel;
-      document.getElementById("modal-cct").textContent = "CCT: " + cctPlantel;
-
-      document.getElementById("modal-clave-inmueble").textContent = obtenerPropiedadFlexible(item, ["CLAVE DEL INMUEBLE", "CLAVE_INMUEBLE", "INMUEBLE"]);
-      document.getElementById("modal-municipio").textContent = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]);
-      document.getElementById("modal-opd").textContent = obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]);
-
-      document.getElementById("modal-descripcion").textContent = item.DESCRIPCION || "Sin descripción disponible.";
-      document.getElementById("modal-responsable").textContent = obtenerPropiedadFlexible(item, ["RESPONSABLE", "RESPONSABLE DE PROYECTO"]);
-      
-      // FORMATEO DE FECHA SOLICITUD A DD-MM-YYYY
-      const fechaRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
-      document.getElementById("modal-fecha").textContent = formatearFechaDDMMYYYY(fechaRaw);
-
-      document.getElementById("modal-fondo").textContent = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
-      
-      // FORZADO A TEXTO PLANO DEL ID INTERNO
-      const idRaw = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
-      let idTexto = (idRaw !== null && idRaw !== undefined) ? String(idRaw).trim() : "N/A";
-      if (idTexto.includes("T00:00:00") || idTexto.includes("GMT")) {
-        const fObj = new Date(idTexto);
-        if (!isNaN(fObj.getTime())) {
-          idTexto = `${fObj.getUTCDate()}-${fObj.getUTCMonth() + 1}`;
-        }
-      }
-      document.getElementById("modal-id-interno").textContent = idTexto;
-
-      const oficiosRaw = obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
-      document.getElementById("modal-oficios").innerHTML = formatearOficios(oficiosRaw);
-
-      const montoAsig = obtenerPropiedadFlexible(item, ["MONTO ASIGNADO", "MONTO_ASIGNADO"]);
-      const montoEjec = obtenerPropiedadFlexible(item, ["MONTO EJERCIDO", "MONTO_EJERCIDO"]);
-      
-      document.getElementById("modal-monto-asignado").textContent = (!isNaN(montoAsig) && montoAsig !== "N/A") ? "$" + Number(montoAsig).toLocaleString("es-MX") : montoAsig;
-      document.getElementById("modal-monto-ejercido").textContent = (!isNaN(montoEjec) && montoEjec !== "N/A") ? "$" + Number(montoEjec).toLocaleString("es-MX") : montoEjec;
-
-      // CONFIGURACIÓN ESTRICTA Y SEGURA DE LA URL DEL EXPEDIENTE
-      const btnExpediente = document.getElementById("btn-modal-expediente");
-      const urlExpediente = item.URL_EXPEDIENTE || obtenerPropiedadFlexible(item, ["EXPEDIENTE INTERNO", "EXPEDIENTE", "LINK"]);
-
-      const esUrlValida = urlExpediente && 
-                          urlExpediente !== "N/A" && 
-                          (String(urlExpediente).trim().toLowerCase().startsWith("http://") || 
-                           String(urlExpediente).trim().toLowerCase().startsWith("https://"));
-
-      if (esUrlValida) {
-        btnExpediente.href = String(urlExpediente).trim();
-        btnExpediente.classList.remove("opacity-50", "pointer-events-none");
-        btnExpediente.classList.add("cursor-pointer", "hover:bg-[#a0003d]");
-        btnExpediente.innerHTML = `📁 Abrir Expediente Interno`;
-      } else {
-        btnExpediente.href = "#";
-        btnExpediente.classList.add("opacity-50", "pointer-events-none");
-        btnExpediente.classList.remove("hover:bg-[#a0003d]");
-        btnExpediente.innerHTML = `📁 Expediente No Disponible`;
-      }
-
-      document.getElementById("modal-detalles").classList.remove("hidden");
+    function renderizarModuloPapeleria() {
+      if (!rawInventariosData) return;
+      const data = rawInventariosData.papeleria;
+      document.getElementById("resumen-rotacion-papeleria").textContent = `Promedio Rotación Categoría: ${data.promedioGeneralRotacion} días`;
+      renderizarTablaInventario(data.productos, "tabla-papeleria-cuerpo", "filtro-papeleria", data.promedioGeneralRotacion);
+      renderizarGraficasCategoria(data, "papeleria");
     }
 
-    function cerrarModal() {
-      document.getElementById("modal-detalles").classList.add("hidden");
+    function renderizarModuloConsumibles() {
+      if (!rawInventariosData) return;
+      const data = rawInventariosData.consumibles;
+      document.getElementById("resumen-rotacion-consumibles").textContent = `Promedio Rotación Categoría: ${data.promedioGeneralRotacion} días`;
+      renderizarTablaInventario(data.productos, "tabla-consumibles-cuerpo", "filtro-consumibles", data.promedioGeneralRotacion);
+      renderizarGraficasCategoria(data, "consumibles");
     }
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        cerrarModal();
-        cerrarModalExportar();
-      }
-    });
+    function renderizarGraficasCategoria(data, tipo) {
+      const top10 = [...data.productos].sort((a,b) => b.salidas - a.salidas).slice(0, 10);
+      document.getElementById(`top10-${tipo}`).innerHTML = top10.map((item, idx) => `
+        <div class="flex justify-between items-center bg-slate-50 p-1.5 rounded">
+          <span class="truncate font-medium">${idx+1}. ${item.producto}</span>
+          <span class="font-bold text-[#C6004C] shrink-0">${item.salidas} solicit.</span>
+        </div>
+      `).join("");
 
-    function filtrarTabla() {
-      const busqueda = document.getElementById("input-filtro").value.toLowerCase();
-      
-      const rubsSel = obtenerValoresSeleccionados("rubro");
-      const munsSel = obtenerValoresSeleccionados("municipio");
-      const opdsSel = obtenerValoresSeleccionados("opd");
-      const estsSel = obtenerValoresSeleccionados("estatus");
-      const fndsSel = obtenerValoresSeleccionados("fondo");
-      const aniosSel = obtenerValoresSeleccionados("anio");
-
-      const filtrados = datosConsolidados.filter(item => {
-        // 1. Coincidencia de texto global
-        const coincideTexto = busqueda === "" || Object.values(item).some(val => String(val).toLowerCase().includes(busqueda));
-
-        // 2. Coincidencia Rubro (Multiselección)
-        const rubVal = String(item.RUBRO_PROYECTO || "").toLowerCase();
-        const coincideRub = rubsSel.length === 0 || rubsSel.some(sel => rubVal.includes(sel));
-
-        // 3. Coincidencia Municipio (Multiselección)
-        const munVal = obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]).toLowerCase();
-        const coincideMun = munsSel.length === 0 || munsSel.some(sel => munVal.includes(sel));
-
-        // 4. Coincidencia OPD (Multiselección)
-        const opdVal = obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]).toLowerCase();
-        const coincideOpd = opdsSel.length === 0 || opdsSel.some(sel => opdVal.includes(sel));
-
-        // 5. Coincidencia Estatus (Multiselección)
-        const estVal = String(item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO || "").toLowerCase();
-        const coincideEst = estsSel.length === 0 || estsSel.some(sel => estVal.includes(sel));
-
-        // 6. Coincidencia Fondo (Multiselección)
-        const fndVal = obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]).toLowerCase();
-        const coincideFnd = fndsSel.length === 0 || fndsSel.some(sel => fndVal.includes(sel));
-
-        // 7. Coincidencia Año (Multiselección)
-        const fechaRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
-        const anioVal = extraerAnioFecha(fechaRaw);
-        const coincideAnio = aniosSel.length === 0 || (anioVal && aniosSel.includes(anioVal.toLowerCase()));
-
-        return coincideTexto && coincideRub && coincideMun && coincideOpd && coincideEst && coincideFnd && coincideAnio;
+      const ctxMes = document.getElementById(`chart-solicitudes-${tipo}`).getContext('2d');
+      new Chart(ctxMes, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data.solicitudesPorMes),
+          datasets: [{ label: 'Solicitudes', data: Object.values(data.solicitudesPorMes), backgroundColor: '#FF8300' }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
       });
 
-      renderizarTabla(filtrados);
-    }
-
-    function limpiarFiltros() {
-      document.getElementById("input-filtro").value = "";
-      
-      const categorias = ["rubro", "municipio", "opd", "estatus", "fondo", "anio"];
-      categorias.forEach(cat => {
-        const checkboxes = document.querySelectorAll(`.filter-check-${cat}`);
-        checkboxes.forEach(cb => cb.checked = false);
-        actualizarTextoDropdown(cat);
+      const ctxCosto = document.getElementById(`chart-costo-${tipo}`).getContext('2d');
+      new Chart(ctxCosto, {
+        type: 'doughnut',
+        data: {
+          labels: top10.map(i => i.producto),
+          datasets: [{ data: top10.map(i => i.costoStockTotal || i.stock), backgroundColor: ['#E5004E','#FF8300','#5B6670','#28A745','#17A2B8','#6F42C1'] }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
       });
-
-      filtrarTabla();
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                   LÓGICA DE EXPORTACIÓN Y MODAL DE DATOS                   */
-    /* -------------------------------------------------------------------------- */
+    function inicializarMapaEventos(eventos) {
+      if (mapaEventosObj) return;
 
-    function abrirModalExportar() {
-      document.getElementById("modal-exportar").classList.remove("hidden");
-    }
+      mapaEventosObj = L.map('mapa-eventos').setView([20.6767, -103.3475], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaEventosObj);
+      window.mapaEventos = mapaEventosObj;
 
-    function cerrarModalExportar() {
-      document.getElementById("modal-exportar").classList.add("hidden");
-    }
-
-    function marcarTodosCampos(estado) {
-      const checkboxes = document.querySelectorAll("#contenedor-checkboxes-campos input[type='checkbox']");
-      checkboxes.forEach(cb => cb.checked = estado);
-    }
-
-    function obtenerValorPorCampo(item, claveCampo) {
-      switch (claveCampo) {
-        case "RUBRO":
-          return item.RUBRO_PROYECTO || "N/A";
-        case "CCT":
-          return item.CCT || item["CLAVE ESCUELA"] || item.CLAVECCT || "N/A";
-        case "ESCUELA":
-          return obtenerPropiedadFlexible(item, ["NOMBRE ESCUELA", "NOMBRE DEL PLANTEL", "ESCUELA", "PLANTEL"]);
-        case "DESCRIPCION":
-          return item.DESCRIPCION || item.OBRA || item.EQUIPAMIENTO || item.SEDE || item.EVENTO || "Sin detalle";
-        case "ESTATUS":
-          return item.ESTATUS_PROCESO || item["ESTATUS DEL PROCESO"] || item.ESTATUS || item.ESTADO || "N/A";
-        case "CLAVE_INMUEBLE":
-          return obtenerPropiedadFlexible(item, ["CLAVE DEL INMUEBLE", "CLAVE_INMUEBLE", "INMUEBLE"]);
-        case "MUNICIPIO":
-          return obtenerPropiedadFlexible(item, ["MUNICIPIO", "NOMUN", "NOM_MUN"]);
-        case "OPD":
-          return obtenerPropiedadFlexible(item, ["OPD", "SUBSISTEMA"]);
-        case "RESPONSABLE":
-          return obtenerPropiedadFlexible(item, ["RESPONSABLE", "RESPONSABLE DE PROYECTO"]);
-        case "FECHA_SOLICITUD":
-          const fRaw = obtenerPropiedadFlexible(item, ["FECHA DE PRIMERA SOLICITUD", "FECHA_SOLICITUD", "FECHA SOLICITUD", "FECHA"]);
-          return formatearFechaDDMMYYYY(fRaw);
-        case "FONDO":
-          return obtenerPropiedadFlexible(item, ["FONDO", "FONDO_FINANCIAMIENTO"]);
-        case "ID_INTERNO":
-          const idRaw = obtenerPropiedadFlexible(item, ["IDENTIFICADOR INTERNO", "ID_INTERNO", "ID INTERNO", "FOLIO"]);
-          let idTexto = (idRaw !== null && idRaw !== undefined) ? String(idRaw).trim() : "N/A";
-          if (idTexto.includes("T00:00:00") || idTexto.includes("GMT")) {
-            const fObj = new Date(idTexto);
-            if (!isNaN(fObj.getTime())) {
-              idTexto = `${fObj.getUTCDate()}-${fObj.getUTCMonth() + 1}`;
-            }
-          }
-          return idTexto;
-        case "OFICIOS":
-          return obtenerPropiedadFlexible(item, ["OFICIOS", "OFICIO"]);
-        case "MONTO_ASIGNADO":
-          const mAsig = obtenerPropiedadFlexible(item, ["MONTO ASIGNADO", "MONTO_ASIGNADO"]);
-          return (!isNaN(mAsig) && mAsig !== "N/A") ? "$" + Number(mAsig).toLocaleString("es-MX") : mAsig;
-        case "MONTO_EJERCIDO":
-          const mEjec = obtenerPropiedadFlexible(item, ["MONTO EJERCIDO", "MONTO_EJERCIDO"]);
-          return (!isNaN(mEjec) && mEjec !== "N/A") ? "$" + Number(mEjec).toLocaleString("es-MX") : mEjec;
-        default:
-          return "N/A";
-      }
-    }
-
-    function ejecutarExportacion() {
-      // 1. Obtener los campos seleccionados
-      const checkboxes = document.querySelectorAll("#contenedor-checkboxes-campos input[type='checkbox']:checked");
-      if (checkboxes.length === 0) {
-        alert("Por favor selecciona al menos un campo para exportar.");
-        return;
-      }
-
-      const columnasSeleccionadas = Array.from(checkboxes).map(cb => ({
-        clave: cb.value,
-        titulo: cb.parentElement.textContent.trim()
-      }));
-
-      // 2. Obtener formato elegido
-      const radioFormato = document.querySelector("input[name='formato_exportar']:checked");
-      const formato = radioFormato ? radioFormato.value : "PDF";
-
-      // 3. Validar si hay datos
-      if (!datosFiltrados || datosFiltrados.length === 0) {
-        alert("No hay registros para exportar con los filtros actuales.");
-        return;
-      }
-
-      const tituloDocumento = "Registros Consolidados (Infraestructura, Obras y Sedes Alternas)";
-
-      // Construcción del conjunto de datos filtrados
-      const encabezados = columnasSeleccionadas.map(c => c.titulo);
-      const filas = datosFiltrados.map(item => {
-        return columnasSeleccionadas.map(c => obtenerValorPorCampo(item, c.clave));
-      });
-
-      if (formato === "PDF") {
-        exportarPDF(tituloDocumento, encabezados, filas);
-      } else if (formato === "EXCEL") {
-        exportarExcel(tituloDocumento, encabezados, filas);
-      } else if (formato === "CSV") {
-        exportarCSV(tituloDocumento, encabezados, filas);
-      }
-
-      cerrarModalExportar();
-    }
-
-    function exportarPDF(titulo, encabezados, filas) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-
-      // Título
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.setTextColor(198, 0, 76); // Color Institucional #C6004C
-      doc.text(titulo, 40, 40);
-
-      // Espaciado / Dos saltos de fila implícitos
-      let startY = 70;
-
-      // Generar Tabla
-      doc.autoTable({
-        head: [encabezados],
-        body: filas,
-        startY: startY,
-        styles: {
-          font: "helvetica",
-          fontSize: 8,
-          cellPadding: 4,
-          textColor: [51, 65, 85]
-        },
-        headStyles: {
-          fillColor: [198, 0, 76],
-          textColor: [255, 255, 255],
-          fontStyle: "bold"
-        },
-        alternateRowStyles: {
-          fillColor: [248, 250, 252]
-        },
-        margin: { top: 40, bottom: 40, left: 40, right: 40 },
-        didDrawPage: function (data) {
-          // Pie de página con número de página
-          const strPage = "Página " + doc.internal.getNumberOfPages();
-          doc.setFontSize(8);
-          doc.setTextColor(148, 163, 184);
-          doc.text(strPage, data.settings.margin.left, doc.internal.pageSize.height - 20);
+      gruposEventosUbicacion = [];
+      eventos.forEach(ev => {
+        let grupoExistente = gruposEventosUbicacion.find(g => calcularDistanciaMetros(g.lat, g.lng, ev.latitud, ev.longitud) <= 30);
+        if (grupoExistente) {
+          grupoExistente.eventos.push(ev);
+        } else {
+          gruposEventosUbicacion.push({ lat: ev.latitud, lng: ev.longitud, eventos: [ev] });
         }
       });
 
-      doc.save("Reporte_SEMS_Consolidado.pdf");
+      gruposEventosUbicacion.forEach(g => {
+        let cantidad = g.eventos.length;
+        let opacidad = cantidad === 1 ? 0.5 : Math.min(1.0, 0.5 + (cantidad * 0.15));
+        let colorPin = cantidad === 1 ? "#FF8300" : "#C6004C";
+
+        let circle = L.circleMarker([g.lat, g.lng], {
+          radius: 8 + Math.min(10, cantidad * 2),
+          fillColor: colorPin,
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: opacidad
+        }).addTo(mapaEventosObj);
+
+        circle.on('click', () => alSeleccionarPin(g));
+      });
     }
 
-    function exportarExcel(titulo, encabezados, filas) {
-      const wb = XLSX.utils.book_new();
+    function alSeleccionarPin(grupo) {
+      const select = document.getElementById("select-eventos-ubicacion");
+      select.innerHTML = grupo.eventos.map(e => `<option value="${e.id}">${e.nombreEvento} (${e.inicioEvento})</option>`).join("");
       
-      // Estructura: Título, 2 renglones vacíos, Encabezados y Filas
-      const wsData = [
-        [titulo],
-        [],
-        [],
-        encabezados,
-        ...filas
-      ];
+      document.getElementById("tarjeta-contador-eventos").innerHTML = `
+        📍 <strong>${grupo.eventos.length}</strong> evento(s) realizado(s) en este sitio
+      `;
 
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-      // Ajuste automático de anchos de columna
-      const colWidths = encabezados.map((h, i) => {
-        let maxLen = h.length;
-        filas.forEach(row => {
-          const cellVal = String(row[i] || '');
-          if (cellVal.length > maxLen) maxLen = cellVal.length;
-        });
-        return { wch: Math.min(Math.max(maxLen + 3, 12), 40) };
-      });
-      ws['!cols'] = colWidths;
-
-      XLSX.utils.book_append_sheet(wb, ws, "Registros SEMS");
-      XLSX.writeFile(wb, "Reporte_SEMS_Consolidado.xlsx");
+      mostrarDetalleEventoSeleccionado();
     }
 
-    function exportarCSV(titulo, encabezados, filas) {
-      let csvContent = "";
-      
-      // Título y 2 saltos de línea
-      csvContent += `"${titulo}"\n\n\n`;
+    function mostrarDetalleEventoSeleccionado() {
+      const idSel = document.getElementById("select-eventos-ubicacion").value;
+      if (!rawInventariosData || !rawInventariosData.eventos) return;
+      const evento = rawInventariosData.eventos.find(e => e.id === idSel);
+      if (!evento) return;
 
-      // Encabezados
-      csvContent += encabezados.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+      document.getElementById("tabla-evento-detalle").innerHTML = `
+        <tr>
+          <td class="p-2">${evento.fechaRegistro}</td>
+          <td class="p-2 font-bold text-slate-800">${evento.nombreEvento}</td>
+          <td class="p-2">${evento.nombreSolicitante}</td>
+          <td class="p-2 font-mono text-[#C6004C]">${evento.correo}</td>
+          <td class="p-2 font-bold text-[#FF8300]">${evento.tipoSolicitud}</td>
+          <td class="p-2">${evento.inicioEvento}</td>
+          <td class="p-2">${evento.finEvento}</td>
+          <td class="p-2 text-slate-600">${evento.materialesSolicitados || 'N/A'}</td>
+          <td class="p-2 text-slate-600">${evento.consumiblesSolicitados || 'N/A'}</td>
+          <td class="p-2 italic text-slate-500">${evento.observaciones || 'Sin observaciones'}</td>
+        </tr>
+      `;
+    }
 
-      // Filas de datos
-      filas.forEach(row => {
-        const filaFormateada = row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",");
-        csvContent += filaFormateada + "\n";
-      });
-
-      // Descargar archivo CSV con BOM UTF-8
-      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", "Reporte_SEMS_Consolidado.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
   </script>
 </body>
