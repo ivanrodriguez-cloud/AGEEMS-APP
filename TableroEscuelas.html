@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Chart.js para Gráficas -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Exportación -->
@@ -80,7 +80,7 @@
   <!-- Contenedor Principal -->
   <div class="flex flex-col md:flex-row flex-1 w-full max-w-full overflow-hidden">
     
-    <!-- BARRA LATERAL GENERAL -->
+    <!-- BARRA LATERAL -->
     <aside class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 md:p-4 space-y-2 shrink-0">
       <nav class="flex md:flex-col gap-2 overflow-x-auto">
         <button onclick="cambiarPestana('general')" id="btn-tab-general" class="flex-1 md:w-full text-left px-3 py-2 md:px-4 md:py-2.5 rounded-lg font-medium text-xs sm:text-sm transition-colors bg-[#C6004C] text-white whitespace-nowrap">
@@ -98,7 +98,7 @@
       </nav>
     </aside>
 
-    <!-- ÁREA DE CONTENIDO -->
+    <!-- ÁREA DE VISTAS -->
     <main class="flex-1 p-3 sm:p-6 min-w-0">
 
       <!-- PESTAÑA 1: TABLERO GENERAL -->
@@ -112,7 +112,7 @@
             <button onclick="abrirModalExportar()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all">Exportar datos</button>
           </div>
 
-          <!-- FILTROS MULTI-SELECCIÓN -->
+          <!-- FILTROS -->
           <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-xs">
             <div class="relative dropdown-container" id="container-filtro-rubro">
               <label class="block font-semibold text-slate-600 mb-1">Rubro</label>
@@ -203,7 +203,7 @@
           </div>
         </div>
 
-        <!-- Tabla dinámica -->
+        <!-- TABLA PRINCIPAL GENERAL -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
           <table class="w-full text-left border-collapse text-sm min-w-[750px]">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
@@ -223,7 +223,7 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 2: MAPA -->
+      <!-- PESTAÑA 2: MAPA SEMS -->
       <section id="vista-estadistica" class="hidden space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles SEMS</h2>
@@ -295,7 +295,9 @@
                     <th class="p-2">Tiempo promedio de rotación</th>
                   </tr>
                 </thead>
-                <tbody id="tabla-papeleria-cuerpo" class="divide-y divide-slate-100"></tbody>
+                <tbody id="tabla-papeleria-cuerpo" class="divide-y divide-slate-100">
+                  <tr><td colspan="7" class="p-4 text-center text-slate-400">Cargando inventario de papelería...</td></tr>
+                </tbody>
               </table>
             </div>
           </div>
@@ -337,7 +339,9 @@
                     <th class="p-2">Tiempo promedio de rotación</th>
                   </tr>
                 </thead>
-                <tbody id="tabla-consumibles-cuerpo" class="divide-y divide-slate-100"></tbody>
+                <tbody id="tabla-consumibles-cuerpo" class="divide-y divide-slate-100">
+                  <tr><td colspan="7" class="p-4 text-center text-slate-400">Cargando inventario de consumibles...</td></tr>
+                </tbody>
               </table>
             </div>
           </div>
@@ -389,7 +393,7 @@
     </main>
   </div>
 
-  <!-- MODAL DETALLES TOGGLETIP -->
+  <!-- MODAL / TOGGLETIP DE DETALLES -->
   <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl border w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 relative">
       <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">✕</button>
@@ -467,6 +471,31 @@
       }
     }
 
+    function formatearFechaDDMMYYYY(fechaRaw) {
+      if (!fechaRaw || fechaRaw === "N/A" || String(fechaRaw).trim() === "") return "N/A";
+      const str = String(fechaRaw).trim();
+
+      if (str.includes("T")) {
+        const partes = str.split("T")[0].split("-");
+        if (partes.length === 3) return `${partes[2].padStart(2, "0")}/${partes[1].padStart(2, "0")}/${partes[0]}`;
+      }
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const [a, m, d] = str.split("-");
+        return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${a}`;
+      }
+
+      const dObj = new Date(str);
+      if (!isNaN(dObj.getTime())) {
+        const dia = String(dObj.getUTCDate()).padStart(2, "0");
+        const mes = String(dObj.getUTCMonth() + 1).padStart(2, "0");
+        const anio = dObj.getUTCFullYear();
+        return `${dia}/${mes}/${anio}`;
+      }
+
+      return str;
+    }
+
     /* -------------------------------------------------------------------------- */
     /* TABLERO GENERAL                                                            */
     /* -------------------------------------------------------------------------- */
@@ -485,7 +514,6 @@
         });
     }
 
-    // CORRECCIÓN DEL RUBRO (ALINEACIÓN EN UNA SOLA LÍNEA)
     function obtenerBadgeRubro(rubro) {
       const r = (rubro || '').toLowerCase();
       let colorClass = "bg-slate-200 text-slate-700";
@@ -495,7 +523,7 @@
       else if (r.includes('obra infejal')) colorClass = "bg-purple-100 text-purple-800";
       else if (r.includes('obra')) colorClass = "bg-rose-100 text-rose-800";
 
-      return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${colorClass}"><span class="text-[10px]">●</span> ${rubro || 'General'}</span>`;
+      return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${colorClass}"><span class="text-[10px]">●</span> ${rubro || 'General'}</span>`;
     }
 
     function obtenerBadgeEstatus(est) {
@@ -503,6 +531,11 @@
       if (e.includes('CONCLUIDO')) return `<span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white whitespace-nowrap">CONCLUIDO</span>`;
       if (e.includes('EN PROCESO')) return `<span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400 text-slate-900 whitespace-nowrap">EN PROCESO</span>`;
       return `<span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 whitespace-nowrap">${est || 'SIN ESTATUS'}</span>`;
+    }
+
+    function obtenerNombreEscuelaFlexible(item) {
+      if (!item) return "N/A";
+      return item["NOMBRE ESCUELA"] || item["NOMBRE DE LA ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item.ESCUELA || item.PLANTEL || "N/A";
     }
 
     function renderizarTabla(datos) {
@@ -516,7 +549,7 @@
 
       tbody.innerHTML = datosFiltrados.map((item, index) => {
         const cct = item.CCT || item["CLAVE ESCUELA"] || 'N/A';
-        const nombre = item["NOMBRE ESCUELA"] || item["NOMBRE DEL PLANTEL"] || item.ESCUELA || 'N/A';
+        const nombre = obtenerNombreEscuelaFlexible(item);
         const detalle = item.DESCRIPCION || item.OBRA || 'Sin detalle';
         const estatus = item.ESTATUS_PROCESO || item.ESTATUS || 'N/A';
 
@@ -528,10 +561,10 @@
             <td class="p-3 text-slate-500">${detalle}</td>
             <td class="p-3">${obtenerBadgeEstatus(estatus)}</td>
             <td class="p-3 text-center">
-              <button onclick="abrirModalDetalles(${index})" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-lg transition-all inline-flex items-center justify-center" title="Ver detalles">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <button onclick="abrirModalDetalles(${index})" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-[#C6004C] rounded-lg transition-all inline-flex items-center justify-center" title="Ver detalles completos">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </button>
             </td>
@@ -545,19 +578,26 @@
       if (!item) return;
 
       document.getElementById("modal-rubro-badge").innerHTML = obtenerBadgeRubro(item.RUBRO_PROYECTO);
-      document.getElementById("modal-escuela").textContent = item["NOMBRE ESCUELA"] || item.ESCUELA || "N/A";
+      document.getElementById("modal-escuela").textContent = obtenerNombreEscuelaFlexible(item);
       document.getElementById("modal-cct").textContent = "CCT: " + (item.CCT || "N/A");
-      document.getElementById("modal-clave-inmueble").textContent = item["CLAVE DEL INMUEBLE"] || "N/A";
+      document.getElementById("modal-clave-inmueble").textContent = item["CLAVE DEL INMUEBLE"] || item["CLAVE_INMUEBLE"] || "N/A";
       document.getElementById("modal-municipio").textContent = item.MUNICIPIO || "N/A";
       document.getElementById("modal-opd").textContent = item.OPD || "N/A";
       document.getElementById("modal-descripcion").textContent = item.DESCRIPCION || "Sin descripción.";
       document.getElementById("modal-responsable").textContent = item.RESPONSABLE || "N/A";
-      document.getElementById("modal-fecha").textContent = item["FECHA DE PRIMERA SOLICITUD"] || "N/A";
+      
+      // FORMATEO ESTRICTO A DD/MM/AAAA
+      const fechaRaw = item["FECHA DE PRIMERA SOLICITUD"] || item["FECHA_SOLICITUD"] || item["FECHA SOLICITUD"] || item["FECHA"];
+      document.getElementById("modal-fecha").textContent = formatearFechaDDMMYYYY(fechaRaw);
+
       document.getElementById("modal-fondo").textContent = item.FONDO || "N/A";
-      document.getElementById("modal-id-interno").textContent = item["IDENTIFICADOR INTERNO"] || "N/A";
+      document.getElementById("modal-id-interno").textContent = item["IDENTIFICADOR INTERNO"] || item["ID_INTERNO"] || "N/A";
       document.getElementById("modal-oficios").innerHTML = (item.OFICIOS || "N/A").split(/\s+/).map(o => `<span class="bg-slate-100 border px-1.5 py-0.5 rounded text-[10px] font-mono">${o}</span>`).join("");
-      document.getElementById("modal-monto-asignado").textContent = item["MONTO ASIGNADO"] ? "$" + Number(item["MONTO ASIGNADO"]).toLocaleString() : "N/A";
-      document.getElementById("modal-monto-ejercido").textContent = item["MONTO EJERCIDO"] ? "$" + Number(item["MONTO EJERCIDO"]).toLocaleString() : "N/A";
+      
+      const mAsig = item["MONTO ASIGNADO"] || item["MONTO_ASIGNADO"];
+      const mEjec = item["MONTO EJERCIDO"] || item["MONTO_EJERCIDO"];
+      document.getElementById("modal-monto-asignado").textContent = (mAsig && !isNaN(mAsig)) ? "$" + Number(mAsig).toLocaleString("es-MX") : (mAsig || "N/A");
+      document.getElementById("modal-monto-ejercido").textContent = (mEjec && !isNaN(mEjec)) ? "$" + Number(mEjec).toLocaleString("es-MX") : (mEjec || "N/A");
 
       const btnExp = document.getElementById("btn-modal-expediente");
       if (item.URL_EXPEDIENTE) {
@@ -576,7 +616,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* PAPELERÍA Y CONSUMIBLES (CARGA INMEDIATA)                                 */
+    /* PAPELERÍA Y CONSUMIBLES (CARGA GARANTIZADA)                                */
     /* -------------------------------------------------------------------------- */
 
     function cargarInventariosYEventos() {
@@ -586,9 +626,6 @@
         return;
       }
 
-      document.getElementById("resumen-rotacion-papeleria").textContent = "Cargando datos...";
-      document.getElementById("resumen-rotacion-consumibles").textContent = "Cargando datos...";
-
       fetch(API_URL + "?action=getInventariosData")
         .then(res => res.json())
         .then(res => {
@@ -597,10 +634,15 @@
             renderizarModuloPapeleria();
             renderizarModuloConsumibles();
             inicializarMapaEventos(res.eventos || []);
+          } else {
+            document.getElementById("resumen-rotacion-papeleria").textContent = "Error de datos";
+            document.getElementById("resumen-rotacion-consumibles").textContent = "Error de datos";
           }
         })
         .catch(err => {
-          console.error("Error al obtener inventarios:", err);
+          console.error("Error de red:", err);
+          document.getElementById("resumen-rotacion-papeleria").textContent = "Error de conexión";
+          document.getElementById("resumen-rotacion-consumibles").textContent = "Error de conexión";
         });
     }
 
@@ -610,7 +652,7 @@
       const filtrados = (datos || []).filter(p => p.producto.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro));
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Sin registros para mostrar.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Sin registros disponibles</td></tr>`;
         return;
       }
 
@@ -666,7 +708,7 @@
 
       const canvas = document.getElementById(`chart-solicitudes-${tipo}`);
       if (!canvas) return;
-      
+
       const ctxMes = canvas.getContext('2d');
       new Chart(ctxMes, {
         type: 'bar',
@@ -679,7 +721,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* MAPA EVENTOS                                                               */
+    /* MAPA Y EVENTOS                                                             */
     /* -------------------------------------------------------------------------- */
 
     function inicializarMapaEventos(eventos) {
