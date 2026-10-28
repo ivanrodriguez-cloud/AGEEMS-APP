@@ -203,7 +203,7 @@
           </div>
         </div>
 
-        <!-- TABLA PRINCIPAL GENERAL -->
+        <!-- TABLA PRINCIPAL -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
           <table class="w-full text-left border-collapse text-sm min-w-[750px]">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
@@ -223,7 +223,7 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 2: MAPA SEMS -->
+      <!-- PESTAÑA 2: MAPA -->
       <section id="vista-estadistica" class="hidden space-y-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <h2 class="text-lg font-bold text-slate-800">Geolocalización de Planteles SEMS</h2>
@@ -393,7 +393,7 @@
     </main>
   </div>
 
-  <!-- MODAL / TOGGLETIP DE DETALLES -->
+  <!-- MODAL DE DETALLES -->
   <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl border w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 relative">
       <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">✕</button>
@@ -586,7 +586,6 @@
       document.getElementById("modal-descripcion").textContent = item.DESCRIPCION || "Sin descripción.";
       document.getElementById("modal-responsable").textContent = item.RESPONSABLE || "N/A";
       
-      // FORMATEO ESTRICTO A DD/MM/AAAA
       const fechaRaw = item["FECHA DE PRIMERA SOLICITUD"] || item["FECHA_SOLICITUD"] || item["FECHA SOLICITUD"] || item["FECHA"];
       document.getElementById("modal-fecha").textContent = formatearFechaDDMMYYYY(fechaRaw);
 
@@ -616,7 +615,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* PAPELERÍA Y CONSUMIBLES (CARGA GARANTIZADA)                                */
+    /* PAPELERÍA Y CONSUMIBLES                                                   */
     /* -------------------------------------------------------------------------- */
 
     function cargarInventariosYEventos() {
@@ -626,7 +625,7 @@
         return;
       }
 
-      fetch(API_URL + "?action=getInventariosData")
+      fetch(API_URL + "?action=getInventariosData&flush=true")
         .then(res => res.json())
         .then(res => {
           if (res.success) {
@@ -635,12 +634,12 @@
             renderizarModuloConsumibles();
             inicializarMapaEventos(res.eventos || []);
           } else {
-            document.getElementById("resumen-rotacion-papeleria").textContent = "Error de datos";
-            document.getElementById("resumen-rotacion-consumibles").textContent = "Error de datos";
+            document.getElementById("resumen-rotacion-papeleria").textContent = "Error al obtener datos";
+            document.getElementById("resumen-rotacion-consumibles").textContent = "Error al obtener datos";
           }
         })
         .catch(err => {
-          console.error("Error de red:", err);
+          console.error("Error de conexión:", err);
           document.getElementById("resumen-rotacion-papeleria").textContent = "Error de conexión";
           document.getElementById("resumen-rotacion-consumibles").textContent = "Error de conexión";
         });
