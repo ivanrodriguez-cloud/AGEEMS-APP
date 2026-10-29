@@ -29,6 +29,8 @@
 
   <style>
     body { font-family: 'Poppins', sans-serif; }
+    .dropdown-excel { display: none; }
+    .dropdown-excel.active { display: block; }
   </style>
 
   <!-- Guardián de Sesión -->
@@ -108,11 +110,8 @@
             <h2 class="text-base sm:text-lg font-bold text-slate-800">Registros Consolidados</h2>
             <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
           </div>
-          <div class="flex justify-end w-full">
-            <button onclick="abrirModalExportar()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all">Exportar datos</button>
-          </div>
 
-          <!-- FILTROS -->
+          <!-- FILTROS GENERACIÓN GENERAL -->
           <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-xs">
             <div class="relative dropdown-container" id="container-filtro-rubro">
               <label class="block font-semibold text-slate-600 mb-1">Rubro</label>
@@ -203,7 +202,7 @@
           </div>
         </div>
 
-        <!-- TABLA PRINCIPAL -->
+        <!-- TABLA PRINCIPAL GENERAL -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full">
           <table class="w-full text-left border-collapse text-sm min-w-[750px]">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
@@ -243,7 +242,7 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 4: PAPELERÍA Y CONSUMIBLES -->
+      <!-- PESTAÑA 4: PAPELERÍA Y CONSUMIBLES (CON CROSS-FILTERING Y TABLAS EXCEL) -->
       <section id="vista-papeleria-consumibles" class="hidden space-y-4">
         
         <!-- SUBMENÚ 3 PESTAÑAS -->
@@ -261,38 +260,113 @@
 
         <!-- SUBPESTAÑA PAPELERÍA -->
         <div id="subvista-papeleria" class="space-y-4">
-          <div class="bg-white p-3 rounded-xl border flex justify-between items-center text-xs">
-            <input type="text" id="filtro-papeleria" onkeyup="renderizarModuloPapeleria()" placeholder="🔍 Buscar por código o producto..." class="border p-2 rounded-lg w-64">
-            <div id="resumen-rotacion-papeleria" class="font-bold text-slate-600">Promedio Categoría: -- días</div>
+          <div class="bg-white p-3 rounded-xl border flex flex-wrap justify-between items-center text-xs gap-2">
+            <div class="flex items-center gap-2">
+              <input type="text" id="filtro-papeleria" onkeyup="renderizarModuloPapeleria()" placeholder="🔍 Buscar por código o producto..." class="border p-2 rounded-lg w-64 focus:ring-2 focus:ring-[#C6004C] outline-none">
+              <span id="indicador-filtro-papeleria" class="font-bold text-[#C6004C]"></span>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="limpiarFiltrosInventario('papeleria')" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-slate-600 font-medium">🔄 Restablecer Filtros</button>
+              <div id="resumen-rotacion-papeleria" class="font-bold text-slate-600">Promedio Categoría: -- días</div>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- IZQUIERDA: GRÁFICOS Y TOP 10 -->
             <div class="lg:col-span-5 space-y-4">
-              <div class="bg-white p-4 rounded-xl border">
-                <h3 class="text-xs font-bold text-slate-700 mb-2">Solicitudes por Mes</h3>
-                <canvas id="chart-solicitudes-papeleria" class="max-h-48"></canvas>
+              <div class="bg-white p-4 rounded-xl border relative">
+                <div class="flex justify-between items-center mb-2">
+                  <h3 class="text-xs font-bold text-slate-700">Solicitudes por Mes</h3>
+                  <span class="text-[10px] text-slate-400">Clic en la barra para filtrar</span>
+                </div>
+                <canvas id="chart-solicitudes-papeleria" class="max-h-48 cursor-pointer"></canvas>
               </div>
+
+              <!-- TOP 10 (INDEPENDIENTE) -->
               <div class="bg-white p-4 rounded-xl border">
-                <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Productos Solicitados</h3>
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Productos Solicitados (Global)</h3>
                 <div id="top10-papeleria" class="space-y-1 text-xs"></div>
               </div>
+
               <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Costo del Stock Seleccionado</h3>
                 <canvas id="chart-costo-papeleria" class="max-h-40"></canvas>
               </div>
             </div>
 
-            <div class="lg:col-span-7 bg-white rounded-xl border p-3 overflow-x-auto">
+            <!-- DERECHA: TABLA CON MENÚ ESTILO EXCEL -->
+            <div class="lg:col-span-7 bg-white rounded-xl border p-3 overflow-x-auto relative">
               <table class="w-full text-left border-collapse text-xs">
-                <thead class="bg-slate-50 border-b uppercase text-slate-600">
+                <thead class="bg-slate-50 border-b uppercase text-slate-600 select-none">
                   <tr>
-                    <th class="p-2">Código</th>
-                    <th class="p-2">Producto</th>
-                    <th class="p-2 text-center">Ingresos</th>
-                    <th class="p-2 text-center">Salidas</th>
-                    <th class="p-2 text-center">Stock</th>
-                    <th class="p-2">Unidad de medida</th>
-                    <th class="p-2">Tiempo promedio de rotación</th>
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('papeleria', 'codigo')">
+                        <span>Código</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-papeleria-codigo" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('papeleria', 'codigo', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Ordenar A-Z</button>
+                        <button onclick="ordenarPor('papeleria', 'codigo', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Ordenar Z-A</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('papeleria', 'producto')">
+                        <span>Producto</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-papeleria-producto" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-52 text-slate-700">
+                        <button onclick="ordenarPor('papeleria', 'producto', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Ordenar A-Z</button>
+                        <button onclick="ordenarPor('papeleria', 'producto', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Ordenar Z-A</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 text-center relative">
+                      <div class="flex items-center justify-center gap-1 cursor-pointer" onclick="toggleMenuColumna('papeleria', 'ingresos')">
+                        <span>Ingresos</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-papeleria-ingresos" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('papeleria', 'ingresos', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('papeleria', 'ingresos', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 text-center relative">
+                      <div class="flex items-center justify-center gap-1 cursor-pointer" onclick="toggleMenuColumna('papeleria', 'salidas')">
+                        <span>Salidas</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-papeleria-salidas" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('papeleria', 'salidas', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('papeleria', 'salidas', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 text-center relative">
+                      <div class="flex items-center justify-center gap-1 cursor-pointer" onclick="toggleMenuColumna('papeleria', 'stock')">
+                        <span>Stock</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-papeleria-stock" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('papeleria', 'stock', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('papeleria', 'stock', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('papeleria', 'unidadMedida')">
+                        <span>Unidad</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-papeleria-unidadMedida" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('papeleria', 'unidadMedida', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Ordenar A-Z</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('papeleria', 'diasRotacionPromedio')">
+                        <span>Rotación</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-papeleria-diasRotacionPromedio" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('papeleria', 'diasRotacionPromedio', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('papeleria', 'diasRotacionPromedio', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody id="tabla-papeleria-cuerpo" class="divide-y divide-slate-100">
@@ -305,38 +379,112 @@
 
         <!-- SUBPESTAÑA CONSUMIBLES -->
         <div id="subvista-consumibles" class="hidden space-y-4">
-          <div class="bg-white p-3 rounded-xl border flex justify-between items-center text-xs">
-            <input type="text" id="filtro-consumibles" onkeyup="renderizarModuloConsumibles()" placeholder="🔍 Buscar consumible..." class="border p-2 rounded-lg w-64">
-            <div id="resumen-rotacion-consumibles" class="font-bold text-slate-600">Promedio Categoría: -- días</div>
+          <div class="bg-white p-3 rounded-xl border flex flex-wrap justify-between items-center text-xs gap-2">
+            <div class="flex items-center gap-2">
+              <input type="text" id="filtro-consumibles" onkeyup="renderizarModuloConsumibles()" placeholder="🔍 Buscar consumible..." class="border p-2 rounded-lg w-64 focus:ring-2 focus:ring-[#C6004C] outline-none">
+              <span id="indicador-filtro-consumibles" class="font-bold text-[#C6004C]"></span>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="limpiarFiltrosInventario('consumibles')" class="bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-slate-600 font-medium">🔄 Restablecer Filtros</button>
+              <div id="resumen-rotacion-consumibles" class="font-bold text-slate-600">Promedio Categoría: -- días</div>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
             <div class="lg:col-span-5 space-y-4">
-              <div class="bg-white p-4 rounded-xl border">
-                <h3 class="text-xs font-bold text-slate-700 mb-2">Solicitudes por Mes</h3>
-                <canvas id="chart-solicitudes-consumibles" class="max-h-48"></canvas>
+              <div class="bg-white p-4 rounded-xl border relative">
+                <div class="flex justify-between items-center mb-2">
+                  <h3 class="text-xs font-bold text-slate-700">Solicitudes por Mes</h3>
+                  <span class="text-[10px] text-slate-400">Clic en la barra para filtrar</span>
+                </div>
+                <canvas id="chart-solicitudes-consumibles" class="max-h-48 cursor-pointer"></canvas>
               </div>
+
+              <!-- TOP 10 (INDEPENDIENTE) -->
               <div class="bg-white p-4 rounded-xl border">
-                <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Consumibles Solicitados</h3>
+                <h3 class="text-xs font-bold text-slate-700 mb-2">Top 10 Consumibles Solicitados (Global)</h3>
                 <div id="top10-consumibles" class="space-y-1 text-xs"></div>
               </div>
+
               <div class="bg-white p-4 rounded-xl border">
                 <h3 class="text-xs font-bold text-slate-700 mb-2">Costo del Stock Seleccionado</h3>
                 <canvas id="chart-costo-consumibles" class="max-h-40"></canvas>
               </div>
             </div>
 
-            <div class="lg:col-span-7 bg-white rounded-xl border p-3 overflow-x-auto">
+            <!-- TABLA CONSUMIBLES EXCEL -->
+            <div class="lg:col-span-7 bg-white rounded-xl border p-3 overflow-x-auto relative">
               <table class="w-full text-left border-collapse text-xs">
-                <thead class="bg-slate-50 border-b uppercase text-slate-600">
+                <thead class="bg-slate-50 border-b uppercase text-slate-600 select-none">
                   <tr>
-                    <th class="p-2">Código</th>
-                    <th class="p-2">Producto</th>
-                    <th class="p-2 text-center">Ingresos</th>
-                    <th class="p-2 text-center">Salidas</th>
-                    <th class="p-2 text-center">Stock</th>
-                    <th class="p-2">Unidad de medida</th>
-                    <th class="p-2">Tiempo promedio de rotación</th>
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('consumibles', 'codigo')">
+                        <span>Código</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-consumibles-codigo" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('consumibles', 'codigo', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Ordenar A-Z</button>
+                        <button onclick="ordenarPor('consumibles', 'codigo', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Ordenar Z-A</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('consumibles', 'producto')">
+                        <span>Producto</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-consumibles-producto" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-52 text-slate-700">
+                        <button onclick="ordenarPor('consumibles', 'producto', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Ordenar A-Z</button>
+                        <button onclick="ordenarPor('consumibles', 'producto', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Ordenar Z-A</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 text-center relative">
+                      <div class="flex items-center justify-center gap-1 cursor-pointer" onclick="toggleMenuColumna('consumibles', 'ingresos')">
+                        <span>Ingresos</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-consumibles-ingresos" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('consumibles', 'ingresos', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('consumibles', 'ingresos', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 text-center relative">
+                      <div class="flex items-center justify-center gap-1 cursor-pointer" onclick="toggleMenuColumna('consumibles', 'salidas')">
+                        <span>Salidas</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-consumibles-salidas" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('consumibles', 'salidas', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('consumibles', 'salidas', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 text-center relative">
+                      <div class="flex items-center justify-center gap-1 cursor-pointer" onclick="toggleMenuColumna('consumibles', 'stock')">
+                        <span>Stock</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-consumibles-stock" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('consumibles', 'stock', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('consumibles', 'stock', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('consumibles', 'unidadMedida')">
+                        <span>Unidad</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-consumibles-unidadMedida" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('consumibles', 'unidadMedida', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Ordenar A-Z</button>
+                      </div>
+                    </th>
+
+                    <th class="p-2 relative">
+                      <div class="flex items-center justify-between cursor-pointer" onclick="toggleMenuColumna('consumibles', 'diasRotacionPromedio')">
+                        <span>Rotación</span> <span class="text-[10px]">▼</span>
+                      </div>
+                      <div id="menu-consumibles-diasRotacionPromedio" class="dropdown-excel absolute left-0 top-full mt-1 bg-white border rounded-lg shadow-xl p-2 z-40 w-48 text-slate-700">
+                        <button onclick="ordenarPor('consumibles', 'diasRotacionPromedio', 'desc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬇️ Mayor a Menor</button>
+                        <button onclick="ordenarPor('consumibles', 'diasRotacionPromedio', 'asc')" class="block w-full text-left px-2 py-1 hover:bg-slate-100 rounded">⬆️ Menor a Mayor</button>
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody id="tabla-consumibles-cuerpo" class="divide-y divide-slate-100">
@@ -393,7 +541,7 @@
     </main>
   </div>
 
-  <!-- MODAL DE DETALLES -->
+  <!-- MODAL DE DETALLES GENERAL -->
   <div id="modal-detalles" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl border w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 relative">
       <button onclick="cerrarModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">✕</button>
@@ -425,7 +573,7 @@
     </div>
   </div>
 
-  <!-- SCRIPT FRONTEND -->
+  <!-- SCRIPT COMPLETO FRONTEND -->
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwCW-78RikNKZfit_Xt9cAl-nL-mHhBBY0aJPCfwYBeGTFvFU46oNoYUOvX5Aho5egDjw/exec";
 
@@ -434,11 +582,21 @@
     let rawInventariosData = null;
     let mapaEventosObj = null;
 
+    // ESTADOS INTERACTIVOS PARA CROSS-FILTERING
+    let estadoPapeleria = { mes: null, ordenColumna: null, ordenDir: 'asc' };
+    let estadoConsumibles = { mes: null, ordenColumna: null, ordenDir: 'asc' };
+
+    let chartMesInstances = {};
+    let chartCostoInstances = {};
+
     document.addEventListener("DOMContentLoaded", () => {
       obtenerDatosTableroGeneral();
       document.addEventListener("click", (e) => {
         if (!e.target.closest(".dropdown-container")) {
           document.querySelectorAll("[id^='dropdown-']").forEach(el => el.classList.add("hidden"));
+        }
+        if (!e.target.closest(".relative")) {
+          document.querySelectorAll(".dropdown-excel").forEach(el => el.classList.remove("active"));
         }
       });
     });
@@ -615,7 +773,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* PAPELERÍA Y CONSUMIBLES                                                   */
+    /* PAPELERÍA Y CONSUMIBLES (LÓGICA CROSS-FILTERING Y TABLAS EXCEL)            */
     /* -------------------------------------------------------------------------- */
 
     function cargarInventariosYEventos() {
@@ -625,7 +783,7 @@
         return;
       }
 
-      fetch(API_URL + "?action=getInventariosData&flush=true")
+      fetch(API_URL + "?action=getInventariosData")
         .then(res => res.json())
         .then(res => {
           if (res.success) {
@@ -634,32 +792,143 @@
             renderizarModuloConsumibles();
             inicializarMapaEventos(res.eventos || []);
           } else {
-            document.getElementById("resumen-rotacion-papeleria").textContent = "Error al obtener datos";
-            document.getElementById("resumen-rotacion-consumibles").textContent = "Error al obtener datos";
+            document.getElementById("resumen-rotacion-papeleria").textContent = "Error de datos";
+            document.getElementById("resumen-rotacion-consumibles").textContent = "Error de datos";
           }
         })
         .catch(err => {
-          console.error("Error de conexión:", err);
+          console.error("Error de red:", err);
           document.getElementById("resumen-rotacion-papeleria").textContent = "Error de conexión";
           document.getElementById("resumen-rotacion-consumibles").textContent = "Error de conexión";
         });
     }
 
-    function renderizarTablaInventario(datos, idTabla, idFiltro, promedioCat) {
-      const tbody = document.getElementById(idTabla);
-      const filtro = (document.getElementById(idFiltro).value || '').toLowerCase();
-      const filtrados = (datos || []).filter(p => p.producto.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro));
+    // TOGGLE MENU DESPLEGABLE EN COLUMNA DE TABLA
+    function toggleMenuColumna(tipo, columna) {
+      document.querySelectorAll(".dropdown-excel").forEach(el => el.classList.remove("active"));
+      const target = document.getElementById(`menu-${tipo}-${columna}`);
+      if (target) target.classList.add("active");
+    }
 
-      if (filtrados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Sin registros disponibles</td></tr>`;
+    function ordenarPor(tipo, columna, dir) {
+      const estado = tipo === 'papeleria' ? estadoPapeleria : estadoConsumibles;
+      estado.ordenColumna = columna;
+      estado.ordenDir = dir;
+      document.querySelectorAll(".dropdown-excel").forEach(el => el.classList.remove("active"));
+
+      if (tipo === 'papeleria') renderizarModuloPapeleria();
+      else renderizarModuloConsumibles();
+    }
+
+    function limpiarFiltrosInventario(tipo) {
+      if (tipo === 'papeleria') {
+        estadoPapeleria = { mes: null, ordenColumna: null, ordenDir: 'asc' };
+        document.getElementById("filtro-papeleria").value = "";
+        document.getElementById("indicador-filtro-papeleria").textContent = "";
+        renderizarModuloPapeleria();
+      } else {
+        estadoConsumibles = { mes: null, ordenColumna: null, ordenDir: 'asc' };
+        document.getElementById("filtro-consumibles").value = "";
+        document.getElementById("indicador-filtro-consumibles").textContent = "";
+        renderizarModuloConsumibles();
+      }
+    }
+
+    /* MÓDULO PAPELERÍA */
+    function renderizarModuloPapeleria() {
+      if (!rawInventariosData || !rawInventariosData.papeleria) return;
+      const data = rawInventariosData.papeleria;
+      const busqueda = (document.getElementById("filtro-papeleria").value || "").toLowerCase();
+
+      let lista = [...data.productos];
+
+      // 1. Filtrar por búsqueda manual
+      if (busqueda) {
+        lista = lista.filter(p => p.producto.toLowerCase().includes(busqueda) || p.codigo.toLowerCase().includes(busqueda));
+      }
+
+      // 2. Filtrar por mes seleccionado en la gráfica (Cross-filtering)
+      if (estadoPapeleria.mes) {
+        lista = lista.filter(p => p.mesesSalida && p.mesesSalida.includes(estadoPapeleria.mes));
+        document.getElementById("indicador-filtro-papeleria").textContent = `Filtro mes: ${estadoPapeleria.mes}`;
+      } else if (!busqueda) {
+        document.getElementById("indicador-filtro-papeleria").textContent = "";
+      }
+
+      // 3. Ordenar columna según selección estilo Excel
+      if (estadoPapeleria.ordenColumna) {
+        const col = estadoPapeleria.ordenColumna;
+        const dir = estadoPapeleria.ordenDir === 'asc' ? 1 : -1;
+        lista.sort((a, b) => {
+          if (typeof a[col] === 'number') return (a[col] - b[col]) * dir;
+          return String(a[col] || '').localeCompare(String(b[col] || '')) * dir;
+        });
+      }
+
+      document.getElementById("resumen-rotacion-papeleria").textContent = `Promedio Categoría: ${data.promedioGeneralRotacion} días`;
+
+      renderizarTablaInventario(lista, "tabla-papeleria-cuerpo", data.promedioGeneralRotacion);
+      renderizarGraficaSolicitudes(data, "papeleria", estadoPapeleria);
+      renderizarGraficaCosto(lista, "papeleria");
+      
+      // Top 10 Permanece global
+      renderizarTop10(data.productos, "papeleria");
+    }
+
+    /* MÓDULO CONSUMIBLES */
+    function renderizarModuloConsumibles() {
+      if (!rawInventariosData || !rawInventariosData.consumibles) return;
+      const data = rawInventariosData.consumibles;
+      const busqueda = (document.getElementById("filtro-consumibles").value || "").toLowerCase();
+
+      let lista = [...data.productos];
+
+      // 1. Filtrar por búsqueda
+      if (busqueda) {
+        lista = lista.filter(p => p.producto.toLowerCase().includes(busqueda) || p.codigo.toLowerCase().includes(busqueda));
+      }
+
+      // 2. Filtrar por mes seleccionado en la gráfica
+      if (estadoConsumibles.mes) {
+        lista = lista.filter(p => p.mesesSalida && p.mesesSalida.includes(estadoConsumibles.mes));
+        document.getElementById("indicador-filtro-consumibles").textContent = `Filtro mes: ${estadoConsumibles.mes}`;
+      } else if (!busqueda) {
+        document.getElementById("indicador-filtro-consumibles").textContent = "";
+      }
+
+      // 3. Ordenar
+      if (estadoConsumibles.ordenColumna) {
+        const col = estadoConsumibles.ordenColumna;
+        const dir = estadoConsumibles.ordenDir === 'asc' ? 1 : -1;
+        lista.sort((a, b) => {
+          if (typeof a[col] === 'number') return (a[col] - b[col]) * dir;
+          return String(a[col] || '').localeCompare(String(b[col] || '')) * dir;
+        });
+      }
+
+      document.getElementById("resumen-rotacion-consumibles").textContent = `Promedio Categoría: ${data.promedioGeneralRotacion} días`;
+
+      renderizarTablaInventario(lista, "tabla-consumibles-cuerpo", data.promedioGeneralRotacion);
+      renderizarGraficaSolicitudes(data, "consumibles", estadoConsumibles);
+      renderizarGraficaCosto(lista, "consumibles");
+
+      // Top 10 Permanece global
+      renderizarTop10(data.productos, "consumibles");
+    }
+
+    function renderizarTablaInventario(datos, idTabla, promedioCat) {
+      const tbody = document.getElementById(idTabla);
+
+      if (!datos || datos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Sin registros que coincidan con la selección</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = filtrados.map(p => {
+      tbody.innerHTML = datos.map(p => {
         let porcentajeBarra = Math.min(100, Math.round((p.diasRotacionPromedio / (promedioCat * 2 || 1)) * 100));
 
         return `
-          <tr class="hover:bg-slate-50 border-b">
+          <tr class="hover:bg-slate-50 border-b transition-colors">
             <td class="p-2 font-mono text-slate-500">${p.codigo}</td>
             <td class="p-2 font-medium text-slate-800">${p.producto}</td>
             <td class="p-2 text-center text-emerald-600 font-bold">${p.ingresos}</td>
@@ -679,43 +948,87 @@
       }).join("");
     }
 
-    function renderizarModuloPapeleria() {
-      if (!rawInventariosData || !rawInventariosData.papeleria) return;
-      const data = rawInventariosData.papeleria;
-      document.getElementById("resumen-rotacion-papeleria").textContent = `Promedio Categoría: ${data.promedioGeneralRotacion} días`;
-      renderizarTablaInventario(data.productos, "tabla-papeleria-cuerpo", "filtro-papeleria", data.promedioGeneralRotacion);
-      renderizarGraficasCategoria(data, "papeleria");
-    }
-
-    function renderizarModuloConsumibles() {
-      if (!rawInventariosData || !rawInventariosData.consumibles) return;
-      const data = rawInventariosData.consumibles;
-      document.getElementById("resumen-rotacion-consumibles").textContent = `Promedio Categoría: ${data.promedioGeneralRotacion} días`;
-      renderizarTablaInventario(data.productos, "tabla-consumibles-cuerpo", "filtro-consumibles", data.promedioGeneralRotacion);
-      renderizarGraficasCategoria(data, "consumibles");
-    }
-
-    function renderizarGraficasCategoria(data, tipo) {
-      if (!data || !data.productos) return;
-      const top10 = [...data.productos].sort((a,b) => b.salidas - a.salidas).slice(0, 10);
+    function renderizarTop10(productosGlobales, tipo) {
+      const top10 = [...productosGlobales].sort((a,b) => b.salidas - a.salidas).slice(0, 10);
       document.getElementById(`top10-${tipo}`).innerHTML = top10.map((item, idx) => `
         <div class="flex justify-between items-center bg-slate-50 p-1.5 rounded">
           <span class="truncate font-medium">${idx+1}. ${item.producto}</span>
           <span class="font-bold text-[#C6004C] shrink-0">${item.salidas} sol.</span>
         </div>
       `).join("");
+    }
 
+    function renderizarGraficaSolicitudes(data, tipo, estadoObj) {
       const canvas = document.getElementById(`chart-solicitudes-${tipo}`);
       if (!canvas) return;
 
-      const ctxMes = canvas.getContext('2d');
-      new Chart(ctxMes, {
+      const labels = Object.keys(data.solicitudesPorMes || {});
+      const valores = Object.values(data.solicitudesPorMes || {});
+
+      if (chartMesInstances[tipo]) chartMesInstances[tipo].destroy();
+
+      const ctx = canvas.getContext('2d');
+      chartMesInstances[tipo] = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: Object.keys(data.solicitudesPorMes || {}),
-          datasets: [{ label: 'Solicitudes', data: Object.values(data.solicitudesPorMes || {}), backgroundColor: '#FF8300' }]
+          labels: labels,
+          datasets: [{
+            label: 'Solicitudes',
+            data: valores,
+            backgroundColor: labels.map(l => l === estadoObj.mes ? '#C6004C' : '#FF8300')
+          }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          onClick: (e, elements) => {
+            if (elements.length > 0) {
+              const idx = elements[0].index;
+              const mesClicked = labels[idx];
+
+              if (estadoObj.mes === mesClicked) {
+                estadoObj.mes = null;
+              } else {
+                estadoObj.mes = mesClicked;
+              }
+
+              if (tipo === 'papeleria') renderizarModuloPapeleria();
+              else renderizarModuloConsumibles();
+            }
+          }
+        }
+      });
+    }
+
+    function renderizarGraficaCosto(productosFiltrados, tipo) {
+      const canvas = document.getElementById(`chart-costo-${tipo}`);
+      if (!canvas) return;
+
+      const costoTotal = productosFiltrados.reduce((acc, p) => acc + (p.costoStock || 0), 0);
+
+      if (chartCostoInstances[tipo]) chartCostoInstances[tipo].destroy();
+
+      const ctx = canvas.getContext('2d');
+      chartCostoInstances[tipo] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Costo Stock Seleccionado', 'Referencia'],
+          datasets: [{
+            data: [costoTotal, Math.max(0, 500000 - costoTotal)],
+            backgroundColor: ['#C6004C', '#F1F5F9']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `$${ctx.raw.toLocaleString('es-MX')} MXN`
+              }
+            }
+          }
+        }
       });
     }
 
@@ -794,7 +1107,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* FILTROS Y DROPDOWNS                                                       */
+    /* FILTROS GENERALES                                                         */
     /* -------------------------------------------------------------------------- */
 
     function toggleDropdown(id) {
