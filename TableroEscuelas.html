@@ -1037,7 +1037,8 @@
 
       let grupos = [];
       (eventos || []).forEach(ev => {
-        let grupo = grupos.find(g => calcularDistanciaMetros(g.lat, g.lng, ev.latitud, ev.longitud) <= 30);
+        // Agrupamiento ajustado a menos de 100 metros
+        let grupo = grupos.find(g => calcularDistanciaMetros(g.lat, g.lng, ev.latitud, ev.longitud) <= 100);
         if (grupo) {
           grupo.eventos.push(ev);
         } else {
