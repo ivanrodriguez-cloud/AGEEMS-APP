@@ -142,7 +142,7 @@
       font-size: 14px; 
       text-decoration: none; 
       display: inline-block; 
-      border-radius: 6px;
+      border-radius: 6px; 
     }
 
     table { 
@@ -340,8 +340,8 @@
         return;
       }
 
-      productosDisponibles.forEach(item => {
-        tbody.innerHTML += `<tr class="fila-producto">
+      productosDisponibles.forEach((item, index) => {
+        tbody.innerHTML += `<tr class="fila-producto" data-orden-original="${index}">
           <td class="col-producto">${item.producto}</td>
           <td style="text-align: center;"><strong>${item.disp}</strong></td>
           <td style="text-align: center;">
@@ -350,10 +350,43 @@
                    data-codigo="${item.codigo}" 
                    data-unidad="${item.unidadMedida}" 
                    data-unidades-paquete="${item.unidadesPorPaquete}" 
-                   min="0" max="${item.disp}" value="0">
+                   min="0" max="${item.disp}" value="0"
+                   oninput="reordenarProductos()" onchange="reordenarProductos()">
           </td>
         </tr>`;
       });
+    }
+
+    // Reordena las filas para subir los productos con cantidad > 0 al inicio de la tabla
+    function reordenarProductos() {
+      const tbody = document.querySelector("#tablaProductos tbody");
+      const filas = Array.from(tbody.querySelectorAll("tr.fila-producto"));
+      const elementoActivo = document.activeElement;
+
+      filas.sort((a, b) => {
+        const cantA = parseInt(a.querySelector(".prod-item").value) || 0;
+        const cantB = parseInt(b.querySelector(".prod-item").value) || 0;
+
+        const selA = cantA > 0 ? 1 : 0;
+        const selB = cantB > 0 ? 1 : 0;
+
+        // Si uno está seleccionado (cantidad > 0) y el otro no, sube el seleccionado
+        if (selA !== selB) {
+          return selB - selA;
+        }
+
+        // Si ambos están en el mismo estado, conserva el orden original
+        const ordenA = parseInt(a.dataset.ordenOriginal) || 0;
+        const ordenB = parseInt(b.dataset.ordenOriginal) || 0;
+        return ordenA - ordenB;
+      });
+
+      filas.forEach(fila => tbody.appendChild(fila));
+
+      // Mantiene el foco en el campo donde el usuario está escribiendo
+      if (elementoActivo && elementoActivo.classList.contains("prod-item")) {
+        elementoActivo.focus();
+      }
     }
 
     // Función para filtrar los productos sin alterar los valores ingresados en Cant.
@@ -419,6 +452,7 @@
         document.getElementById('mensajeAlerta').innerText = "¡Solicitud registrada con éxito!";
         document.getElementById('miAlerta').style.display = 'flex';
         document.getElementById('papeleriaForm').reset();
+        reordenarProductos();
         btn.disabled = false;
         btn.innerText = "Enviar Solicitud";
       })
