@@ -373,16 +373,48 @@
         return;
       }
     
-      consumiblesValidos.forEach(item => {
+      consumiblesValidos.forEach((item, index) => {
         let nombreCons = item.consumible || item.Consumible || item.nombre || item.Nombre || "Sin nombre";
         let dispCons = item.stock !== undefined ? item.stock : (item.Stock !== undefined ? item.Stock : 0);
     
-        tbody.innerHTML += `<tr>
+        tbody.innerHTML += `<tr class="fila-consumible" data-orden-original="${index}">
           <td>${nombreCons}</td>
           <td style="text-align: center;"><strong>${dispCons}</strong></td>
-          <td style="text-align: center;"><input type="number" class="cant-input cons-item" data-nombre="${nombreCons}" min="0" max="${dispCons}" value="0"></td>
+          <td style="text-align: center;"><input type="number" class="cant-input cons-item" data-nombre="${nombreCons}" min="0" max="${dispCons}" value="0" oninput="reordenarConsumibles()" onchange="reordenarConsumibles()"></td>
         </tr>`;
       });
+    }
+
+    // Reordena las filas para subir los consumibles con cantidad > 0 al inicio de la tabla
+    function reordenarConsumibles() {
+      const tbody = document.querySelector("#tablaConsumibles tbody");
+      const filas = Array.from(tbody.querySelectorAll("tr.fila-consumible"));
+      const elementoActivo = document.activeElement;
+
+      filas.sort((a, b) => {
+        const cantA = parseInt(a.querySelector(".cons-item").value) || 0;
+        const cantB = parseInt(b.querySelector(".cons-item").value) || 0;
+
+        const selA = cantA > 0 ? 1 : 0;
+        const selB = cantB > 0 ? 1 : 0;
+
+        // Si uno está seleccionado (cantidad > 0) y el otro no, sube el seleccionado
+        if (selA !== selB) {
+          return selB - selA;
+        }
+
+        // Si ambos están en el mismo estado, conserva el orden original
+        const ordenA = parseInt(a.dataset.ordenOriginal) || 0;
+        const ordenB = parseInt(b.dataset.ordenOriginal) || 0;
+        return ordenA - ordenB;
+      });
+
+      filas.forEach(fila => tbody.appendChild(fila));
+
+      // Mantiene el foco en el campo donde el usuario está escribiendo
+      if (elementoActivo && elementoActivo.classList.contains("cons-item")) {
+        elementoActivo.focus();
+      }
     }
 
     // Función genérica para filtrar tablas en tiempo real
@@ -431,6 +463,7 @@
           document.getElementById('mensajeAlerta').innerText = "¡Solicitud registrada con éxito!";
           document.getElementById('miAlerta').style.display = 'flex';
           document.getElementById('coffeeForm').reset();
+          reordenarConsumibles();
           actualizarRestriccionHoras();
           document.getElementById('btnEnviar').disabled = false;
           document.getElementById('btnEnviar').innerText = "Enviar Solicitud";
