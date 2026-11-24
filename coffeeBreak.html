@@ -65,11 +65,14 @@
       padding: 8px 12px;
     }
 
-    /* Buscador del mapa */
+    /* Buscador del mapa con lista desplegable de sugerencias */
+    .mapa-search-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+    }
     .mapa-search-container {
       display: flex;
       gap: 6px;
-      margin-bottom: 8px;
     }
     .btn-buscar-mapa {
       background-color: var(--primary-orange);
@@ -86,6 +89,45 @@
     }
     .btn-buscar-mapa:hover { opacity: 0.9; }
     .btn-buscar-mapa:disabled { background-color: #ccc; cursor: not-allowed; }
+
+    .sugerencias-mapa {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      z-index: 1005;
+      max-height: 220px;
+      overflow-y: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .sugerencias-mapa li {
+      padding: 10px 12px;
+      font-size: 12.5px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+    .sugerencias-mapa li:last-child { border-bottom: none; }
+    .sugerencias-mapa li:hover {
+      background-color: #fff5eb;
+      color: var(--primary-pink);
+    }
+    .sugerencias-estado {
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+      cursor: default !important;
+    }
 
     /* Estilo visual para campos bloqueados */
     input[readonly] { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
@@ -165,10 +207,13 @@
       <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
       
       <div class="form-group">
-        <label>Lugar del evento (Busca el lugar o haz doble clic en el mapa para fijar el marcador azul) *</label>
-        <div class="mapa-search-container">
-          <input type="text" id="buscadorLugar" placeholder="📍 Ej. Secretaría de Educación Jalisco, Zapopan..." onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarDireccion();}">
-          <button type="button" id="btnBuscarMapa" class="btn-buscar-mapa" onclick="buscarDireccion()">Buscar</button>
+        <label>Lugar del evento (Escribe para buscar o haz doble clic en el mapa para fijar el marcador azul) *</label>
+        <div class="mapa-search-wrapper" id="contenedorBuscadorMapa">
+          <div class="mapa-search-container">
+            <input type="text" id="buscadorLugar" autocomplete="off" placeholder="📍 Ej. Secretaría de Educación Jalisco, Zapopan..." oninput="programarAutocompletadoMapa()" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarDireccion(true);}">
+            <button type="button" id="btnBuscarMapa" class="btn-buscar-mapa" onclick="buscarDireccion(true)">Buscar</button>
+          </div>
+          <ul id="listaSugerenciasMapa" class="sugerencias-mapa"></ul>
         </div>
         <div id="mapaId"></div>
       </div>
@@ -227,6 +272,7 @@
     let latBase = 20.6767;
     let lonBase = -103.3475;
     let coordenadasActuales = "https://www.google.com/maps?q=20.6767,-103.3475";
+    let temporizadorBusquedaMapa = null;
 
     window.onload = function() {
       aplicarDatosSesion();
@@ -244,40 +290,109 @@
         guardarCoordenadasFormulario(e.latlng.lat, e.latlng.lng);
       });
 
+      // Cerrar lista desplegable si se hace clic fuera del buscador
+      document.addEventListener('click', function(e) {
+        const contenedor = document.getElementById('contenedorBuscadorMapa');
+        if (contenedor && !contenedor.contains(e.target)) {
+          document.getElementById('listaSugerenciasMapa').style.display = 'none';
+        }
+      });
+
       detectarUbicacionGPS();
       cargarInsumos();
     };
 
-    // Buscador gratuito de direcciones (OpenStreetMap Nominatim)
-    function buscarDireccion() {
+    // Dispara la búsqueda con un pequeño retraso mientras el usuario escribe
+    function programarAutocompletadoMapa() {
+      clearTimeout(temporizadorBusquedaMapa);
+      const query = document.getElementById('buscadorLugar').value.trim();
+      const lista = document.getElementById('listaSugerenciasMapa');
+
+      if (query.length < 3) {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+        return;
+      }
+
+      temporizadorBusquedaMapa = setTimeout(() => {
+        buscarDireccion(false);
+      }, 400);
+    }
+
+    // Buscador gratuito de direcciones con lista desplegable de coincidencias
+    function buscarDireccion(seleccionarPrimero) {
       const input = document.getElementById('buscadorLugar');
       const btn = document.getElementById('btnBuscarMapa');
+      const lista = document.getElementById('listaSugerenciasMapa');
       const query = input.value.trim();
       if (!query) return;
 
-      btn.disabled = true;
-      btn.innerText = "Buscando...";
+      if (seleccionarPrimero) {
+        btn.disabled = true;
+        btn.innerText = "Buscando...";
+      } else {
+        lista.innerHTML = '<li class="sugerencias-estado">Buscando coincidencias...</li>';
+        lista.style.display = 'block';
+      }
 
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&limit=1`)
+      // Viewbox prioriza resultados alrededor de Jalisco sin excluir el resto de México
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&viewbox=-105.7,22.8,-101.5,18.9&limit=5`;
+
+      fetch(url)
         .then(res => res.json())
         .then(resultados => {
+          lista.innerHTML = '';
+
           if (resultados && resultados.length > 0) {
-            const lat = parseFloat(resultados[0].lat);
-            const lon = parseFloat(resultados[0].lon);
-            mapa.setView([lat, lon], 16);
-            marcador.setLatLng([lat, lon]);
-            guardarCoordenadasFormulario(lat, lon);
+            if (seleccionarPrimero) {
+              seleccionarLugarMapa(resultados[0].lat, resultados[0].lon, resultados[0].display_name);
+              return;
+            }
+
+            resultados.forEach(item => {
+              const li = document.createElement('li');
+              li.textContent = "📍 " + item.display_name;
+              li.onclick = function() {
+                seleccionarLugarMapa(item.lat, item.lon, item.display_name);
+              };
+              lista.appendChild(li);
+            });
+            lista.style.display = 'block';
           } else {
-            alert("No se encontró la ubicación. Intenta ser más específico (ej. incluir municipio o calle) o haz doble clic directamente en el mapa.");
+            if (seleccionarPrimero) {
+              alert("No se encontró la ubicación. Intenta ser más específico (ej. incluir municipio o calle) o haz doble clic directamente en el mapa.");
+            } else {
+              lista.innerHTML = '<li class="sugerencias-estado">Sin coincidencias. Intenta agregar municipio o estado.</li>';
+              lista.style.display = 'block';
+            }
           }
         })
         .catch(() => {
-          alert("Error de conexión al buscar la dirección.");
+          if (seleccionarPrimero) {
+            alert("Error de conexión al buscar la dirección.");
+          } else {
+            lista.style.display = 'none';
+          }
         })
         .finally(() => {
-          btn.disabled = false;
-          btn.innerText = "Buscar";
+          if (seleccionarPrimero) {
+            btn.disabled = false;
+            btn.innerText = "Buscar";
+          }
         });
+    }
+
+    function seleccionarLugarMapa(latStr, lonStr, nombreCompleto) {
+      const lat = parseFloat(latStr);
+      const lon = parseFloat(lonStr);
+      const lista = document.getElementById('listaSugerenciasMapa');
+
+      document.getElementById('buscadorLugar').value = nombreCompleto;
+      lista.style.display = 'none';
+
+      mapa.setView([lat, lon], 16);
+      marcador.setLatLng([lat, lon]);
+      guardarCoordenadasFormulario(lat, lon);
     }
 
     function aplicarDatosSesion() {
