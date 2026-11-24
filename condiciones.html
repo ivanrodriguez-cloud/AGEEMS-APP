@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ivanrodriguez-cloud/AGEEMS-APP/main/icono.png">
+  <meta charset="utf-8">
+  <title>Condiciones del Servicio - SEMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-orange: #FF8300;
+      --primary-pink: #E5004E;
+      --neutral-gray: #5B6670;
+      --light-bg: #f8f9fa;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light-bg);
+      color: var(--neutral-gray);
+      margin: 0;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      line-height: 1.6;
+    }
+    .container {
+      background: #ffffff;
+      width: 100%;
+      max-width: 800px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      box-sizing: border-box;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+    }
+    .header img {
+      max-width: 130px;
+      height: auto;
+      border-radius: 15px;
+    }
+    .btn-secundario {
+      background-color: transparent;
+      color: var(--neutral-gray);
+      border: 1px solid #ccc;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+    .btn-secundario:hover {
+      border-color: var(--primary-orange);
+      color: var(--primary-orange);
+    }
+    h1 {
+      color: var(--primary-pink);
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 5px 0;
+    }
+    .subtitulo {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 25px;
+    }
+    h2 {
+      color: var(--primary-orange);
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 22px;
+      margin-bottom: 8px;
+    }
+    p, li {
+      font-size: 14px;
+      text-align: justify;
+    }
+    ul, ol {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    a {
+      color: var(--primary-pink);
+      text-decoration: none;
+      word-break: break-word;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .footer-legal {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <img src="icono.png" alt="Logo SEMS">
+    </div>
+
+    <a href="index.html" class="btn-secundario">← Volver al Inicio</a>
+
+    <h1>Condiciones del Servicio y Políticas de Uso</h1>
+    <div class="subtitulo">
+      <strong>Plataforma Web Interna:</strong> AGEEMS-APP (Área de Gestión Estratégica de Educación Media Superior)<br>
+      <strong>Última actualización:</strong> Noviembre de 2026
+    </div>
+
+    <h2>1. Aceptación de los Términos</h2>
+    <p>
+      El acceso, navegación y uso de la aplicación web <strong>AGEEMS-APP</strong> (<code>https://ivanrodriguez-cloud.github.io/AGEEMS-APP/</code>) se rigen por las presentes Condiciones del Servicio, en apego a las <strong>Políticas de Uso y Privacidad de la Red de Portales del Gobierno de Jalisco</strong> (<a href="https://info.jalisco.gob.mx/politicas" target="_blank">https://info.jalisco.gob.mx/politicas</a>) y a la normatividad aplicable a los servidores públicos del Estado de Jalisco. Al autenticarse en la plataforma, usted manifiesta su conformidad y aceptación plena de estas disposiciones.
+    </p>
+
+    <h2>2. Arquitectura de Seguridad y Doble Filtro de Acceso</h2>
+    <ol>
+      <li><strong>Restricción de Dominio Institucional:</strong> La aplicación utiliza autenticación mediante Google OAuth 2.0 configurada exclusivamente para cuentas institucionales con terminación <strong><code>@jalisco.gob.mx</code></strong>.</li>
+      <li><strong>Lista Blanca de Usuarios Autorizados:</strong> Poseer un correo <code>@jalisco.gob.mx</code> es requisito indispensable pero no suficiente; el usuario debe estar registrado previamente en la base de datos interna de control (<code>DIRECTORIO SEMS</code>), la cual determina su estatus activo y su nivel de privilegios (rol).</li>
+      <li><strong>Protección de Vistas y Redirección Obligatoria:</strong> Todos los módulos, tableros y formularios internos están vinculados al mecanismo de validación de sesión de la página de inicio. Cualquier intento de acceder directamente mediante URL a una sección interna sin haber completado el doble filtro de autenticación redirigirá automáticamente al usuario a la pantalla principal de inicio de sesión.</li>
+    </ol>
+
+    <h2>3. Reglas de Uso y Obligaciones del Usuario</h2>
+    <p>El usuario se obliga a emplear <strong>AGEEMS-APP</strong> única y exclusivamente como herramienta de trabajo para el cumplimiento de sus atribuciones institucionales dentro de la Secretaría de Educación Jalisco:</p>
+    <ul>
+      <li><strong>Responsabilidad sobre la Cuenta:</strong> Las credenciales de acceso institucional son personales e intransferibles. Queda estrictamente prohibido prestar sesiones abiertas, compartir tokens de acceso o gestionar solicitudes a nombre de terceros sin autorización.</li>
+      <li><strong>Veracidad en los Registros:</strong> Toda solicitud de papelería, consumibles, cortesías, préstamo de material publicitario o registro de eventos debe corresponder a actividades oficiales reales y contener datos exactos.</li>
+      <li><strong>Conducta y Lenguaje Institucional:</strong> Conforme a las políticas de uso del Gobierno de Jalisco, en todos los campos de captura y observaciones deberá emplearse un lenguaje respetuoso, profesional e institucional, quedando prohibido ingresar contenido ofensivo, discriminatorio, difamatorio o ajeno al servicio público.</li>
+      <li><strong>Prohibición de Alteración o Intrusión:</strong> Queda estrictamente prohibido intentar eludir los controles de autenticación, manipular parámetros del código cliente (<em>front-end</em>) para escalar privilegios de rol, extraer masivamente bases de datos vinculadas o introducir código malicioso que comprometa la integridad o disponibilidad del sistema.</li>
+    </ul>
+
+    <h2>4. Alcance Operativo y Límites de Responsabilidad</h2>
+    <ul>
+      <li><strong>Sujeción a Disponibilidad:</strong> El envío de solicitudes de insumos o préstamos de material mediante la plataforma constituye un trámite interno sujeto a validación de existencias en inventario y aprobación por parte del personal facultado.</li>
+      <li><strong>Disponibilidad Tecnológica:</strong> Al operar sobre infraestructura en la nube (GitHub Pages y Google Workspace), el servicio puede experimentar interrupciones temporales por mantenimiento de dichos proveedores o actualizaciones internas del sistema.</li>
+      <li><strong>Enlaces a Portales Externos:</strong> Los enlaces incluidos en la sección de <em>Páginas de Interés</em> (tales como SIGE - INFEJAL y Consulta Pública - SIOP) redirigen a plataformas externas administradas por sus respectivas dependencias, por lo que su uso y privacidad se rigen por los términos propios de cada portal.</li>
+    </ul>
+
+    <h2>5. Sanciones por Incumplimiento</h2>
+    <p>
+      Cualquier uso indebido de la aplicación, falsedad en las declaraciones, intento de vulnerar los mecanismos de seguridad o incumplimiento de estas condiciones facultará a la administración del sistema para revocar de forma inmediata el acceso del usuario en el directorio autorizado, dando vista, en su caso, al Órgano Interno de Control conforme a la Ley de Responsabilidades Políticas y Administrativas del Estado de Jalisco.
+    </p>
+
+    <h2>6. Modificaciones</h2>
+    <p>
+      La administración de <strong>AGEEMS-APP</strong> se reserva el derecho de actualizar las presentes Condiciones del Servicio cuando resulte necesario por cambios normativos o funcionales, entrando en vigor a partir de su publicación en esta plataforma.
+    </p>
+
+    <div class="footer-legal">
+      Secretaría de Educación del Estado de Jalisco · Subsecretaría de Educación Media Superior<br>
+      <a href="privacidad.html">Ver Política de Privacidad</a> · <a href="index.html">Ir al Inicio</a>
+    </div>
+  </div>
+
+</body>
+</html>
