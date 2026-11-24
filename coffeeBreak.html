@@ -65,6 +65,28 @@
       padding: 8px 12px;
     }
 
+    /* Buscador del mapa */
+    .mapa-search-container {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .btn-buscar-mapa {
+      background-color: var(--primary-orange);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0 16px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .btn-buscar-mapa:hover { opacity: 0.9; }
+    .btn-buscar-mapa:disabled { background-color: #ccc; cursor: not-allowed; }
+
     /* Estilo visual para campos bloqueados */
     input[readonly] { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
 
@@ -102,7 +124,7 @@
     .cant-input:disabled { background-color: #e9ecef; cursor: not-allowed; }
     .img-tabla { width: 45px; height: 45px; object-fit: contain; border: none !important; padding: 0 !important; background-color: transparent !important; display: block; margin: 0 auto; }
 
-    #mapaId { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; z-index: 1; margin-top: 5px; }
+    #mapaId { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #ddd; z-index: 1; margin-top: 5px; cursor: pointer; }
     .leaflet-control-attribution { display: none !important; }
 
     .modal-alerta { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
@@ -143,7 +165,11 @@
       <div class="form-group"><label>Fecha y Hora de Fin del Evento *</label><input type="datetime-local" id="fechaFin" required></div>
       
       <div class="form-group">
-        <label>Lugar del evento (Arrastra el marcador azul al sitio exacto) *</label>
+        <label>Lugar del evento (Busca el lugar o haz doble clic en el mapa para fijar el marcador azul) *</label>
+        <div class="mapa-search-container">
+          <input type="text" id="buscadorLugar" placeholder="📍 Ej. Secretaría de Educación Jalisco, Zapopan..." onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarDireccion();}">
+          <button type="button" id="btnBuscarMapa" class="btn-buscar-mapa" onclick="buscarDireccion()">Buscar</button>
+        </div>
         <div id="mapaId"></div>
       </div>
 
@@ -206,19 +232,53 @@
       aplicarDatosSesion();
       actualizarRestriccionHoras();
       
-      mapa = L.map('mapaId').setView([latBase, lonBase], 12);
+      // Se deshabilita el zoom con doble clic para usar el doble clic para colocar el marcador
+      mapa = L.map('mapaId', { doubleClickZoom: false }).setView([latBase, lonBase], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
 
-      marcador = L.marker([latBase, lonBase], { draggable: true }).addTo(mapa);
+      marcador = L.marker([latBase, lonBase], { draggable: false }).addTo(mapa);
       
-      marcador.on('dragend', function() {
-        var posicion = marcador.getLatLng();
-        guardarCoordenadasFormulario(posicion.lat, posicion.lng);
+      // Colocar marcador azul mediante DOBLE CLIC en cualquier parte del mapa
+      mapa.on('dblclick', function(e) {
+        marcador.setLatLng(e.latlng);
+        guardarCoordenadasFormulario(e.latlng.lat, e.latlng.lng);
       });
 
       detectarUbicacionGPS();
       cargarInsumos();
     };
+
+    // Buscador gratuito de direcciones (OpenStreetMap Nominatim)
+    function buscarDireccion() {
+      const input = document.getElementById('buscadorLugar');
+      const btn = document.getElementById('btnBuscarMapa');
+      const query = input.value.trim();
+      if (!query) return;
+
+      btn.disabled = true;
+      btn.innerText = "Buscando...";
+
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&limit=1`)
+        .then(res => res.json())
+        .then(resultados => {
+          if (resultados && resultados.length > 0) {
+            const lat = parseFloat(resultados[0].lat);
+            const lon = parseFloat(resultados[0].lon);
+            mapa.setView([lat, lon], 16);
+            marcador.setLatLng([lat, lon]);
+            guardarCoordenadasFormulario(lat, lon);
+          } else {
+            alert("No se encontró la ubicación. Intenta ser más específico (ej. incluir municipio o calle) o haz doble clic directamente en el mapa.");
+          }
+        })
+        .catch(() => {
+          alert("Error de conexión al buscar la dirección.");
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.innerText = "Buscar";
+        });
+    }
 
     function aplicarDatosSesion() {
       const userSession = sessionStorage.getItem("userSession");
@@ -398,12 +458,10 @@
         const selA = cantA > 0 ? 1 : 0;
         const selB = cantB > 0 ? 1 : 0;
 
-        // Si uno está seleccionado (cantidad > 0) y el otro no, sube el seleccionado
         if (selA !== selB) {
           return selB - selA;
         }
 
-        // Si ambos están en el mismo estado, conserva el orden original
         const ordenA = parseInt(a.dataset.ordenOriginal) || 0;
         const ordenB = parseInt(b.dataset.ordenOriginal) || 0;
         return ordenA - ordenB;
@@ -411,7 +469,6 @@
 
       filas.forEach(fila => tbody.appendChild(fila));
 
-      // Mantiene el foco en el campo donde el usuario está escribiendo
       if (elementoActivo && elementoActivo.classList.contains("cons-item")) {
         elementoActivo.focus();
       }
