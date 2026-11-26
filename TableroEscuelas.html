@@ -106,94 +106,102 @@
             <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por CCT, Escuela o Rubro..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#C6004C]">
           </div>
 
-          <!-- FILTROS GENERACIÓN GENERAL -->
+          <!-- FILTROS GENERACIÓN GENERAL (CON SALTO DE LÍNEA Y CONTADOR) -->
           <div class="border-t border-slate-100 pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-xs">
+            
             <div class="relative dropdown-container" id="container-filtro-rubro">
               <label class="block font-semibold text-slate-600 mb-1">Rubro</label>
-              <button onclick="toggleDropdown('dropdown-rubro')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
-                <span id="btn-text-rubro" class="truncate">Todos los rubros</span>▼
+              <button onclick="toggleDropdown('dropdown-rubro')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 gap-1">
+                <span id="btn-text-rubro" data-default="Todos los rubros" class="truncate">Todos los rubros</span>
+                <span class="shrink-0 text-[10px]">▼</span>
               </button>
-              <div id="dropdown-rubro" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
-                  <button onclick="marcarTodosFiltro('rubro', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('rubro', false)" class="text-slate-400">Limpiar</button>
+              <div id="dropdown-rubro" class="hidden absolute left-0 min-w-full w-max max-w-[260px] z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2 max-h-60 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1.5 mb-1.5 text-[10px] gap-2">
+                  <button type="button" onclick="marcarTodosFiltro('rubro', true)" class="text-[#C6004C] font-semibold hover:underline">Seleccionar todos</button>
+                  <button type="button" onclick="marcarTodosFiltro('rubro', false)" class="text-slate-400 hover:text-slate-600">Limpiar</button>
                 </div>
-                <div id="opts-rubro" class="space-y-1"></div>
+                <div id="opts-rubro" class="space-y-1.5"></div>
               </div>
             </div>
 
             <div class="relative dropdown-container" id="container-filtro-municipio">
               <label class="block font-semibold text-slate-600 mb-1">Municipio</label>
-              <button onclick="toggleDropdown('dropdown-municipio')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
-                <span id="btn-text-municipio" class="truncate">Todos los municipios</span>▼
+              <button onclick="toggleDropdown('dropdown-municipio')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 gap-1">
+                <span id="btn-text-municipio" data-default="Todos los municipios" class="truncate">Todos los municipios</span>
+                <span class="shrink-0 text-[10px]">▼</span>
               </button>
-              <div id="dropdown-municipio" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
-                  <button onclick="marcarTodosFiltro('municipio', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('municipio', false)" class="text-slate-400">Limpiar</button>
+              <div id="dropdown-municipio" class="hidden absolute left-0 min-w-full w-max max-w-[260px] z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2 max-h-60 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1.5 mb-1.5 text-[10px] gap-2">
+                  <button type="button" onclick="marcarTodosFiltro('municipio', true)" class="text-[#C6004C] font-semibold hover:underline">Seleccionar todos</button>
+                  <button type="button" onclick="marcarTodosFiltro('municipio', false)" class="text-slate-400 hover:text-slate-600">Limpiar</button>
                 </div>
-                <div id="opts-municipio" class="space-y-1"></div>
+                <div id="opts-municipio" class="space-y-1.5"></div>
               </div>
             </div>
 
             <div class="relative dropdown-container" id="container-filtro-opd">
               <label class="block font-semibold text-slate-600 mb-1">OPD</label>
-              <button onclick="toggleDropdown('dropdown-opd')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
-                <span id="btn-text-opd" class="truncate">Todos los OPD</span>▼
+              <button onclick="toggleDropdown('dropdown-opd')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 gap-1">
+                <span id="btn-text-opd" data-default="Todos los OPD" class="truncate">Todos los OPD</span>
+                <span class="shrink-0 text-[10px]">▼</span>
               </button>
-              <div id="dropdown-opd" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
-                  <button onclick="marcarTodosFiltro('opd', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('opd', false)" class="text-slate-400">Limpiar</button>
+              <div id="dropdown-opd" class="hidden absolute left-0 min-w-full w-max max-w-[260px] z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2 max-h-60 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1.5 mb-1.5 text-[10px] gap-2">
+                  <button type="button" onclick="marcarTodosFiltro('opd', true)" class="text-[#C6004C] font-semibold hover:underline">Seleccionar todos</button>
+                  <button type="button" onclick="marcarTodosFiltro('opd', false)" class="text-slate-400 hover:text-slate-600">Limpiar</button>
                 </div>
-                <div id="opts-opd" class="space-y-1"></div>
+                <div id="opts-opd" class="space-y-1.5"></div>
               </div>
             </div>
 
             <div class="relative dropdown-container" id="container-filtro-estatus">
               <label class="block font-semibold text-slate-600 mb-1">Estatus</label>
-              <button onclick="toggleDropdown('dropdown-estatus')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
-                <span id="btn-text-estatus" class="truncate">Todos los estatus</span>▼
+              <button onclick="toggleDropdown('dropdown-estatus')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 gap-1">
+                <span id="btn-text-estatus" data-default="Todos los estatus" class="truncate">Todos los estatus</span>
+                <span class="shrink-0 text-[10px]">▼</span>
               </button>
-              <div id="dropdown-estatus" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
-                  <button onclick="marcarTodosFiltro('estatus', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('estatus', false)" class="text-slate-400">Limpiar</button>
+              <div id="dropdown-estatus" class="hidden absolute left-0 min-w-full w-max max-w-[260px] z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2 max-h-60 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1.5 mb-1.5 text-[10px] gap-2">
+                  <button type="button" onclick="marcarTodosFiltro('estatus', true)" class="text-[#C6004C] font-semibold hover:underline">Seleccionar todos</button>
+                  <button type="button" onclick="marcarTodosFiltro('estatus', false)" class="text-slate-400 hover:text-slate-600">Limpiar</button>
                 </div>
-                <div id="opts-estatus" class="space-y-1"></div>
+                <div id="opts-estatus" class="space-y-1.5"></div>
               </div>
             </div>
 
             <div class="relative dropdown-container" id="container-filtro-fondo">
               <label class="block font-semibold text-slate-600 mb-1">Fondo</label>
-              <button onclick="toggleDropdown('dropdown-fondo')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
-                <span id="btn-text-fondo" class="truncate">Todos los fondos</span>▼
+              <button onclick="toggleDropdown('dropdown-fondo')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 gap-1">
+                <span id="btn-text-fondo" data-default="Todos los fondos" class="truncate">Todos los fondos</span>
+                <span class="shrink-0 text-[10px]">▼</span>
               </button>
-              <div id="dropdown-fondo" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
-                  <button onclick="marcarTodosFiltro('fondo', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('fondo', false)" class="text-slate-400">Limpiar</button>
+              <div id="dropdown-fondo" class="hidden absolute left-0 sm:left-auto sm:right-0 min-w-full w-max max-w-[260px] z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2 max-h-60 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1.5 mb-1.5 text-[10px] gap-2">
+                  <button type="button" onclick="marcarTodosFiltro('fondo', true)" class="text-[#C6004C] font-semibold hover:underline">Seleccionar todos</button>
+                  <button type="button" onclick="marcarTodosFiltro('fondo', false)" class="text-slate-400 hover:text-slate-600">Limpiar</button>
                 </div>
-                <div id="opts-fondo" class="space-y-1"></div>
+                <div id="opts-fondo" class="space-y-1.5"></div>
               </div>
             </div>
 
             <div class="relative dropdown-container" id="container-filtro-anio">
               <label class="block font-semibold text-slate-600 mb-1">Año de Solicitud</label>
-              <button onclick="toggleDropdown('dropdown-anio')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700">
-                <span id="btn-text-anio" class="truncate">Todos los años</span>▼
+              <button onclick="toggleDropdown('dropdown-anio')" type="button" class="w-full border rounded-lg p-2 text-left bg-slate-50 flex justify-between items-center text-slate-700 gap-1">
+                <span id="btn-text-anio" data-default="Todos los años" class="truncate">Todos los años</span>
+                <span class="shrink-0 text-[10px]">▼</span>
               </button>
-              <div id="dropdown-anio" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border rounded-lg shadow-lg p-2 max-h-56 overflow-y-auto">
-                <div class="flex justify-between border-b pb-1 mb-1 text-[10px]">
-                  <button onclick="marcarTodosFiltro('anio', true)" class="text-[#C6004C] font-semibold">Seleccionar todos</button>
-                  <button onclick="marcarTodosFiltro('anio', false)" class="text-slate-400">Limpiar</button>
+              <div id="dropdown-anio" class="hidden absolute right-0 min-w-full w-max max-w-[260px] z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2 max-h-60 overflow-y-auto">
+                <div class="flex justify-between border-b pb-1.5 mb-1.5 text-[10px] gap-2">
+                  <button type="button" onclick="marcarTodosFiltro('anio', true)" class="text-[#C6004C] font-semibold hover:underline">Seleccionar todos</button>
+                  <button type="button" onclick="marcarTodosFiltro('anio', false)" class="text-slate-400 hover:text-slate-600">Limpiar</button>
                 </div>
-                <div id="opts-anio" class="space-y-1"></div>
+                <div id="opts-anio" class="space-y-1.5"></div>
               </div>
             </div>
+
           </div>
           <div class="flex justify-end pt-1">
-            <button onclick="limpiarFiltros()" class="text-[11px] text-[#C6004C] font-medium">🧹 Limpiar todos los filtros</button>
+            <button type="button" onclick="limpiarFiltros()" class="text-[11px] text-[#C6004C] font-medium hover:underline">🧹 Limpiar todos los filtros</button>
           </div>
         </div>
 
@@ -772,7 +780,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* PAPELERÍA Y CONSUMIBLES (LÓGICA RECIENTE CON COSTO H Y VALORES ÚNICOS)     */
+    /* PAPELERÍA Y CONSUMIBLES                                                    */
     /* -------------------------------------------------------------------------- */
 
     function cargarInventariosYEventos() {
@@ -832,7 +840,6 @@
       }
     }
 
-    /* MÓDULO PAPELERÍA */
     function renderizarModuloPapeleria() {
       if (!rawInventariosData || !rawInventariosData.papeleria) return;
       const data = rawInventariosData.papeleria;
@@ -868,7 +875,6 @@
       renderizarTop10(data.productos, "papeleria");
     }
 
-    /* MÓDULO CONSUMIBLES */
     function renderizarModuloConsumibles() {
       if (!rawInventariosData || !rawInventariosData.consumibles) return;
       const data = rawInventariosData.consumibles;
@@ -1026,7 +1032,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* MAPA Y EVENTOS                                                             */
+    /* MAPA Y EVENTOS (AGRUPACIÓN < 30 METROS)                                    */
     /* -------------------------------------------------------------------------- */
 
     function inicializarMapaEventos(eventos) {
@@ -1037,8 +1043,8 @@
 
       let grupos = [];
       (eventos || []).forEach(ev => {
-        // Agrupamiento ajustado a menos de 100 metros
-        let grupo = grupos.find(g => calcularDistanciaMetros(g.lat, g.lng, ev.latitud, ev.longitud) <= 100);
+        // Agrupamiento a menos de 30 metros
+        let grupo = grupos.find(g => calcularDistanciaMetros(g.lat, g.lng, ev.latitud, ev.longitud) <= 30);
         if (grupo) {
           grupo.eventos.push(ev);
         } else {
@@ -1055,13 +1061,13 @@
           fillColor: colorPin,
           color: "#ffffff",
           weight: 2,
-          fillOpacity: cant === 1 ? 0.6 : 0.9
+          fillOpacity: cant === 1 ? 0.55 : Math.min(1.0, 0.65 + (cant * 0.1))
         }).addTo(mapaEventosObj);
 
         marker.on('click', () => {
           const select = document.getElementById("select-eventos-ubicacion");
-          select.innerHTML = g.eventos.map(e => `<option value="${e.id}">${e.nombreEvento} (${e.inicioEvento})</option>`).join("");
-          document.getElementById("tarjeta-contador-eventos").innerHTML = `📍 <strong>${cant}</strong> evento(s) en esta ubicación`;
+          select.innerHTML = g.eventos.map(e => `<option value="${e.id}">${e.nombreEvento} (${formatearFechaDDMMYYYY(e.inicioEvento)})</option>`).join("");
+          document.getElementById("tarjeta-contador-eventos").innerHTML = `📍 <strong>${cant}</strong> evento(s) realizado(s) en este lugar`;
           mostrarDetalleEventoSeleccionado();
         });
       });
@@ -1076,13 +1082,13 @@
 
       document.getElementById("tabla-evento-detalle").innerHTML = `
         <tr class="border-b">
-          <td class="p-2">${evento.fechaRegistro}</td>
+          <td class="p-2">${formatearFechaDDMMYYYY(evento.fechaRegistro)}</td>
           <td class="p-2 font-bold">${evento.nombreEvento}</td>
           <td class="p-2">${evento.nombreSolicitante}</td>
           <td class="p-2 font-mono text-[#C6004C]">${evento.correo}</td>
           <td class="p-2 font-bold text-[#FF8300]">${evento.tipoSolicitud}</td>
-          <td class="p-2">${evento.inicioEvento}</td>
-          <td class="p-2">${evento.finEvento}</td>
+          <td class="p-2">${formatearFechaDDMMYYYY(evento.inicioEvento)}</td>
+          <td class="p-2">${formatearFechaDDMMYYYY(evento.finEvento)}</td>
           <td class="p-2">${evento.materialesSolicitados}</td>
           <td class="p-2">${evento.consumiblesSolicitados}</td>
           <td class="p-2 italic text-slate-500">${evento.observaciones}</td>
@@ -1101,7 +1107,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* FILTROS GENERALES                                                         */
+    /* FILTROS GENERALES (MULTILÍNEA Y CONTADOR DE SELECCIÓN)                     */
     /* -------------------------------------------------------------------------- */
 
     function toggleDropdown(id) {
@@ -1129,12 +1135,33 @@
         const cont = document.getElementById(`opts-${k}`);
         if (!cont) return;
         cont.innerHTML = Array.from(cats[k]).sort().map(val => `
-          <label class="flex items-center gap-2 p-1 hover:bg-slate-50 cursor-pointer text-slate-700">
-            <input type="checkbox" value="${val}" onchange="filtrarTabla()" class="filter-check-${k} text-[#C6004C]">
-            <span class="truncate">${val}</span>
+          <label class="flex items-start gap-2 p-1 hover:bg-slate-50 cursor-pointer rounded transition-colors">
+            <input type="checkbox" value="${val}" onchange="filtrarTabla()" class="filter-check-${k} mt-0.5 rounded text-[#C6004C] focus:ring-[#C6004C] shrink-0">
+            <span class="text-slate-700 whitespace-normal break-words leading-tight text-left">${val}</span>
           </label>
         `).join("");
+        actualizarEtiquetaFiltro(k);
       });
+    }
+
+    function actualizarEtiquetaFiltro(k) {
+      const spanTexto = document.getElementById(`btn-text-${k}`);
+      if (!spanTexto) return;
+
+      const checkboxes = document.querySelectorAll(`.filter-check-${k}`);
+      const seleccionados = Array.from(checkboxes).filter(cb => cb.checked);
+      const textoDefault = spanTexto.getAttribute("data-default") || "Todos";
+
+      if (seleccionados.length === 0) {
+        spanTexto.textContent = textoDefault;
+        spanTexto.classList.remove("font-bold", "text-[#C6004C]");
+      } else if (seleccionados.length === 1) {
+        spanTexto.textContent = `1 seleccionado (${seleccionados[0].value})`;
+        spanTexto.classList.add("font-bold", "text-[#C6004C]");
+      } else {
+        spanTexto.textContent = `${seleccionados.length} seleccionados`;
+        spanTexto.classList.add("font-bold", "text-[#C6004C]");
+      }
     }
 
     function marcarTodosFiltro(k, estado) {
@@ -1148,6 +1175,10 @@
 
     function filtrarTabla() {
       const busqueda = document.getElementById("input-filtro").value.toLowerCase();
+      const categorias = ["rubro", "municipio", "opd", "estatus", "fondo", "anio"];
+      
+      categorias.forEach(k => actualizarEtiquetaFiltro(k));
+
       const r = obtenerValoresSeleccionados("rubro");
       const m = obtenerValoresSeleccionados("municipio");
       const o = obtenerValoresSeleccionados("opd");
